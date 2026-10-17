@@ -1,0 +1,258 @@
+/**app.wxss** 全局样式。主题色取自头像，见 design/brand.md */
+page {
+  --yolk: #ffb21e; /* 主色：按钮、选中、点菜 +。黄底上一律用深色字 */
+  --pan: #3b3b42; /* 深色：正文、底部点菜栏 */
+  --apricot: #ffe7c2; /* 浅色：占位图、标签底 */
+  --cream: #fff8ee; /* 页面背景 */
+  --scallion: #5db15a; /* 完成 / 已买 */
+  --wood: #a0693f; /* 木柄棕：次要强调 */
+  --text-2: #6e6e76; /* 次要文字 */
+  --text-3: #a0a0a8; /* 提示文字 */
+  --line: #f2e8da; /* 分隔线 */
+
+  background: var(--cream);
+  color: var(--pan);
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+view,
+scroll-view,
+input,
+image {
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}
+
+/* ---------- 通用 ---------- */
+
+.card {
+  margin: 20rpx 24rpx 0;
+  padding: 28rpx;
+  background: #fff;
+  border-radius: 20rpx;
+}
+
+.card-title {
+  margin-bottom: 16rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.btn-primary {
+  height: 80rpx;
+  padding: 0 48rpx;
+  border-radius: 40rpx;
+  background: var(--yolk);
+  color: var(--pan);
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 80rpx;
+  text-align: center;
+}
+
+.btn-outline {
+  height: 80rpx;
+  padding: 0 32rpx;
+  border: 2rpx solid var(--pan);
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  line-height: 76rpx;
+  text-align: center;
+}
+
+.tag {
+  display: inline-block;
+  margin: 0 12rpx 8rpx 0;
+  padding: 2rpx 16rpx;
+  border-radius: 20rpx;
+  background: var(--cream);
+  font-size: 22rpx;
+  color: var(--text-2);
+}
+
+/* 熟练度标记：拿手菜 / 练习中 / 想学 */
+.badge {
+  flex-shrink: 0;
+  padding: 0 12rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  line-height: 34rpx;
+}
+
+.badge.mastered {
+  background: var(--yolk);
+  color: var(--pan);
+}
+
+.badge.learning {
+  background: var(--apricot);
+  color: var(--wood);
+}
+
+.badge.wish {
+  background: #efeff1;
+  color: var(--text-2);
+}
+
+/* 空状态 */
+.empty {
+  padding: 160rpx 48rpx;
+  text-align: center;
+}
+
+.empty-emoji {
+  font-size: 96rpx;
+}
+
+.empty-title {
+  margin-top: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.empty-desc {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
+.empty .btn-primary {
+  display: inline-block;
+  margin-top: 40rpx;
+}
+
+/* ---------- 菜品卡片（templates/dish-card.wxml） ---------- */
+
+.dish-card {
+  display: flex;
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+}
+
+.cover {
+  flex-shrink: 0;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 16rpx;
+}
+
+.cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--apricot);
+  color: var(--wood);
+  font-size: 56rpx;
+  font-weight: 700;
+}
+
+.dish-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin-left: 20rpx;
+}
+
+.dish-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dish-meta {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dish-foot {
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 12rpx;
+}
+
+.dish-cook {
+  flex: 1;
+  min-width: 0;
+  margin-left: 12rpx;
+  font-size: 22rpx;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 加减份数 ---------- */
+
+.stepper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.stepper-btn {
+  position: relative;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  line-height: 46rpx;
+}
+
+/* 按钮看着小，点击范围往外扩一圈，手指好按 */
+.stepper-btn::after {
+  content: "";
+  position: absolute;
+  top: -16rpx;
+  right: -14rpx;
+  bottom: -16rpx;
+  left: -14rpx;
+}
+
+.stepper-btn.plus {
+  background: var(--yolk);
+  color: var(--pan);
+}
+
+.stepper-btn.minus {
+  border: 2rpx solid #d9cfc1;
+  color: var(--text-2);
+  line-height: 42rpx;
+}
+
+.stepper-num {
+  min-width: 52rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.stepper.big .stepper-btn {
+  width: 64rpx;
+  height: 64rpx;
+  font-size: 40rpx;
+  line-height: 62rpx;
+}
+
+.stepper.big .stepper-btn.minus {
+  line-height: 58rpx;
+}
+
+.stepper.big .stepper-num {
+  min-width: 120rpx;
+}

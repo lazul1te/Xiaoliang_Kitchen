@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- C · 厨师帽：暖黄底 + 白色厨师帽 + 小爱心 -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#FFC94D"/>
+      <stop offset="1" stop-color="#FFAE22"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <ellipse cx="512" cy="776" rx="210" ry="22" fill="#000" opacity="0.10"/>
+
+  <!-- 帽顶三团 + 帽身 -->
+  <g fill="#FFFFFF">
+    <circle cx="380" cy="440" r="126"/>
+    <circle cx="644" cy="440" r="126"/>
+    <circle cx="512" cy="372" r="160"/>
+    <rect x="392" y="440" width="240" height="220"/>
+  </g>
+
+  <!-- 褶皱 -->
+  <g stroke="#EADFD0" stroke-width="12" stroke-linecap="round">
+    <line x1="452" y1="572" x2="452" y2="640"/>
+    <line x1="512" y1="572" x2="512" y2="640"/>
+    <line x1="572" y1="572" x2="572" y2="640"/>
+  </g>
+
+  <!-- 帽檐 -->
+  <rect x="362" y="650" width="300" height="100" rx="30" fill="#FFFFFF"/>
+  <rect x="392" y="646" width="240" height="8" fill="#EADFD0"/>
+
+  <!-- 帽檐上的小爱心 -->
+  <path transform="translate(482 672) scale(0.6)" fill="#EA5530"
+        d="M50 88 C20 65 4 48 4 30 C4 15 15 5 28 5 C38 5 46 11 50 20
+           C54 11 62 5 72 5 C85 5 96 15 96 30 C96 48 80 65 50 88 Z"/>
+</svg>

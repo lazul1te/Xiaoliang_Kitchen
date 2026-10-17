@@ -1,0 +1,88 @@
+<view wx:if="{{notFound}}" class="empty">
+  <view class="empty-emoji">🍽️</view>
+  <view class="empty-title">这道菜找不到了</view>
+</view>
+
+<view wx:elif="{{dish}}" class="detail">
+  <!-- 成品图；没有照片时用菜名第一个字占位 -->
+  <image wx:if="{{dish.cover}}" class="hero" src="{{dish.cover}}" mode="aspectFill" />
+  <view wx:else class="hero hero-placeholder">
+    <text class="hero-initial">{{dish.initial}}</text>
+    <text class="hero-tip">还没有成品照</text>
+  </view>
+
+  <!-- 名称、标签、耗时/份量/难度 -->
+  <view class="card head">
+    <view class="title-row">
+      <text class="title">{{dish.name}}</text>
+      <view class="badge {{dish.statusClass}}">{{dish.statusText}}</view>
+    </view>
+    <view wx:if="{{dish.tags.length}}" class="tags">
+      <text wx:for="{{dish.tags}}" wx:key="*this" class="tag">{{item}}</text>
+    </view>
+    <view class="facts">
+      <view class="fact">
+        <text class="fact-value">{{dish.duration}}</text>
+        <text class="fact-unit">分钟</text>
+        <view class="fact-label">耗时</view>
+      </view>
+      <view class="fact">
+        <text class="fact-value">{{dish.servings}}</text>
+        <text class="fact-unit">人份</text>
+        <view class="fact-label">份量</view>
+      </view>
+      <view class="fact">
+        <text class="stars">{{dish.stars}}</text>
+        <view class="fact-label">难度</view>
+      </view>
+    </view>
+    <view class="cook-line">{{dish.cookLine}}</view>
+  </view>
+
+  <!-- 原料 -->
+  <view class="card">
+    <view class="card-title">原料</view>
+    <view wx:for="{{dish.ingredientGroups}}" wx:key="type" wx:for-item="group" class="ing-group">
+      <view class="ing-label">{{group.label}}</view>
+      <view class="ing-items">
+        <view wx:for="{{group.items}}" wx:key="name" class="ing-row">
+          <text>{{item.name}}</text>
+          <text class="ing-amount">{{item.amountText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 做法 -->
+  <view class="card">
+    <view class="card-title">做法 · {{dish.steps.length}} 步</view>
+    <view wx:for="{{dish.steps}}" wx:key="text" class="step">
+      <view class="step-no">{{index + 1}}</view>
+      <view class="step-body">
+        <view class="step-text">{{item.text}}</view>
+        <image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
+        <view wx:if="{{item.timerText}}" class="step-timer">⏱ 计时 {{item.timerText}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 小贴士 -->
+  <view wx:if="{{dish.tips}}" class="card tips">
+    <view class="card-title">小贴士</view>
+    <view class="tips-text">{{dish.tips}}</view>
+  </view>
+</view>
+
+<!-- 底部操作栏 -->
+<view wx:if="{{dish}}" class="action-bar">
+  <view class="action-edit" bindtap="onEdit">编辑</view>
+  <view class="action-basket">
+    <view wx:if="{{qty === 0}}" class="btn-outline" bindtap="onPlus">加入点菜篮</view>
+    <view wx:else class="stepper big">
+      <view class="stepper-btn minus" bindtap="onMinus">−</view>
+      <text class="stepper-num">{{qty}} 份</text>
+      <view class="stepper-btn plus" bindtap="onPlus">+</view>
+    </view>
+  </view>
+  <view class="btn-primary" bindtap="onStartCook">开始做</view>
+</view>

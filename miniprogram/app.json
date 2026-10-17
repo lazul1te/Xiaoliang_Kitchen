@@ -1,0 +1,51 @@
+{
+  "pages": [
+    "pages/menu/index",
+    "pages/today/index",
+    "pages/logs/index",
+    "pages/mine/index",
+    "pages/dish-detail/index"
+  ],
+  "window": {
+    "backgroundColor": "#FFF8EE",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFF8EE",
+    "navigationBarTitleText": "拿手菜小本本",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#9A9AA0",
+    "selectedColor": "#3B3B42",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/menu/index",
+        "text": "菜单",
+        "iconPath": "images/tabbar/menu.png",
+        "selectedIconPath": "images/tabbar/menu-active.png"
+      },
+      {
+        "pagePath": "pages/today/index",
+        "text": "今日",
+        "iconPath": "images/tabbar/today.png",
+        "selectedIconPath": "images/tabbar/today-active.png"
+      },
+      {
+        "pagePath": "pages/logs/index",
+        "text": "记录",
+        "iconPath": "images/tabbar/logs.png",
+        "selectedIconPath": "images/tabbar/logs-active.png"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的",
+        "iconPath": "images/tabbar/mine.png",
+        "selectedIconPath": "images/tabbar/mine-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- A · 热汤碗：番茄红底 + 奶白碗 + 筷子 + 热气 -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#FA8A5C"/>
+      <stop offset="1" stop-color="#EA5530"/>
+    </radialGradient>
+    <clipPath id="bowl">
+      <path d="M252 540 A260 250 0 0 0 772 540 Z"/>
+    </clipPath>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- 热气 -->
+  <g fill="none" stroke="#FFF6EA" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M410 486 q36 -30 0 -60 t0 -60 t0 -60" opacity="0.85"/>
+    <path d="M512 476 q36 -30 0 -60 t0 -60 t0 -60 t0 -60"/>
+    <path d="M614 486 q36 -30 0 -60 t0 -60 t0 -60" opacity="0.85"/>
+  </g>
+
+  <!-- 筷子 -->
+  <g stroke-linecap="round" stroke-width="24">
+    <line x1="652" y1="528" x2="818" y2="250" stroke="#7A4A2E"/>
+    <line x1="700" y1="534" x2="862" y2="294" stroke="#8B5736"/>
+  </g>
+
+  <!-- 碗底 + 投影 -->
+  <ellipse cx="512" cy="824" rx="180" ry="18" fill="#000" opacity="0.12"/>
+  <path d="M438 770 H586 L572 814 H452 Z" fill="#F3E3CF"/>
+
+  <!-- 碗身 -->
+  <path d="M252 540 A260 250 0 0 0 772 540 Z" fill="#FFF6EA"/>
+  <g clip-path="url(#bowl)">
+    <rect x="200" y="612" width="624" height="34" fill="#EA5530"/>
+    <rect x="200" y="664" width="624" height="12" fill="#EA5530"/>
+    <path fill="#E9D6C0" opacity="0.45" fill-rule="evenodd"
+          d="M0 0H1024V1024H0Z M0 380 a400 400 0 1 0 800 0 a400 400 0 1 0 -800 0Z"/>
+  </g>
+
+  <!-- 碗沿 + 汤面 + 葱花 -->
+  <ellipse cx="512" cy="540" rx="272" ry="44" fill="#FFFFFF"/>
+  <ellipse cx="512" cy="542" rx="238" ry="28" fill="#FFC15E"/>
+  <g fill="#62B35A">
+    <ellipse cx="440" cy="540" rx="15" ry="6" transform="rotate(-12 440 540)"/>
+    <ellipse cx="566" cy="548" rx="13" ry="5" transform="rotate(10 566 548)"/>
+    <ellipse cx="505" cy="534" rx="11" ry="4.5"/>
+  </g>
+</svg>

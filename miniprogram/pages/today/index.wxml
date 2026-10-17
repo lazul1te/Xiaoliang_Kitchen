@@ -1,0 +1,24 @@
+<import src="/templates/dish-card.wxml" />
+
+<view wx:if="{{!items.length}}" class="empty">
+  <view class="empty-emoji">🧺</view>
+  <view class="empty-title">今天还没点菜</view>
+  <view class="empty-desc">去菜单里挑几道想做的菜吧</view>
+  <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
+</view>
+
+<view wx:else class="today">
+  <view class="today-head">
+    <text>今天要做 {{items.length}} 道菜，共 {{count}} 份</text>
+    <text class="clear" bindtap="onClear">清空</text>
+  </view>
+
+  <block wx:for="{{items}}" wx:key="_id">
+    <template is="dishCard" data="{{dish: item, basket: basket}}" />
+  </block>
+
+  <view class="card shopping">
+    <view class="card-title">🛒 购物清单</view>
+    <view class="shopping-hint">下一步会把这几道菜的原料自动合并成买菜清单，买到一样勾一样。</view>
+  </view>
+</view>

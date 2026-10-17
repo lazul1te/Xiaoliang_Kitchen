@@ -1,0 +1,79 @@
+.mine {
+  padding-bottom: 40rpx;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  padding: 48rpx 40rpx 24rpx;
+}
+
+.logo {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+}
+
+.profile-text {
+  margin-left: 28rpx;
+}
+
+.app-name {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.app-slogan {
+  margin-top: 6rpx;
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.stats {
+  display: flex;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+.settings {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 0;
+  font-size: 28rpx;
+}
+
+.setting-item + .setting-item {
+  border-top: 2rpx solid var(--line);
+}
+
+.arrow {
+  font-size: 36rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+.version {
+  margin-top: 40rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-3);
+}

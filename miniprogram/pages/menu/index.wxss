@@ -1,0 +1,225 @@
+.menu-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ---------- 顶部 ---------- */
+
+.header {
+  flex-shrink: 0;
+  padding: 8rpx 24rpx 20rpx;
+}
+
+.slogan {
+  margin-bottom: 14rpx;
+  font-size: 24rpx;
+  color: var(--text-3);
+  letter-spacing: 2rpx;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  padding: 0 24rpx;
+  background: #fff;
+  border-radius: 36rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 72rpx;
+  margin: 0 12rpx;
+  font-size: 26rpx;
+}
+
+.search-placeholder {
+  color: var(--text-3);
+}
+
+.add-btn {
+  flex-shrink: 0;
+  height: 72rpx;
+  margin-left: 16rpx;
+  padding: 0 26rpx;
+  border-radius: 36rpx;
+  background: var(--yolk);
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 72rpx;
+}
+
+/* ---------- 搜索结果 ---------- */
+
+.search-list {
+  flex: 1;
+  height: 0;
+  padding: 0 24rpx;
+}
+
+.search-empty {
+  padding: 120rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
+/* ---------- 左分类 + 右菜品 ---------- */
+
+.body {
+  flex: 1;
+  height: 0;
+  display: flex;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.cat-list {
+  flex-shrink: 0;
+  width: 168rpx;
+  height: 100%;
+  background: #fbeedb;
+}
+
+.cat-item {
+  position: relative;
+  padding: 32rpx 12rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.cat-item.active {
+  background: var(--cream);
+  color: var(--pan);
+  font-weight: 600;
+}
+
+/* 选中分类左边的小黄条 */
+.cat-item.active::before {
+  content: "";
+  position: absolute;
+  top: 30rpx;
+  bottom: 30rpx;
+  left: 0;
+  width: 8rpx;
+  border-radius: 0 8rpx 8rpx 0;
+  background: var(--yolk);
+}
+
+.cat-count {
+  position: absolute;
+  top: 12rpx;
+  right: 10rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  border-radius: 16rpx;
+  background: var(--yolk);
+  color: var(--pan);
+  font-size: 20rpx;
+  font-weight: 600;
+  line-height: 32rpx;
+}
+
+.dish-list {
+  flex: 1;
+  height: 100%;
+  padding: 0 20rpx;
+}
+
+.section-title {
+  padding: 20rpx 4rpx 14rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.section-empty {
+  padding: 20rpx 4rpx 30rpx;
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+.list-end {
+  padding: 24rpx 0 48rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-3);
+}
+
+/* ---------- 底部点菜栏 ---------- */
+
+.basket-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 104rpx;
+  margin: 12rpx 24rpx 16rpx;
+  padding: 0 12rpx 0 32rpx;
+  border-radius: 52rpx;
+  background: var(--pan);
+}
+
+.basket-info {
+  display: flex;
+  align-items: center;
+}
+
+.basket-icon {
+  position: relative;
+  font-size: 44rpx;
+  opacity: 0.45;
+}
+
+.basket-icon.on {
+  opacity: 1;
+}
+
+.basket-num {
+  position: absolute;
+  top: -12rpx;
+  right: -20rpx;
+  min-width: 34rpx;
+  height: 34rpx;
+  padding: 0 8rpx;
+  border-radius: 17rpx;
+  background: var(--yolk);
+  color: var(--pan);
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 34rpx;
+  text-align: center;
+}
+
+.basket-text {
+  margin-left: 32rpx;
+  font-size: 28rpx;
+  color: #fff;
+}
+
+.basket-go {
+  height: 80rpx;
+  padding: 0 44rpx;
+  border-radius: 40rpx;
+  background: var(--yolk);
+  color: var(--pan);
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 80rpx;
+}
+
+.basket-go.disabled {
+  background: #55555d;
+  color: #8e8e96;
+}

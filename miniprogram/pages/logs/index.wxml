@@ -1,0 +1,6 @@
+<view class="empty">
+  <view class="empty-emoji">📒</view>
+  <view class="empty-title">还没有做菜记录</view>
+  <view class="empty-desc">以后每做完一道菜就打个卡</view>
+  <view class="empty-desc">成品照和心得会按日期记在这里</view>
+</view>

@@ -1,0 +1,25 @@
+.today {
+  padding: 24rpx;
+}
+
+.today-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.clear {
+  color: var(--wood);
+}
+
+.shopping {
+  margin: 8rpx 0 40rpx;
+}
+
+.shopping-hint {
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: var(--text-2);
+}

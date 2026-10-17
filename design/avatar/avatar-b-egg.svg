@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- B · 爱心煎蛋：杏色底 + 平底锅（长木柄）+ 爱心蛋黄 -->
+  <rect width="1024" height="1024" fill="#FFE7C2"/>
+
+  <!-- 锅柄：金属段 + 木柄，向右下方 18° 伸出 -->
+  <g transform="translate(430 480) rotate(18)">
+    <rect x="250" y="-26" width="170" height="52" rx="14" fill="#3B3B42"/>
+    <rect x="372" y="-32" width="128" height="64" rx="32" fill="#A0693F"/>
+    <rect x="372" y="-32" width="18" height="64" fill="#8A5732"/>
+    <circle cx="468" cy="0" r="11" fill="#FFE7C2"/>
+  </g>
+
+  <!-- 锅身 -->
+  <circle cx="430" cy="480" r="270" fill="#3B3B42"/>
+  <circle cx="430" cy="480" r="238" fill="#4B4B54"/>
+  <path d="M237 410 A205 205 0 0 1 360 287" fill="none" stroke="#FFFFFF" stroke-opacity="0.18"
+        stroke-width="14" stroke-linecap="round"/>
+
+  <!-- 煎蛋（蛋白 + 爱心蛋黄 + 葱花），整体放大并居中到锅心 -->
+  <g transform="translate(430 480) scale(1.12) translate(-472 -470)">
+    <path fill="#FFFFFF" d="M330 470
+             C320 395 380 330 455 330
+             C520 318 590 345 610 405
+             C640 470 615 540 560 575
+             C510 615 430 620 385 590
+             C335 560 335 520 330 470 Z"/>
+    <g transform="translate(400 396) scale(1.5)">
+      <path fill="#FFB21E" d="M50 88 C20 65 4 48 4 30 C4 15 15 5 28 5 C38 5 46 11 50 20
+                              C54 11 62 5 72 5 C85 5 96 15 96 30 C96 48 80 65 50 88 Z"/>
+      <ellipse cx="30" cy="26" rx="10" ry="6" fill="#FFFFFF" opacity="0.6" transform="rotate(-30 30 26)"/>
+    </g>
+    <g fill="#5DB15A">
+      <rect x="368" y="430" width="24" height="10" rx="5" transform="rotate(30 380 435)"/>
+      <rect x="574" y="492" width="22" height="10" rx="5" transform="rotate(-20 585 497)"/>
+      <rect x="506" y="566" width="22" height="10" rx="5" transform="rotate(60 517 571)"/>
+    </g>
+  </g>
+</svg>

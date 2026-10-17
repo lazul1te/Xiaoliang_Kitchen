@@ -1,0 +1,28 @@
+<!--
+  菜品卡片：菜单页、搜索结果、今日页共用。用法：
+    <import src="/templates/dish-card.wxml" />
+    <template is="dishCard" data="{{dish: item, basket: basket}}" />
+  dish 是 utils/dish.js 里 toCard() 的结果，basket 是点菜篮 { 菜品id: 份数 }。
+  点击事件 onOpenDish / onPlus / onMinus 由使用它的页面提供；样式在 app.wxss。
+-->
+<template name="dishCard">
+  <view class="dish-card" data-id="{{dish._id}}" bindtap="onOpenDish">
+    <image wx:if="{{dish.cover}}" class="cover" src="{{dish.cover}}" mode="aspectFill" />
+    <view wx:else class="cover cover-placeholder">{{dish.initial}}</view>
+    <view class="dish-info">
+      <view class="dish-name">{{dish.name}}</view>
+      <view class="dish-meta">{{dish.meta}}</view>
+      <view class="dish-foot">
+        <view class="badge {{dish.statusClass}}">{{dish.statusText}}</view>
+        <text class="dish-cook">{{dish.cookText}}</text>
+        <view class="stepper">
+          <block wx:if="{{basket[dish._id] > 0}}">
+            <view class="stepper-btn minus" data-id="{{dish._id}}" catchtap="onMinus">−</view>
+            <text class="stepper-num">{{basket[dish._id]}}</text>
+          </block>
+          <view class="stepper-btn plus" data-id="{{dish._id}}" catchtap="onPlus">+</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>

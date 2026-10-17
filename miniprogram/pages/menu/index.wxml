@@ -1,0 +1,61 @@
+<import src="/templates/dish-card.wxml" />
+
+<view class="menu-page">
+  <!-- 顶部：标语 + 搜索 + 新菜 -->
+  <view class="header">
+    <view class="slogan">好好做饭，也好好记录</view>
+    <view class="search-row">
+      <view class="search-box">
+        <icon type="search" size="14" color="#A0A0A8" />
+        <input class="search-input" value="{{keyword}}" placeholder="搜菜名或原料，比如：鸡蛋"
+               placeholder-class="search-placeholder" confirm-type="search" bindinput="onSearchInput" />
+        <icon wx:if="{{keyword}}" type="clear" size="16" color="#C4C4CA" bindtap="onClearSearch" />
+      </view>
+      <view class="add-btn" bindtap="onAddDish">＋ 新菜</view>
+    </view>
+  </view>
+
+  <!-- 搜索结果 -->
+  <scroll-view wx:if="{{searching}}" class="search-list" scroll-y>
+    <view wx:if="{{!searchResults.length}}" class="search-empty">没找到「{{keyword}}」，换个词试试</view>
+    <block wx:for="{{searchResults}}" wx:key="_id">
+      <template is="dishCard" data="{{dish: item, basket: basket}}" />
+    </block>
+  </scroll-view>
+
+  <!-- 左分类 + 右菜品。搜索时只是隐藏，回来还停在原来的位置 -->
+  <view class="body {{searching ? 'is-hidden' : ''}}">
+    <scroll-view class="cat-list" scroll-y scroll-into-view="cat-{{activeId}}" scroll-with-animation>
+      <view wx:for="{{categories}}" wx:key="_id" id="cat-{{item._id}}"
+            class="cat-item {{item._id === activeId ? 'active' : ''}}"
+            data-id="{{item._id}}" bindtap="onTapCategory">
+        {{item.name}}
+        <view wx:if="{{basketByCat[item._id]}}" class="cat-count">{{basketByCat[item._id]}}</view>
+      </view>
+    </scroll-view>
+
+    <scroll-view class="dish-list" scroll-y scroll-into-view="{{scrollIntoView}}" scroll-with-animation
+                 bindscroll="onDishScroll" bindscrolltolower="onDishScrollToLower">
+      <view wx:for="{{sections}}" wx:key="_id" wx:for-item="section" id="sec-{{section._id}}" class="section">
+        <view class="section-title">{{section.name}}</view>
+        <view wx:if="{{!section.dishes.length}}" class="section-empty">这个分类还没有菜</view>
+        <block wx:for="{{section.dishes}}" wx:key="_id">
+          <template is="dishCard" data="{{dish: item, basket: basket}}" />
+        </block>
+      </view>
+      <view class="list-end">— 菜单到底啦 —</view>
+    </scroll-view>
+  </view>
+
+  <!-- 底部点菜栏 -->
+  <view class="basket-bar">
+    <view class="basket-info">
+      <view class="basket-icon {{basketCount ? 'on' : ''}}">
+        🧺
+        <view wx:if="{{basketCount}}" class="basket-num">{{basketCount}}</view>
+      </view>
+      <text class="basket-text">{{basketCount ? '已点 ' + basketCount + ' 份' : '还没点菜'}}</text>
+    </view>
+    <view class="basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday">选好了</view>
+  </view>
+</view>
