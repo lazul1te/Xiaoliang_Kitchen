@@ -22,7 +22,11 @@
   - 写：先写云数据库，成功后再更新 `store`。`update` 里的数组字段要用 `cloud.command().set()` 整个替换；返回「改了 0 条」要当失败处理（`cloud.notWritten()`）。
   - 改菜品前先读云上的记录，`updatedAt` 跟打开编辑页时不一样就是对方改过，页面会问要不要覆盖（`saveDish` 的 `baseUpdatedAt` / `force`）。
   - 云数据库集合 `categories`、`dishes`、`plans`、`cook_logs`，权限是自定义安全规则 `{ "read": "auth.openid != null", "write": "auth.openid != null" }`（所有能打开小程序的人共用；只有体验成员能打开）。控制台不接受 `"write": true`，会报 `InvalidParameter, rule invalid`。小程序端一次最多读 20 条，`cloud.fetchAll()` 会分页读完。
-  - 云存储用默认权限：都能看，只有上传的人能删，所以删不掉对方传的旧照片时直接忽略。
+  - 云存储：免费环境的权限是「仅创建者可读写」，用户确认过改不了（要升级付费版）。所以小程序里**不要直接读云文件**（`<image src="cloud://">`、`wx.cloud.downloadFile`、`wx.cloud.deleteFile` 对对方传的文件都会失败）：
+    - 显示照片一律用全局组件 `<cloud-image>`（`components/cloud-image`，用法同 `<image>`），它通过 `services/photo.js` 请云函数 `photo`（`cloudfunctions/photo`，管理员身份）换临时链接。同一屏的照片攒一批换，链接缓存 9 分钟（私有文件的链接 10 分钟有效），加载失败会换新链接重试一次，还不行就发 `error` 事件。
+    - 删照片用 `photo.remove`，导出读不到的照片用 `photo.read`，都走云函数；云函数没部署时退回客户端接口（自己传的照片照样能用）。
+    - 改了 `cloudfunctions/photo` 要提醒用户在开发者工具里右键「上传并部署：云端安装依赖」。
+    - 卡片照片加载失败换成占位图（`broken` 按照片地址记，下拉刷新清空）；「我的 → 检查云数据库」用 `photo.check` 检查云函数和照片。
   - 照片：`image.js` 先压缩再传云存储；成品照传大图（`cover`）和小图（`coverThumb`），菜单卡片用小图。
 - 菜品数据存进去、读出来都过一遍 `utils/dish.js` 的 `normalizeDish()`，保证字段齐全。
 - 主题色用 `app.wxss` 里的 CSS 变量（`--yolk`、`--pan`、`--danger` 等），黄色底上一律用深色字。
@@ -34,7 +38,7 @@
 - 云开发报错统一用 `cloud.explain(err, 集合名)` 翻成人话，写明是哪个集合；「我的 → 检查云数据库」会挨个读四个集合。
 - 做菜记录在 `services/log.js`（集合 `cook_logs`，`store.js` 一起同步；集合没建时当作没有记录）。菜的 `cookCount` / `lastCookedAt` 由 `store.js` 按记录现算（用户反馈过次数和记录对不上），云上菜品记录里的这两个字段不再用。打卡照片要当菜的封面时另外传一份，删记录不会删掉封面。
 - 烹饪模式 `pages/cook`：计时器按结束时间算（切到后台再回来也准），到点震动 + `utils/sound.js` 的提示音 + 弹窗。提示音以 base64 写在代码里，因为单独的音频文件可能被「过滤无依赖文件」漏掉。
-- 数据导入 `services/import.js` 读的是导出的同一种格式（`app: "nashoucai-xiaobenben"`、`format: 1`，`photos` 里是 base64），按菜名跳过已有的菜，分类按名字对上；做菜记录按「同一道菜 + 同一分钟」去重，导完把菜的次数取「文件里写的」和「实际记录数」里大的那个。要批量加菜，就生成这种文件放到 `imports/`（不进 git），让用户在「我的 → 数据导入」里选；照片原图处理好放 `design/dishes/`。
+- 数据导入 `services/import.js` 读的是导出的同一种格式（`app: "nashoucai-xiaobenben"`、`format: 1`，`photos` 里是 base64），按菜名跳过已有的菜，分类按名字对上；做菜记录按「同一道菜 + 同一分钟」去重（次数按记录现算，不用改菜）。也认手写的导入模板 `docs/菜谱导入模板.json`（顶层有 `菜谱` 数组，中文字段，`fromTemplate` 转成同一种格式）；改模板的字段要同步改 `fromTemplate` 和测试。要批量加菜，就生成这种文件放到 `imports/`（不进 git），让用户在「我的 → 数据导入」里选；照片原图处理好放 `design/dishes/`。
 - 买菜清单的合并规则在 `utils/shopping.js`：同名原料合在一起，数字用量 × 份数相加，单位不同或「适量」原样列出；再对比库存（名字去掉括号说明后对）：库存里有的放「家里有」，用完了的放「要买的」，库存里没记录的调料单独一组。
 - 弹窗、提示用 `utils/ui.js`（Promise 形式，可以 await）。
 - Tab 图标和头像的源文件在 `design/`（SVG），PNG 放在 `miniprogram/images/`。

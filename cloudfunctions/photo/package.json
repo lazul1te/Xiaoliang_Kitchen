@@ -1,0 +1,9 @@
+{
+  "name": "photo",
+  "version": "1.0.0",
+  "description": "照片的临时链接、删除、读取（管理员身份，不受云存储权限限制）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.4"
+  }
+}

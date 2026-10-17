@@ -1,7 +1,7 @@
 <view wx:if="{{form}}" class="edit">
   <!-- 成品照：点一下选照片 -->
   <view class="cover-box" bindtap="onChooseCover">
-    <image wx:if="{{form.cover}}" class="cover-img" src="{{form.cover}}" mode="aspectFill" />
+    <cloud-image wx:if="{{form.cover}}" class="cover-img" src="{{form.cover}}" mode="aspectFill" />
     <view wx:else class="cover-empty">
       <text class="cover-icon">📷</text>
       <text>添加成品照</text>
@@ -100,7 +100,7 @@
       <textarea class="text-input" value="{{item.text}}" placeholder="这一步怎么做，比如：热锅凉油，倒入蛋液炒散"
                 auto-height maxlength="-1" cursor-spacing="80" data-i="{{index}}" bindinput="onStepInput" />
       <view wx:if="{{item.image}}" class="step-img-box">
-        <image class="step-img" src="{{item.image}}" mode="aspectFill" />
+        <cloud-image class="step-img" src="{{item.image}}" mode="aspectFill" />
         <view class="img-remove" data-i="{{index}}" bindtap="onRemoveStepImage">×</view>
       </view>
       <view class="step-extra">

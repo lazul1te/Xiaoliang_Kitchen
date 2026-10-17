@@ -1,0 +1,1 @@
+<image wx:if="{{url}}" class="img" src="{{url}}" mode="{{mode}}" binderror="onError" />

@@ -6,7 +6,7 @@
 
 <view wx:elif="{{dish}}" class="detail">
   <!-- 成品图；没有照片时用菜名第一个字占位 -->
-  <image wx:if="{{dish.cover}}" class="hero" src="{{dish.cover}}" mode="aspectFill" />
+  <cloud-image wx:if="{{dish.cover && !heroBroken}}" class="hero" src="{{dish.cover}}" mode="aspectFill" binderror="onHeroError" />
   <view wx:else class="hero hero-placeholder">
     <text class="hero-initial">{{dish.initial}}</text>
     <text class="hero-tip">还没有成品照</text>
@@ -63,7 +63,7 @@
       <view class="step-no">{{index + 1}}</view>
       <view class="step-body">
         <view wx:if="{{item.text}}" class="step-text">{{item.text}}</view>
-        <image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
+        <cloud-image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
         <view wx:if="{{item.timerText}}" class="step-timer">⏱ 计时 {{item.timerText}}</view>
       </view>
     </view>
@@ -83,7 +83,7 @@
     </view>
     <view wx:if="{{!logs.length}}" class="none">还没打过卡。点下面的「开始做」，做完打个卡</view>
     <view wx:for="{{logs}}" wx:key="_id" class="mini-log" data-id="{{item._id}}" bindtap="onOpenLog">
-      <image wx:if="{{item.photo}}" class="mini-photo" src="{{item.photo}}" mode="aspectFill" />
+      <cloud-image wx:if="{{item.photo}}" class="mini-photo" src="{{item.photo}}" mode="aspectFill" />
       <view class="mini-info">
         <view class="mini-head">
           <text>{{item.dayText}}</text>

@@ -1,5 +1,7 @@
-// 照片：从相册选或者拍照 → 压缩 → 传到云存储；删菜、换照片时把云上的旧照片删掉
+// 照片：从相册选或者拍照 → 压缩 → 传到云存储；删菜、换照片时把云上的旧照片删掉。
+// 显示照片用 components/cloud-image（换成两个人都能看的链接），删照片交给云函数（见 services/photo.js）
 const cloud = require("./cloud");
+const photo = require("./photo");
 const ui = require("../utils/ui");
 const { newId } = require("../utils/id");
 
@@ -56,12 +58,9 @@ function uploadPhoto(tempPath) {
   return upload(tempPath, "steps");
 }
 
-// 删掉云存储里的照片。删不掉也不影响使用，只是多占一点空间，所以不报错
+// 删掉云存储里的照片（对方传的也能删）。删不掉也不影响使用，只是多占一点空间，所以不报错
 function remove(fileIDs) {
-  const fileList = fileIDs.filter(isCloudFile);
-  if (!fileList.length) return Promise.resolve();
-  cloud.init();
-  return wx.cloud.deleteFile({ fileList }).catch(() => {});
+  return photo.remove(fileIDs);
 }
 
 module.exports = { isCloudFile, choose, uploadCover, uploadPhoto, remove };

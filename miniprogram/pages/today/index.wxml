@@ -32,7 +32,7 @@
   </view>
 
   <block wx:for="{{items}}" wx:key="_id">
-    <template is="dishCard" data="{{dish: item, basket: basket}}" />
+    <template is="dishCard" data="{{dish: item, basket: basket, broken: broken}}" />
   </block>
 
   <view class="card shopping">

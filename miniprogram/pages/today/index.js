@@ -15,6 +15,7 @@ Page({
     shopping: null, // 买菜清单 { buy, unknown, stocked, extras, total, done }
     hasPlan: false,
     showStocked: false, // 「家里有的」展开没有
+    broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
   },
 
   onShow() {
@@ -27,6 +28,7 @@ Page({
   },
 
   async onPullDownRefresh() {
+    this.setData({ broken: {} }); // 加载失败的照片也重新试一次
     try {
       await dishService.sync();
     } catch (err) {
@@ -126,6 +128,12 @@ Page({
   onRemoveExtra(e) {
     planService.removeExtra(e.currentTarget.dataset.key);
     return this.refresh();
+  },
+
+  // 照片加载不出来：换成占位图，并提示一次去哪里查
+  onCoverError(e) {
+    this.setData({ broken: Object.assign({}, this.data.broken, { [e.currentTarget.dataset.src]: true }) });
+    ui.photoHint();
   },
 
   // ---------- 跳转 ----------

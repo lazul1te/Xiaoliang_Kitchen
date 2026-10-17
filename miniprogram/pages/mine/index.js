@@ -4,6 +4,7 @@ const planService = require("../../services/plan");
 const pantryService = require("../../services/pantry");
 const wishService = require("../../services/wish");
 const cloud = require("../../services/cloud");
+const photo = require("../../services/photo");
 const ui = require("../../utils/ui");
 
 Page({
@@ -49,14 +50,24 @@ Page({
     wx.navigateTo({ url: "/pages/pantry/index" });
   },
 
-  // 四个集合挨个读一下，看是不是都建好了
+  // 四个集合挨个读一下，看是不是都建好了；再试试照片的云函数
   async onCheckDatabase() {
     wx.showLoading({ title: "检查中", mask: true });
-    const results = await cloud.checkCollections();
+    let photos = [];
+    try {
+      (await dishService.listDishes()).forEach((d) => photos.push(d.coverThumb || d.cover));
+    } catch (e) {}
+    const results = (await cloud.checkCollections()).concat(await photo.check(photos));
     wx.hideLoading();
     const lines = results.map((r) => `${r.ok ? "✅" : "❌"} ${r.name}：${r.text}`);
-    const bad = results.filter((r) => !r.ok);
-    const tip = bad.length ? `\n\n没建的集合在云开发控制台「数据库」里新建，四个集合的权限都设成自定义安全规则：${cloud.SHARED_RULE}` : "\n\n都正常";
+    const tips = [];
+    if (results.some((r) => !r.ok && r.name !== "照片")) {
+      tips.push(`数据库：没建的集合在云开发控制台「数据库」里新建，四个集合的权限都设成自定义安全规则 ${cloud.SHARED_RULE}`);
+    }
+    if (results.some((r) => r.needsFunction)) {
+      tips.push("照片：在开发者工具左边的 cloudfunctions 里右键 photo 文件夹，选「上传并部署：云端安装依赖」，部署好以后重新打开小程序");
+    }
+    const tip = tips.length ? `\n\n${tips.join("\n\n")}` : "\n\n都正常";
     ui.alert("云数据库检查", lines.join("\n") + tip);
   },
 

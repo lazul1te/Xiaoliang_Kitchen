@@ -1,0 +1,11 @@
+/* 大小、圆角、外边距由页面上的 class 决定（加在组件节点上），里面的图片铺满 */
+:host {
+  display: block;
+  overflow: hidden;
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

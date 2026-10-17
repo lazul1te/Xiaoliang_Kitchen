@@ -1,4 +1,5 @@
-// 数据导入：读「数据导出」生成的备份文件，或者整理好的菜谱文件（格式一样），把里面的菜谱和做菜记录加进来。
+// 数据导入：读「数据导出」生成的备份文件、整理好的菜谱文件（格式一样），
+// 或者照着导入模板手写的文件（中文字段，见 docs/菜谱导入模板.json），把里面的菜谱和做菜记录加进来。
 // - 已经有同名的菜就跳过，重复导入不会多出一份
 // - 分类按名字对上，没有就新建
 // - 文件里带的照片重新传到云存储；没带照片的，沿用原来的云文件 ID（同一个云环境里还能显示）
@@ -19,14 +20,115 @@ const UNCATEGORIZED = "未分类";
 
 const nameOf = (v) => String((v && v.name) || "").trim();
 
+// ---------- 手写的导入模板（中文字段）→ 和导出文件一样的格式 ----------
+const STATUS_NAMES = { 拿手菜: "mastered", 练习中: "learning", 想学: "wish" };
+const INGREDIENT_KEYS = [
+  ["主料", "main"],
+  ["辅料", "side"],
+  ["调料", "seasoning"],
+];
+const NUMBER = "(\\d+(?:\\.\\d+)?|\\d+\\/\\d+)";
+const WORD_AMOUNT = /^(.+?)\s*(适量|少许|少量|若干|一点|一把|一小把|半个|半根|一个|一根)$/;
+
+// 「土豆 2个」「番茄 2 个」「鸡蛋2个」「盐 适量」「葱 一把」→ { name, amount, unit, type }
+// 末尾括号里的备注算在名字上：「干辣椒 2个（可选）」→ 名字「干辣椒（可选）」、2 个
+function parseIngredient(text, type) {
+  let s = String(text || "").trim();
+  const note = /\s*([（(][^（）()]*[）)])$/.exec(s);
+  if (note) s = s.slice(0, note.index).trim();
+  const tail = note ? note[1] : "";
+  let m = new RegExp(`^(.+?)\\s*${NUMBER}\\s*([^\\d\\s]*)$`).exec(s);
+  if (m) return { name: m[1].trim() + tail, amount: m[2], unit: m[3], type };
+  m = WORD_AMOUNT.exec(s) || /^(.+)\s+(\S+)$/.exec(s);
+  if (m) return { name: m[1].trim() + tail, amount: m[2], unit: "", type };
+  return { name: s + tail, amount: "", unit: "", type };
+}
+
+// 「10分钟」「1分30秒」「90秒」「1.5小时」「半小时」→ 秒；只写数字按分钟算
+function parseSeconds(v) {
+  if (typeof v === "number") return v > 0 ? Math.round(v * 60) : 0;
+  const s = String(v || "").trim();
+  if (!s) return 0;
+  if (/^\d+(\.\d+)?$/.test(s)) return Math.round(Number(s) * 60);
+  const h = /(\d+(?:\.\d+)?)\s*(?:个)?小时/.exec(s);
+  const m = /(\d+(?:\.\d+)?)\s*分/.exec(s);
+  const sec = /(\d+)\s*秒/.exec(s);
+  let total = (h ? Number(h[1]) * 3600 : 0) + (m ? Number(m[1]) * 60 : 0) + (sec ? Number(sec[1]) : 0);
+  if (/半小时/.test(s)) total += 1800;
+  return Math.round(total);
+}
+
+function stepOf(v) {
+  if (v && typeof v === "object") return { text: String(v["步骤"] || v.text || "").trim(), image: "", timer: parseSeconds(v["计时"]) };
+  return { text: String(v || "").trim(), image: "", timer: 0 };
+}
+
+function fromTemplate(raw) {
+  const categories = [];
+  const catId = {};
+  const dishes = raw["菜谱"]
+    .filter((d) => d && String(d["菜名"] || "").trim())
+    .map((d, i) => {
+      const cat = String(d["分类"] || "").trim() || UNCATEGORIZED;
+      if (!catId[cat]) {
+        catId[cat] = `t-cat-${categories.length + 1}`;
+        categories.push({ _id: catId[cat], name: cat, sort: categories.length + 1 });
+      }
+      const ingredients = [];
+      INGREDIENT_KEYS.forEach(([key, type]) => {
+        (Array.isArray(d[key]) ? d[key] : []).forEach((t) => {
+          const item = parseIngredient(t, type);
+          if (item.name) ingredients.push(item);
+        });
+      });
+      return {
+        _id: `t-${i + 1}`,
+        name: String(d["菜名"]).trim(),
+        categoryId: catId[cat],
+        status: STATUS_NAMES[String(d["熟练度"] || "").trim()] || "wish",
+        difficulty: parseInt(d["难度"], 10) || 0,
+        duration: Math.round(parseSeconds(d["用时"]) / 60),
+        servings: parseInt(d["几人份"], 10) || 0,
+        tags: (Array.isArray(d["标签"]) ? d["标签"] : []).map((t) => String(t).trim()).filter(Boolean),
+        ingredients,
+        steps: (Array.isArray(d["做法"]) ? d["做法"] : []).map(stepOf).filter((st) => st.text),
+        tips: String(d["小贴士"] || "").trim(),
+        cover: "",
+      };
+    });
+  return { app: APP, format: FORMAT, categories, dishes, logs: [], photos: {} };
+}
+
+// 手写的文件常见小错：开头有 BOM（Windows 记事本）、最后一项后面多了逗号，这两种直接容忍；
+// 别的错误告诉对方大概在第几行
+function parseJson(text) {
+  const clean = String(text).replace(/^\uFEFF/, "");
+  try {
+    return JSON.parse(clean);
+  } catch (e) {
+    try {
+      return JSON.parse(clean.replace(/,(\s*[}\]])/g, "$1"));
+    } catch (e2) {
+      const msg = e2.message || "";
+      const lineNo = /line (\d+)/.exec(msg);
+      const pos = /position (\d+)/.exec(msg);
+      const n = lineNo ? Number(lineNo[1]) : pos ? clean.slice(0, Number(pos[1])).split("\n").length : 0;
+      const line = n ? `（第 ${n} 行附近）` : "";
+      throw new Error(`文件格式不对${line}：检查一下引号、逗号、冒号是不是英文半角的，有没有少写逗号`);
+    }
+  }
+}
+
 // 读文件、检查格式，返回 { data, summary }
 async function readFile(path) {
-  let data;
+  let text;
   try {
-    data = JSON.parse(wx.getFileSystemManager().readFileSync(path, "utf8"));
+    text = wx.getFileSystemManager().readFileSync(path, "utf8");
   } catch (e) {
     throw new Error("文件打不开，可能不是完整的 .json 文件");
   }
+  let data = parseJson(text);
+  if (data && Array.isArray(data["菜谱"])) data = fromTemplate(data);
   if (!data || data.app !== APP || !Array.isArray(data.dishes)) {
     throw new Error("这不是「拿手菜小本本」的数据文件");
   }
@@ -185,4 +287,4 @@ async function importData(data, onProgress) {
   }
 }
 
-module.exports = { readFile, importData };
+module.exports = { readFile, importData, parseIngredient, parseSeconds };

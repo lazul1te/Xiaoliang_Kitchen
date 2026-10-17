@@ -9,7 +9,7 @@
 <view wx:elif="{{loaded}}" class="wishes">
   <view class="add" bindtap="onAdd">＋ 记一个想吃的</view>
   <view wx:for="{{list}}" wx:key="key" class="wish" data-key="{{item.key}}" bindtap="onOpen">
-    <image wx:if="{{item.photo}}" class="wish-photo" src="{{item.photo}}" mode="aspectFill" />
+    <cloud-image wx:if="{{item.photo}}" class="wish-photo" src="{{item.photo}}" mode="aspectFill" />
     <view wx:else class="wish-photo wish-photo-empty">💭</view>
     <view class="wish-info">
       <view class="wish-name">{{item.name}}</view>

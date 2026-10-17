@@ -1,7 +1,7 @@
 <view class="import">
   <view class="card">
     <view class="card-title">能导入什么</view>
-    <view class="para">「数据导出」生成的备份文件，或者整理好的菜谱文件（.json）。先把文件发到微信聊天里（比如「文件传输助手」），再在这里选。</view>
+    <view class="para">「数据导出」生成的备份文件、整理好的菜谱文件，或者照着导入模板写的菜谱（.json）。先把文件发到微信聊天里（比如「文件传输助手」），再在这里选。</view>
     <view class="para">已经有同名的菜会跳过，重复导入不会多出一份；分类按名字对上，没有就新建。</view>
   </view>
 

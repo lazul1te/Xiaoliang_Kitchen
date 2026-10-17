@@ -27,7 +27,7 @@
       <scroll-view scroll-y class="page">
         <view class="step-no">第 {{index + 1}} 步</view>
         <view class="step-text">{{item.text}}</view>
-        <image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
+        <cloud-image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
         <view wx:if="{{item.hasTimer}}" class="timer {{item.timerState}}">
           <view class="timer-time">{{item.timerText}}</view>
           <view class="timer-actions">

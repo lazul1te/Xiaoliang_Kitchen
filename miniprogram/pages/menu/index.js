@@ -22,6 +22,7 @@ Page({
     basket: {}, // 菜篮 { 菜品id: 份数 }
     basketCount: 0,
     basketByCat: {}, // 每个分类点了几份，显示在左侧分类上
+    broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
   },
 
   async onLoad() {
@@ -55,7 +56,7 @@ Page({
 
   // 下拉右侧列表：马上去云上取最新的
   async onPullRefresh() {
-    this.setData({ refreshing: true });
+    this.setData({ refreshing: true, broken: {} }); // 加载失败的照片也重新试一次
     try {
       await dishService.sync();
     } catch (err) {
@@ -232,6 +233,12 @@ Page({
 
   onOpenDish(e) {
     wx.navigateTo({ url: `/pages/dish-detail/index?id=${e.currentTarget.dataset.id}` });
+  },
+
+  // 照片加载不出来（多半是云存储权限）：换成占位图，并提示一次去哪里查
+  onCoverError(e) {
+    this.setData({ broken: Object.assign({}, this.data.broken, { [e.currentTarget.dataset.src]: true }) });
+    ui.photoHint();
   },
 
   onOpenWishes() {

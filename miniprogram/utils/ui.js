@@ -74,4 +74,12 @@ function showError(err) {
   else toast(errorText(err));
 }
 
-module.exports = { toast, alert, confirm, prompt, apiFail, errorText, showError };
+// 照片加载不出来时提示一次（每次打开小程序最多一次）：多半是云存储权限只给了上传照片的人
+let photoHinted = false;
+function photoHint() {
+  if (photoHinted) return;
+  photoHinted = true;
+  toast("有照片加载不出来，去「我的 → 检查云数据库」看看");
+}
+
+module.exports = { toast, alert, confirm, prompt, apiFail, errorText, showError, photoHint };

@@ -1,7 +1,7 @@
 <!-- 一条做菜记录 -->
 <template name="logCard">
   <view class="log-card" data-id="{{_id}}" bindtap="onOpenLog">
-    <image wx:if="{{photo}}" class="log-photo" src="{{photo}}" mode="aspectFill" />
+    <cloud-image wx:if="{{photo}}" class="log-photo" src="{{photo}}" mode="aspectFill" />
     <view wx:else class="log-photo log-photo-empty">🍳</view>
     <view class="log-info">
       <view class="log-head">

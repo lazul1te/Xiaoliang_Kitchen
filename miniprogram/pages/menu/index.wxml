@@ -20,7 +20,7 @@
   <scroll-view wx:if="{{searching}}" class="search-list" scroll-y>
     <view wx:if="{{!searchResults.length}}" class="search-empty">没找到「{{keyword}}」，换个词试试</view>
     <block wx:for="{{searchResults}}" wx:key="_id">
-      <template is="dishCard" data="{{dish: item, basket: basket}}" />
+      <template is="dishCard" data="{{dish: item, basket: basket, broken: broken}}" />
     </block>
   </scroll-view>
 
@@ -67,7 +67,7 @@
             这个分类还没有菜，<text class="section-add">点这里添加</text>
           </view>
           <block wx:for="{{section.dishes}}" wx:key="_id">
-            <template is="dishCard" data="{{dish: item, basket: basket}}" />
+            <template is="dishCard" data="{{dish: item, basket: basket, broken: broken}}" />
           </block>
         </view>
         <view class="list-end">— 菜单到底啦 —</view>

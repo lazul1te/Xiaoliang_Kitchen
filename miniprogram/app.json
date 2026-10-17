@@ -54,6 +54,9 @@
       }
     ]
   },
+  "usingComponents": {
+    "cloud-image": "/components/cloud-image/index"
+  },
   "sitemapLocation": "sitemap.json",
   "style": "v2",
   "lazyCodeLoading": "requiredComponents"

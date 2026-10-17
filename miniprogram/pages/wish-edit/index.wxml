@@ -1,6 +1,6 @@
 <view wx:if="{{form}}" class="wish-edit">
   <view class="photo-box" bindtap="onChoosePhoto">
-    <image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
+    <cloud-image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
     <view wx:else class="photo-empty">
       <text class="photo-icon">📷</text>
       <text>加一张图（拍照、截图都行）</text>

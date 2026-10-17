@@ -1,7 +1,7 @@
 <view wx:if="{{form}}" class="log-edit">
   <!-- 成品照：点一下拍照或从相册选 -->
   <view class="photo-box" bindtap="onChoosePhoto">
-    <image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
+    <cloud-image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
     <view wx:else class="photo-empty">
       <text class="photo-icon">📷</text>
       <text>拍一张成品照</text>

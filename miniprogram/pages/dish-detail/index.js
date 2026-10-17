@@ -15,6 +15,7 @@ Page({
     logs: [], // 最近几次做菜记录（卡片）
     logCount: 0,
     notFound: false,
+    heroBroken: false, // 成品照加载失败，显示占位图
   },
 
   onLoad(options) {
@@ -55,6 +56,7 @@ Page({
       logs: logs.slice(0, RECENT_LOGS).map((l) => toLogCard(l)),
       logCount: logs.length,
       notFound: false,
+      heroBroken: false,
     });
     this.refreshQty();
   },
@@ -77,6 +79,11 @@ Page({
 
   onEdit() {
     wx.navigateTo({ url: `/pages/dish-edit/index?id=${this.dishId}` });
+  },
+
+  onHeroError() {
+    this.setData({ heroBroken: true });
+    ui.photoHint();
   },
 
   onStartCook() {

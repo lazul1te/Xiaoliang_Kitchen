@@ -4,6 +4,7 @@ const store = require("./store");
 const planService = require("./plan");
 const pantryService = require("./pantry");
 const wishService = require("./wish");
+const photo = require("./photo");
 const imageService = require("./image");
 const cloud = require("./cloud");
 
@@ -72,7 +73,10 @@ async function buildFile({ withPhotos, onProgress }) {
         const res = await wx.cloud.downloadFile({ fileID: ids[i] });
         data.photos[ids[i]] = fs.readFileSync(res.tempFilePath, "base64");
       } catch (e) {
-        failedPhotos += 1; // 下载失败的照片跳过，不影响其他数据
+        // 对方传的照片自己读不到，请云函数读；还是读不到就跳过，不影响其他数据
+        const base64 = await photo.read(ids[i]);
+        if (base64) data.photos[ids[i]] = base64;
+        else failedPhotos += 1;
       }
     }
   }
