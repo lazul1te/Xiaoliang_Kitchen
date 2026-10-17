@@ -1,0 +1,38 @@
+<view class="pantry">
+  <view class="card">
+    <view class="para">家里常备的东西记在这里，买菜清单会自动对比，家里有的就不提醒买了。哪样用完了点一下「用完了」，下次买菜清单里就会出现。</view>
+    <view class="add-row">
+      <input class="add-input" value="{{input}}" placeholder="加一样，比如：生抽 米 面粉" confirm-type="done"
+             bindinput="onInput" bindconfirm="onAdd" />
+      <view class="add-btn" bindtap="onAdd">加</view>
+    </view>
+    <view wx:if="{{presets.length}}" class="presets">
+      <view class="presets-head">
+        <text class="presets-title">常用调料，点一下加进来</text>
+        <text class="presets-all" bindtap="onAddAllPresets">全部加</text>
+      </view>
+      <view class="chips">
+        <view wx:for="{{presets}}" wx:key="*this" class="chip" data-name="{{item}}" bindtap="onAddPreset">＋ {{item}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{outOfStock.length}}" class="card">
+    <view class="card-title">用完了 · {{outOfStock.length}} 样<text class="title-hint">（会出现在买菜清单里）</text></view>
+    <view wx:for="{{outOfStock}}" wx:key="key" class="item">
+      <text class="item-name out">{{item.name}}</text>
+      <text class="item-btn main" data-key="{{item.key}}" bindtap="onRestock">补上了</text>
+      <text class="item-del" data-key="{{item.key}}" data-name="{{item.name}}" bindtap="onRemove">×</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">家里有 · {{inStock.length}} 样</view>
+    <view wx:if="{{!inStock.length}}" class="none">还没有记录。先把常用调料加进来吧</view>
+    <view wx:for="{{inStock}}" wx:key="key" class="item">
+      <text class="item-name">{{item.name}}</text>
+      <text class="item-btn" data-key="{{item.key}}" bindtap="onRanOut">用完了</text>
+      <text class="item-del" data-key="{{item.key}}" data-name="{{item.name}}" bindtap="onRemove">×</text>
+    </view>
+  </view>
+</view>

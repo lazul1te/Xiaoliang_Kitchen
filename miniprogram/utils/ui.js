@@ -67,4 +67,11 @@ function errorText(err) {
   return (err && (err.message || err.errMsg)) || String(err);
 }
 
-module.exports = { toast, alert, confirm, prompt, apiFail, errorText };
+// 下拉刷新这类操作出错：集合没建、权限、环境这种要去控制台改的，弹窗说清楚；网络之类的轻提示就行
+function showError(err) {
+  const code = err && err.code;
+  if (code === "COLLECTION_MISSING" || code === "PERMISSION" || code === "ENV") alert("云数据库有点问题", errorText(err));
+  else toast(errorText(err));
+}
+
+module.exports = { toast, alert, confirm, prompt, apiFail, errorText, showError };

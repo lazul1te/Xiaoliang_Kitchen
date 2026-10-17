@@ -44,6 +44,18 @@
   color: var(--text-3);
 }
 
+.wish-btn {
+  flex-shrink: 0;
+  height: 72rpx;
+  margin-left: 16rpx;
+  padding: 0 22rpx;
+  border-radius: 36rpx;
+  background: #fff;
+  font-size: 26rpx;
+  line-height: 72rpx;
+  color: var(--text-2);
+}
+
 .add-btn {
   flex-shrink: 0;
   height: 72rpx;
@@ -212,8 +224,15 @@
 
 .basket-icon {
   position: relative;
-  font-size: 44rpx;
+  width: 60rpx;
+  height: 60rpx;
   opacity: 0.45;
+}
+
+.basket-img {
+  display: block;
+  width: 60rpx;
+  height: 60rpx;
 }
 
 .basket-icon.on {

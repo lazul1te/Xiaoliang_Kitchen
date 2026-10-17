@@ -1,5 +1,5 @@
 // 做菜记录（打卡）：做完一道菜记一笔，包括成品照、好吃程度、心得、谁掌勺。
-// 存在云数据库的 cook_logs 集合（两个人共用）。记一笔会顺便更新这道菜的「做过几次」和「上次做」。
+// 存在云数据库的 cook_logs 集合（两个人共用）。菜的「做过几次」「上次做」是按这些记录算出来的（见 store.js）。
 const cloud = require("./cloud");
 const store = require("./store");
 const imageService = require("./image");
@@ -32,30 +32,6 @@ function toDoc(log) {
   return doc;
 }
 
-// 更新一道菜的「做过几次」（delta：+1、-1 或 0）和「上次做」（这道菜所有记录里最近的一次）。
-// 不改菜的 updatedAt：做菜次数变了不算改菜谱，对方正在编辑这道菜也不会被打扰。
-// 记录本身已经存好了，这里没更新上也不报错，下次同步以云上的为准。
-async function updateDishStats(dishId, delta) {
-  const dish = store.getDish(dishId);
-  if (!dish) return; // 菜已经删掉了
-  const latest = store
-    .listLogs()
-    .filter((l) => l.dishId === dishId)
-    .reduce((max, l) => Math.max(max, l.cookedAt), 0);
-  const count = Math.max(0, dish.cookCount + delta);
-  const lastCookedAt = latest || (count > 0 ? dish.lastCookedAt : null);
-  const _ = cloud.command();
-  const data = { lastCookedAt };
-  // 用 inc 加减：两个人同时打卡也不会少算
-  if (delta) data.cookCount = dish.cookCount + delta < 0 ? 0 : _.inc(delta);
-  try {
-    await cloud.collection("dishes").doc(dishId).update({ data });
-  } catch (err) {
-    return;
-  }
-  store.putDish(Object.assign(dish, { cookCount: count, lastCookedAt }));
-}
-
 // 打卡照片也设成这道菜的成品照。另外传一份，以后删这条记录不会把菜的封面一起删掉
 async function setCover(dishId, tempPath) {
   const dish = store.getDish(dishId);
@@ -76,7 +52,7 @@ async function setCover(dishId, tempPath) {
 }
 
 // 保存一条记录（新增或修改）。
-// options.useAsCover：照片也设成菜的成品照；options.removeFromPlan：从今日菜单里划掉这道菜
+// options.useAsCover：照片也设成菜的成品照；options.removeFromPlan：从菜篮里拿掉这道菜
 async function saveLog(input, options = {}) {
   await store.ensureLoaded();
   const old = input._id ? store.getLog(input._id) : null;
@@ -105,7 +81,7 @@ async function saveLog(input, options = {}) {
     }
   } catch (err) {
     imageService.remove(uploaded);
-    throw cloud.explain(err);
+    throw cloud.explain(err, COLLECTION);
   }
   if (old) {
     const keep = [log.photo, log.photoThumb];
@@ -116,14 +92,6 @@ async function saveLog(input, options = {}) {
     try {
       storage.set(COOK_NAME_KEY, log.cook);
     } catch (e) {}
-  }
-  if (!old) {
-    await updateDishStats(log.dishId, 1);
-  } else if (old.dishId !== log.dishId) {
-    await updateDishStats(old.dishId, -1);
-    await updateDishStats(log.dishId, 1);
-  } else if (old.cookedAt !== log.cookedAt) {
-    await updateDishStats(log.dishId, 0);
   }
   if (options.useAsCover && tempPhoto) await setCover(log.dishId, tempPhoto).catch(() => {}); // 封面没设上不影响记录
   if (options.removeFromPlan) planService.drop(log.dishId);
@@ -138,17 +106,16 @@ async function removeLog(id) {
   try {
     res = await cloud.collection(COLLECTION).doc(id).remove();
   } catch (err) {
-    throw cloud.explain(err);
+    throw cloud.explain(err, COLLECTION);
   }
   if (res.stats && res.stats.removed === 0) {
-    // 没删掉：要么对方已经删了（她那边已经把次数减过了），要么权限不允许删
+    // 没删掉：要么对方已经删了，要么权限不允许删
     await store.sync().catch(() => {});
     if (store.getLog(id)) throw cloud.notWritten();
     return;
   }
   store.removeLog(id);
   imageService.remove([old.photo, old.photoThumb]);
-  await updateDishStats(old.dishId, -1);
 }
 
 module.exports = { listLogs, getLog, getCookName, saveLog, removeLog };

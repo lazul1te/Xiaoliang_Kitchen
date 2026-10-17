@@ -2,6 +2,11 @@
   padding: 24rpx;
 }
 
+.empty-img {
+  width: 200rpx;
+  height: 200rpx;
+}
+
 .today-head {
   display: flex;
   justify-content: space-between;
@@ -51,6 +56,20 @@
   padding-bottom: 6rpx;
   font-size: 24rpx;
   color: var(--wood);
+}
+
+.shop-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.shop-all {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 24rpx;
+  color: var(--wood);
+  text-decoration: underline;
 }
 
 .shop-row {
@@ -107,11 +126,30 @@
   color: var(--text-3);
 }
 
+.shop-flag {
+  margin-right: 10rpx;
+  padding: 0 8rpx;
+  border-radius: 6rpx;
+  background: #fde4dc;
+  color: var(--danger);
+}
+
 /* 买到了：变淡、划掉 */
 .shop-row.done .shop-name,
 .shop-row.done .shop-amount {
   color: var(--text-3);
   text-decoration: line-through;
+}
+
+/* 右边的小按钮：家里有 / 用完了 */
+.shop-act {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 4rpx 16rpx;
+  border: 2rpx solid var(--line);
+  border-radius: 24rpx;
+  font-size: 22rpx;
+  color: var(--text-2);
 }
 
 .shop-remove {
@@ -125,5 +163,31 @@
 .shop-add {
   padding: 20rpx 0 4rpx;
   font-size: 26rpx;
+  color: var(--wood);
+}
+
+/* 家里有的 */
+.stock-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 2rpx solid var(--line);
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.stock-name {
+  flex: 1;
+}
+
+.stock-amount {
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+.pantry-link {
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 24rpx;
   color: var(--wood);
 }

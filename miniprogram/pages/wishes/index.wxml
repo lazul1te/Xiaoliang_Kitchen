@@ -1,0 +1,23 @@
+<view wx:if="{{loaded && !list.length}}" class="empty">
+  <view class="empty-emoji">💭</view>
+  <view class="empty-title">还没有想吃的</view>
+  <view class="empty-desc">在外面吃到、刷到想做的菜，先记个名字和图</view>
+  <view class="empty-desc">以后有空了再慢慢学</view>
+  <view class="btn-primary" bindtap="onAdd">记一个想吃的</view>
+</view>
+
+<view wx:elif="{{loaded}}" class="wishes">
+  <view class="add" bindtap="onAdd">＋ 记一个想吃的</view>
+  <view wx:for="{{list}}" wx:key="key" class="wish" data-key="{{item.key}}" bindtap="onOpen">
+    <image wx:if="{{item.photo}}" class="wish-photo" src="{{item.photo}}" mode="aspectFill" />
+    <view wx:else class="wish-photo wish-photo-empty">💭</view>
+    <view class="wish-info">
+      <view class="wish-name">{{item.name}}</view>
+      <view wx:if="{{item.note}}" class="wish-note">{{item.note}}</view>
+      <view class="wish-foot">
+        <text class="wish-day">{{item.dayText}}</text>
+        <text class="wish-learn" data-key="{{item.key}}" catchtap="onLearn">开始学 ›</text>
+      </view>
+    </view>
+  </view>
+</view>

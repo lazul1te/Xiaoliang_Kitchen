@@ -23,12 +23,37 @@
   </view>
 
   <view class="card settings">
+    <view class="setting-item" bindtap="onOpenWishes">
+      <text>💭 想吃清单</text>
+      <view class="setting-right">
+        <text wx:if="{{wishCount}}" class="setting-note">{{wishCount}} 个</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+    <view class="setting-item" bindtap="onOpenPantry">
+      <text>🧂 家里的库存</text>
+      <view class="setting-right">
+        <text wx:if="{{outCount}}" class="setting-note warn">{{outCount}} 样用完了</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card settings">
     <view class="setting-item" bindtap="onOpenCategories">
       <text>分类管理</text>
       <text class="arrow">›</text>
     </view>
     <view class="setting-item" bindtap="onOpenExport">
       <text>数据导出</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="setting-item" bindtap="onOpenImport">
+      <text>数据导入</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="setting-item" bindtap="onCheckDatabase">
+      <text>检查云数据库</text>
       <text class="arrow">›</text>
     </view>
   </view>

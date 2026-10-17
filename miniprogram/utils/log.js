@@ -98,6 +98,32 @@ function groupByMonth(logs, dishNames) {
   return months;
 }
 
+// 做饭日历：某个月的格子，一周一行（周一开头），每天带上那天做了几道菜。month 是 0～11
+function buildMonth(year, month, logs) {
+  const counts = {};
+  logs.forEach((l) => {
+    const k = dateValue(l.cookedAt);
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const prefix = `${year}-${pad(month + 1)}-`;
+  const today = dateValue(Date.now());
+  const lead = (new Date(year, month, 1).getDay() + 6) % 7; // 1 号前面空几格
+  const days = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push({ key: `b${i}`, day: "", date: "", count: 0 });
+  for (let d = 1; d <= days; d++) {
+    const date = prefix + pad(d);
+    cells.push({ key: date, day: d, date, count: counts[date] || 0, isToday: date === today, isFuture: date > today });
+  }
+  while (cells.length % 7) cells.push({ key: `a${cells.length}`, day: "", date: "", count: 0 });
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push({ key: `w${i}`, days: cells.slice(i, i + 7) });
+  const monthCount = Object.keys(counts)
+    .filter((k) => k.indexOf(prefix) === 0)
+    .reduce((sum, k) => sum + counts[k], 0);
+  return { title: `${year}年${month + 1}月`, weeks, monthCount };
+}
+
 // 统计：这个月做了几次、一共几次、做过几道不同的菜
 function logStats(logs) {
   const now = new Date();
@@ -112,4 +138,4 @@ function logStats(logs) {
   return { thisMonth, total: logs.length, dishCount: Object.keys(dishes).length };
 }
 
-module.exports = { timeOf, dateValue, dateToTime, normalizeLog, sortLogs, toLogCard, groupByMonth, logStats };
+module.exports = { timeOf, dateValue, dateToTime, dayText, normalizeLog, sortLogs, toLogCard, groupByMonth, buildMonth, logStats };

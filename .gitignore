@@ -12,3 +12,6 @@ $RECYCLE.BIN/
 
 # Node.js
 node_modules/
+
+# 生成的导入文件（照片已经单独放在 design/dishes）
+imports/

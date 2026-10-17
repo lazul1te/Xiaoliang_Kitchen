@@ -19,7 +19,7 @@ Page({
     keyword: "",
     searching: false,
     searchResults: [],
-    basket: {}, // 点菜篮 { 菜品id: 份数 }
+    basket: {}, // 菜篮 { 菜品id: 份数 }
     basketCount: 0,
     basketByCat: {}, // 每个分类点了几份，显示在左侧分类上
   },
@@ -41,7 +41,7 @@ Page({
       // 新增、编辑、删除了菜品，或者改了分类，重新读一遍
       this.loadData();
     } else if (this.allDishes) {
-      // 从详情页或「今日」回来时，点菜篮可能变了
+      // 从详情页或「菜篮」回来时，菜篮可能变了
       this.applyBasket(planService.getBasket());
     }
     planService.updateBadge();
@@ -59,7 +59,7 @@ Page({
     try {
       await dishService.sync();
     } catch (err) {
-      ui.toast(ui.errorText(err));
+      ui.showError(err);
     }
     await this.loadData();
     this.setData({ refreshing: false });
@@ -232,6 +232,10 @@ Page({
 
   onOpenDish(e) {
     wx.navigateTo({ url: `/pages/dish-detail/index?id=${e.currentTarget.dataset.id}` });
+  },
+
+  onOpenWishes() {
+    wx.navigateTo({ url: "/pages/wishes/index" });
   },
 
   // 右上角「...」→ 转发给对方（体验版只有体验成员能打开）

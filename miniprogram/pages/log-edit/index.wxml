@@ -59,7 +59,7 @@
     </view>
     <view wx:if="{{showPlanOption}}" class="option" bindtap="onTogglePlan">
       <view class="checkbox {{removeFromPlan ? 'on' : ''}}">{{removeFromPlan ? '✓' : ''}}</view>
-      <text>从今日菜单里划掉这道菜</text>
+      <text>从菜篮里拿掉这道菜</text>
     </view>
   </view>
 </view>

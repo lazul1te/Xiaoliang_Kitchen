@@ -2,7 +2,7 @@
   菜品卡片：菜单页、搜索结果、今日页共用。用法：
     <import src="/templates/dish-card.wxml" />
     <template is="dishCard" data="{{dish: item, basket: basket}}" />
-  dish 是 utils/dish.js 里 toCard() 的结果，basket 是点菜篮 { 菜品id: 份数 }。
+  dish 是 utils/dish.js 里 toCard() 的结果，basket 是菜篮 { 菜品id: 份数 }。
   点击事件 onOpenDish / onPlus / onMinus 由使用它的页面提供；样式在 app.wxss。
 -->
 <template name="dishCard">

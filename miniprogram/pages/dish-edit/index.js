@@ -2,6 +2,7 @@
 const dishService = require("../../services/dish");
 const categoryService = require("../../services/category");
 const imageService = require("../../services/image");
+const wishService = require("../../services/wish");
 const ui = require("../../utils/ui");
 const { formatSeconds } = require("../../utils/dish");
 
@@ -54,6 +55,7 @@ function toForm(dish) {
     name: dish.name,
     categoryId: dish.categoryId,
     cover: dish.cover,
+    coverThumb: dish.coverThumb,
     status: dish.status,
     difficulty: dish.difficulty,
     duration: dish.duration ? String(dish.duration) : "",
@@ -79,6 +81,7 @@ function newForm(categoryId, categories) {
     name: "",
     categoryId: valid ? categoryId : categories.length ? categories[0]._id : "",
     cover: "",
+    coverThumb: "",
     status: "learning",
     difficulty: 2,
     duration: "",
@@ -103,6 +106,7 @@ function fromForm(form) {
     name: form.name,
     categoryId: form.categoryId,
     cover: form.cover,
+    coverThumb: form.coverThumb,
     status: form.status,
     difficulty: form.difficulty,
     duration: form.duration,
@@ -152,7 +156,15 @@ Page({
     // 标签选项：常用标签 + 其他菜用过的标签
     this.tagNames = unique(PRESET_TAGS.concat(...dishes.map((d) => d.tags)));
     wx.setNavigationBarTitle({ title: dish ? "编辑菜谱" : "新增菜品" });
-    this.setData({ form: dish ? toForm(dish) : newForm(options.categoryId, categories), isEdit: !!dish });
+    const form = dish ? toForm(dish) : newForm(options.categoryId, categories);
+    // 从想吃清单「开始学」：带上菜名、照片和备注，熟练度先标「想学」；存好以后从清单里拿掉
+    const wish = !dish && options.wish ? wishService.get(options.wish) : null;
+    if (wish) {
+      this.wishKey = wish.key;
+      this.wishPhoto = wish.photo;
+      Object.assign(form, { name: wish.name, cover: wish.photo, coverThumb: wish.photoThumb, tips: wish.note, status: "wish" });
+    }
+    this.setData({ form, isEdit: !!dish });
     this.refreshCategory();
     this.refreshTags();
   },
@@ -400,6 +412,8 @@ Page({
     }
     this.saving = false;
     if (!dish) return;
+    // 照片菜谱接着用的话就别删；换掉了才删
+    if (this.wishKey) wishService.remove(this.wishKey, { keepPhoto: !!this.wishPhoto && dish.cover === this.wishPhoto });
     const done = () => ui.toast("已保存");
     this.leave(() => {
       if (this.data.isEdit) wx.navigateBack({ success: done });

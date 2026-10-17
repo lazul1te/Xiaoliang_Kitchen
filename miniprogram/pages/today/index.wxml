@@ -1,6 +1,6 @@
 <import src="/templates/dish-card.wxml" />
 
-<!-- 买菜清单的一行：点一下就是买到了 / 没买到 -->
+<!-- 买菜清单的一行：点一下就是买到了 / 没买到。action：have 右边显示「家里有」，remove 显示删除 -->
 <template name="shopRow">
   <view class="shop-row {{checked ? 'done' : ''}}" data-key="{{key}}" bindtap="onToggleItem">
     <view class="check">{{checked ? '✓' : ''}}</view>
@@ -9,22 +9,25 @@
         <text class="shop-name">{{name}}</text>
         <text wx:if="{{amountText}}" class="shop-amount">{{amountText}}</text>
       </view>
-      <view wx:if="{{dishesText}}" class="shop-dishes">{{dishesText}}</view>
+      <view wx:if="{{dishesText || outOfStock}}" class="shop-dishes">
+        <text wx:if="{{outOfStock}}" class="shop-flag">家里用完了</text>{{dishesText}}
+      </view>
     </view>
-    <view wx:if="{{removable}}" class="shop-remove" data-key="{{key}}" catchtap="onRemoveExtra">×</view>
+    <view wx:if="{{action === 'have'}}" class="shop-act" data-name="{{name}}" catchtap="onHaveIt">家里有</view>
+    <view wx:if="{{action === 'remove'}}" class="shop-remove" data-key="{{key}}" catchtap="onRemoveExtra">×</view>
   </view>
 </template>
 
 <view wx:if="{{!hasPlan}}" class="empty">
-  <view class="empty-emoji">🧺</view>
-  <view class="empty-title">今天还没点菜</view>
-  <view class="empty-desc">去菜单里挑几道想做的菜，两个人点的都会出现在这里</view>
+  <image class="empty-img" src="/images/basket-big.png" />
+  <view class="empty-title">菜篮还是空的</view>
+  <view class="empty-desc">去菜单里挑几道想做的菜，两个人点的都会放进来</view>
   <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
 </view>
 
 <view wx:else class="today">
   <view class="today-head">
-    <text>今天要做 {{items.length}} 道菜，共 {{count}} 份</text>
+    <text>菜篮里有 {{items.length}} 道菜，共 {{count}} 份</text>
     <text class="clear" bindtap="onClear">清空</text>
   </view>
 
@@ -37,28 +40,47 @@
       <text class="shopping-title">🛒 买菜清单</text>
       <text class="shopping-progress">已买 {{shopping.done}}/{{shopping.total}}</text>
     </view>
-    <view class="shopping-hint">按菜谱里的用量 × 份数算好了，买到一样点一下，两个人都能看到</view>
+    <view class="shopping-hint">按菜谱用量 × 份数算好了，家里库存里有的不用买。买到一样点一下，两个人都能看到</view>
 
     <view wx:if="{{shopping.buy.length}}" class="shop-group">
       <view class="shop-label">要买的</view>
       <block wx:for="{{shopping.buy}}" wx:key="key">
-        <template is="shopRow" data="{{...item}}" />
+        <template is="shopRow" data="{{...item, action: 'have'}}" />
       </block>
     </view>
 
-    <view wx:if="{{shopping.seasoning.length}}" class="shop-group">
-      <view class="shop-label">调料（看看家里还有没有）</view>
-      <block wx:for="{{shopping.seasoning}}" wx:key="key">
-        <template is="shopRow" data="{{...item}}" />
+    <view wx:if="{{shopping.unknown.length}}" class="shop-group">
+      <view class="shop-label-row">
+        <text class="shop-label">调料：家里有的点「家里有」，以后就不提醒了</text>
+        <text class="shop-all" bindtap="onHaveAll">都有</text>
+      </view>
+      <block wx:for="{{shopping.unknown}}" wx:key="key">
+        <template is="shopRow" data="{{...item, action: 'have'}}" />
       </block>
     </view>
 
     <view class="shop-group">
       <view class="shop-label">自己加的</view>
       <block wx:for="{{shopping.extras}}" wx:key="key">
-        <template is="shopRow" data="{{...item, removable: true}}" />
+        <template is="shopRow" data="{{...item, action: 'remove'}}" />
       </block>
       <view class="shop-add" bindtap="onAddExtra">＋ 加一样（比如：牛奶、纸巾）</view>
     </view>
+
+    <view wx:if="{{shopping.stocked.length}}" class="shop-group">
+      <view class="shop-label-row" bindtap="onToggleStocked">
+        <text class="shop-label">家里有的 {{shopping.stocked.length}} 样，不用买</text>
+        <text class="shop-all">{{showStocked ? '收起' : '展开'}}</text>
+      </view>
+      <block wx:if="{{showStocked}}">
+        <view wx:for="{{shopping.stocked}}" wx:key="key" class="stock-row">
+          <text class="stock-name">{{item.name}}</text>
+          <text class="stock-amount">{{item.amountText}}</text>
+          <text class="shop-act" data-key="{{item.key}}" bindtap="onRanOut">用完了</text>
+        </view>
+      </block>
+    </view>
+
+    <view class="pantry-link" bindtap="onOpenPantry">管理家里的库存 ›</view>
   </view>
 </view>

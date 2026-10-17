@@ -1,0 +1,37 @@
+<view class="import">
+  <view class="card">
+    <view class="card-title">能导入什么</view>
+    <view class="para">「数据导出」生成的备份文件，或者整理好的菜谱文件（.json）。先把文件发到微信聊天里（比如「文件传输助手」），再在这里选。</view>
+    <view class="para">已经有同名的菜会跳过，重复导入不会多出一份；分类按名字对上，没有就新建。</view>
+  </view>
+
+  <view class="card">
+    <view class="step">
+      <view class="step-no">1</view>
+      <view class="step-main">
+        <view class="step-title">选文件</view>
+        <view wx:if="{{file}}" class="step-desc">{{file.name}}</view>
+      </view>
+      <view class="step-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onChoose">{{file ? '换一个' : '从聊天记录选'}}</view>
+    </view>
+
+    <view wx:if="{{file}}" class="summary">
+      <view class="row"><text>菜谱</text><text class="row-value">{{file.dishCount}} 道，新的 {{file.newCount}} 道</text></view>
+      <view wx:if="{{file.skipNames.length}}" class="skip">已经有了、会跳过：{{file.skipText}}</view>
+      <view class="row"><text>做菜记录</text><text class="row-value">{{file.logCount}} 条</text></view>
+      <view class="row"><text>照片</text><text class="row-value">{{file.photoCount}} 张</text></view>
+    </view>
+
+    <view class="step">
+      <view class="step-no">2</view>
+      <view class="step-main">
+        <view class="step-title">开始导入</view>
+        <view wx:if="{{status === 'working'}}" class="step-desc">{{progress}}</view>
+        <view wx:elif="{{status === 'done'}}" class="step-desc ok">导入了 {{result.added}} 道菜、{{result.logsAdded}} 条做菜记录{{result.skipped ? '，跳过 ' + result.skipped + ' 道已有的菜' : ''}}</view>
+      </view>
+      <view class="step-btn main {{status === 'ready' ? '' : 'disabled'}}" bindtap="onImport">导入</view>
+    </view>
+  </view>
+
+  <view wx:if="{{status === 'done'}}" class="btn-primary go" bindtap="onGoMenu">去菜单看看</view>
+</view>

@@ -101,7 +101,7 @@
 <view wx:if="{{dish}}" class="action-bar">
   <view class="action-edit" bindtap="onEdit">编辑</view>
   <view class="action-basket">
-    <view wx:if="{{qty === 0}}" class="btn-outline" bindtap="onPlus">加入点菜篮</view>
+    <view wx:if="{{qty === 0}}" class="btn-outline" bindtap="onPlus">加入菜篮</view>
     <view wx:else class="stepper big">
       <view class="stepper-btn minus" bindtap="onMinus">−</view>
       <text class="stepper-num">{{qty}} 份</text>

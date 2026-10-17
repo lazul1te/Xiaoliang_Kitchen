@@ -11,6 +11,7 @@
                placeholder-class="search-placeholder" confirm-type="search" bindinput="onSearchInput" />
         <icon wx:if="{{keyword}}" type="clear" size="16" color="#C4C4CA" bindtap="onClearSearch" />
       </view>
+      <view class="wish-btn" bindtap="onOpenWishes">💭 想吃</view>
       <view class="add-btn" bindtap="onAddDish">＋ 新菜</view>
     </view>
   </view>
@@ -78,7 +79,7 @@
   <view class="basket-bar">
     <view class="basket-info">
       <view class="basket-icon {{basketCount ? 'on' : ''}}">
-        🧺
+        <image class="basket-img" src="/images/basket.png" />
         <view wx:if="{{basketCount}}" class="basket-num">{{basketCount}}</view>
       </view>
       <text class="basket-text">{{basketCount ? '已点 ' + basketCount + ' 份' : '还没点菜'}}</text>

@@ -65,6 +65,21 @@
   border-top: 2rpx solid var(--line);
 }
 
+.setting-right {
+  display: flex;
+  align-items: center;
+}
+
+.setting-note {
+  margin-right: 12rpx;
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+.setting-note.warn {
+  color: var(--danger);
+}
+
 .arrow {
   font-size: 36rpx;
   line-height: 1;

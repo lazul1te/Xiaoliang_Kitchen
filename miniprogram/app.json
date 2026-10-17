@@ -9,7 +9,11 @@
     "pages/categories/index",
     "pages/cook/index",
     "pages/log-edit/index",
-    "pages/export/index"
+    "pages/export/index",
+    "pages/import/index",
+    "pages/pantry/index",
+    "pages/wishes/index",
+    "pages/wish-edit/index"
   ],
   "window": {
     "backgroundColor": "#FFF8EE",
@@ -32,7 +36,7 @@
       },
       {
         "pagePath": "pages/today/index",
-        "text": "今日",
+        "text": "菜篮",
         "iconPath": "images/tabbar/today.png",
         "selectedIconPath": "images/tabbar/today-active.png"
       },

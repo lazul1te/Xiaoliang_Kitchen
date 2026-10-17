@@ -1,12 +1,17 @@
 // 我的：小程序信息、菜谱统计、设置入口
 const dishService = require("../../services/dish");
 const planService = require("../../services/plan");
+const pantryService = require("../../services/pantry");
+const wishService = require("../../services/wish");
+const cloud = require("../../services/cloud");
 const ui = require("../../utils/ui");
 
 Page({
   data: {
     stats: { total: 0, mastered: 0, cooked: 0 },
     sampleCount: 0, // 还剩几道示例菜
+    wishCount: 0, // 想吃清单里有几个
+    outCount: 0, // 库存里几样用完了
   },
 
   onShow() {
@@ -31,7 +36,28 @@ Page({
         cooked: dishes.reduce((sum, d) => sum + (d.cookCount || 0), 0),
       },
       sampleCount: dishes.filter((d) => d.sample).length,
+      wishCount: wishService.list().length,
+      outCount: pantryService.list().outOfStock.length,
     });
+  },
+
+  onOpenWishes() {
+    wx.navigateTo({ url: "/pages/wishes/index" });
+  },
+
+  onOpenPantry() {
+    wx.navigateTo({ url: "/pages/pantry/index" });
+  },
+
+  // 四个集合挨个读一下，看是不是都建好了
+  async onCheckDatabase() {
+    wx.showLoading({ title: "检查中", mask: true });
+    const results = await cloud.checkCollections();
+    wx.hideLoading();
+    const lines = results.map((r) => `${r.ok ? "✅" : "❌"} ${r.name}：${r.text}`);
+    const bad = results.filter((r) => !r.ok);
+    const tip = bad.length ? `\n\n没建的集合在云开发控制台「数据库」里新建，四个集合的权限都设成自定义安全规则：${cloud.SHARED_RULE}` : "\n\n都正常";
+    ui.alert("云数据库检查", lines.join("\n") + tip);
   },
 
   onOpenCategories() {
@@ -60,5 +86,9 @@ Page({
 
   onOpenExport() {
     wx.navigateTo({ url: "/pages/export/index" });
+  },
+
+  onOpenImport() {
+    wx.navigateTo({ url: "/pages/import/index" });
   },
 });

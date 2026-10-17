@@ -1,0 +1,107 @@
+.import {
+  padding-bottom: 60rpx;
+}
+
+.para {
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+.para + .para {
+  margin-top: 12rpx;
+}
+
+/* ---------- 两步 ---------- */
+
+.step {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+}
+
+.step-no {
+  flex-shrink: 0;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: var(--yolk);
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 44rpx;
+}
+
+.step-main {
+  flex: 1;
+  min-width: 0;
+  margin: 0 20rpx;
+}
+
+.step-title {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.step-desc {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: var(--text-3);
+  word-break: break-all;
+}
+
+.step-desc.ok {
+  color: var(--scallion);
+}
+
+.step-btn {
+  flex-shrink: 0;
+  padding: 0 28rpx;
+  border: 2rpx solid var(--pan);
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  line-height: 60rpx;
+}
+
+.step-btn.main {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  font-weight: 600;
+}
+
+.step-btn.disabled {
+  border-color: var(--line);
+  background: #fff;
+  color: var(--text-3);
+}
+
+/* 文件里有什么 */
+.summary {
+  margin: 0 0 8rpx 64rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  background: var(--cream);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6rpx 0;
+  font-size: 26rpx;
+}
+
+.row-value {
+  color: var(--text-2);
+}
+
+.skip {
+  padding: 4rpx 0 8rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: var(--wood);
+}
+
+.go {
+  margin: 40rpx 48rpx 0;
+}

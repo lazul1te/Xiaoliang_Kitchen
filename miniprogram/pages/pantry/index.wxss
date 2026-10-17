@@ -1,0 +1,117 @@
+.pantry {
+  padding-bottom: 60rpx;
+}
+
+.para {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+.add-row {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.add-input {
+  flex: 1;
+  height: 72rpx;
+  padding: 0 20rpx;
+  border-radius: 36rpx;
+  background: var(--cream);
+  font-size: 26rpx;
+}
+
+.add-btn {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 0 36rpx;
+  border-radius: 36rpx;
+  background: var(--yolk);
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 72rpx;
+}
+
+.presets {
+  margin-top: 24rpx;
+}
+
+.presets-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+}
+
+.presets-title {
+  color: var(--text-3);
+}
+
+.presets-all {
+  color: var(--wood);
+  text-decoration: underline;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 8rpx;
+}
+
+.chip {
+  margin: 8rpx 14rpx 0 0;
+  padding: 6rpx 20rpx;
+  border: 2rpx dashed #d9cfc1;
+  border-radius: 28rpx;
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.title-hint {
+  font-size: 22rpx;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.none {
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 0;
+  border-top: 2rpx solid var(--line);
+}
+
+.item-name {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.item-name.out {
+  color: var(--danger);
+}
+
+.item-btn {
+  padding: 4rpx 20rpx;
+  border: 2rpx solid var(--line);
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.item-btn.main {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  color: var(--pan);
+}
+
+.item-del {
+  width: 64rpx;
+  text-align: center;
+  font-size: 34rpx;
+  color: var(--text-3);
+}

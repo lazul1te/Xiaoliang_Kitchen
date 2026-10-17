@@ -4,33 +4,37 @@ const store = require("./store");
 const imageService = require("./image");
 const categoryService = require("./category");
 const planService = require("./plan");
+const pantryService = require("./pantry");
+const wishService = require("./wish");
 const samples = require("../data/samples");
 const { normalizeDish } = require("../utils/dish");
 
 const COLLECTION = "dishes";
 const STALE_MS = 15 * 1000; // 回到页面时，离上次同步超过 15 秒就去云上看看对方有没有改过
 
-// 数据版本号（菜谱 + 今日菜单）：页面 onShow 时跟上次比一比，变了就重新读
+// 两个人共用的几条记录：菜篮、库存、想吃清单（都在 plans 集合里）
+const SHARED = [planService, pantryService, wishService];
+
+// 数据版本号（菜谱 + 共用记录）：页面 onShow 时跟上次比一比，变了就重新读
 function getVersion() {
-  return `${store.getVersion()}-${planService.getVersion()}`;
+  return [store.getVersion()].concat(SHARED.map((s) => s.getVersion())).join("-");
 }
 
-// 等云上的最新数据回来（打开小程序时先显示的可能是上次的缓存）。今日菜单取不到不影响看菜谱
+// 等云上的最新数据回来（打开小程序时先显示的可能是上次的缓存）。共用记录取不到不影响看菜谱
 function refresh() {
-  return Promise.all([store.whenFresh(), planService.whenFresh().catch(() => false)]);
+  return Promise.all([store.whenFresh()].concat(SHARED.map((s) => s.whenFresh().catch(() => false))));
 }
 
-// 回到页面时调用：隔了一会儿就在后台同步一次（菜谱和今日菜单）。返回有没有变，失败了当作没变
+// 回到页面时调用：隔了一会儿就在后台同步一次。返回有没有变，失败了当作没变
 function refreshIfStale() {
-  return Promise.all([
-    store.syncIfStale(STALE_MS).catch(() => false),
-    planService.syncIfStale(STALE_MS).catch(() => false),
-  ]).then(([a, b]) => a || b);
+  return Promise.all(
+    [store.syncIfStale(STALE_MS)].concat(SHARED.map((s) => s.syncIfStale(STALE_MS))).map((p) => p.catch(() => false))
+  ).then((changed) => changed.some(Boolean));
 }
 
-// 下拉刷新：马上去云上取
+// 下拉刷新：马上去云上取。出错时报错里会写明是哪个集合
 function sync() {
-  return Promise.all([store.sync(), planService.sync()]).then(([a, b]) => a || b);
+  return Promise.all([store.sync()].concat(SHARED.map((s) => s.sync()))).then((changed) => changed.some(Boolean));
 }
 
 async function listDishes() {
@@ -80,11 +84,8 @@ async function saveDish(input, options = {}) {
   let old = null;
   if (input._id) {
     // 两个人共用：保存前先看看云上这道菜还在不在、有没有被对方改过
-    let remote;
-    try {
-      remote = (await col.doc(input._id).get()).data;
-    } catch (err) {
-      if (!cloud.isDocMissing(err)) throw cloud.explain(err);
+    const remote = await cloud.findOne(COLLECTION, input._id);
+    if (!remote) {
       store.sync().catch(() => {});
       throw new Error("这道菜已经被删掉了，可能是对方刚删的");
     }
@@ -130,7 +131,7 @@ async function saveDish(input, options = {}) {
     }
   } catch (err) {
     imageService.remove(uploaded);
-    throw cloud.explain(err);
+    throw cloud.explain(err, COLLECTION);
   }
   if (old) {
     const keep = filesOf(dish);

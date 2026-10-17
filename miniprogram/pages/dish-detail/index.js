@@ -1,4 +1,4 @@
-// 菜品详情：原料、分步做法、小贴士、做菜记录；底部可以加入点菜篮、编辑、开始做
+// 菜品详情：原料、分步做法、小贴士、做菜记录；底部可以加入菜篮、编辑、开始做
 const dishService = require("../../services/dish");
 const logService = require("../../services/log");
 const planService = require("../../services/plan");
@@ -11,7 +11,7 @@ const RECENT_LOGS = 5; // 详情页最多显示几条做菜记录
 Page({
   data: {
     dish: null,
-    qty: 0, // 点菜篮里这道菜的份数
+    qty: 0, // 菜篮里这道菜的份数
     logs: [], // 最近几次做菜记录（卡片）
     logCount: 0,
     notFound: false,
@@ -67,7 +67,7 @@ Page({
     const isFirst = this.data.qty === 0;
     planService.add(this.data.dish._id);
     this.refreshQty();
-    if (isFirst) wx.showToast({ title: "已加入点菜篮", icon: "none" });
+    if (isFirst) wx.showToast({ title: "已加入菜篮", icon: "none" });
   },
 
   onMinus() {

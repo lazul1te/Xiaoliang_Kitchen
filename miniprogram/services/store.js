@@ -118,13 +118,32 @@ function setCategories(list) {
   touch();
 }
 
+// 「做过几次」「上次做」直接按做菜记录算，跟记录页永远对得上
+function statsByDish() {
+  const map = {};
+  state.logs.forEach((l) => {
+    const s = map[l.dishId] || (map[l.dishId] = { count: 0, last: 0 });
+    s.count += 1;
+    if (l.cookedAt > s.last) s.last = l.cookedAt;
+  });
+  return map;
+}
+
+function withStats(dish, map) {
+  const s = map[dish._id];
+  dish.cookCount = s ? s.count : 0;
+  dish.lastCookedAt = s ? s.last : null;
+  return dish;
+}
+
 function listDishes() {
-  return clone(state.dishes);
+  const map = statsByDish();
+  return clone(state.dishes).map((d) => withStats(d, map));
 }
 
 function getDish(id) {
   const dish = state.dishes.find((d) => d._id === id);
-  return dish ? clone(dish) : null;
+  return dish ? withStats(clone(dish), statsByDish()) : null;
 }
 
 function putDish(dish) {

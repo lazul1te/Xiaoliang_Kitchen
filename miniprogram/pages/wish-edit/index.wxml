@@ -1,0 +1,30 @@
+<view wx:if="{{form}}" class="wish-edit">
+  <view class="photo-box" bindtap="onChoosePhoto">
+    <image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
+    <view wx:else class="photo-empty">
+      <text class="photo-icon">📷</text>
+      <text>加一张图（拍照、截图都行）</text>
+    </view>
+    <view wx:if="{{form.photo}}" class="photo-actions">
+      <text class="photo-btn">换一张</text>
+      <text class="photo-btn" catchtap="onRemovePhoto">删除</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="field">
+      <text class="label">菜名</text>
+      <input class="input" value="{{form.name}}" placeholder="比如：酸菜鱼" maxlength="20" data-field="name" bindinput="onInput" />
+    </view>
+    <view class="note-label">备注</view>
+    <textarea class="text-input" value="{{form.note}}" placeholder="在哪吃到的、哪个视频教程、想怎么做……"
+              auto-height maxlength="-1" cursor-spacing="80" data-field="note" bindinput="onInput" />
+  </view>
+
+  <view wx:if="{{isEdit}}" class="learn" bindtap="onLearn">开始学：写成菜谱 ›</view>
+</view>
+
+<view wx:if="{{form}}" class="save-bar">
+  <view wx:if="{{isEdit}}" class="delete-btn" bindtap="onDelete">删除</view>
+  <view class="btn-primary save-btn" bindtap="onSave">保存</view>
+</view>

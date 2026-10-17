@@ -1,11 +1,20 @@
-// 买菜清单：把今日菜单里几道菜的原料合并起来。
-// 同名的原料放在一起；用量是数字、单位相同的直接加起来（再乘上点的份数），「适量」这类原样列出。
-// 调料单独放一组（家里一般都有，看看缺不缺）。
+// 买菜清单：把菜篮里几道菜的原料合并起来，再和家里的库存对一对。
+// - 同名的原料放在一起；用量是数字、单位相同的直接加起来（再乘上点的份数），「适量」这类原样列出
+// - 库存里有的 → 「家里有」，不用买；库存里标了用完了的 → 放进「要买的」
+// - 调料、库存里又没记录的 → 单独一组，点「有」加进库存，以后就不再提醒
 
-// 原料名 → 一个固定的短 key，用来记「买到了没有」
+// 去掉括号里的说明，「口蘑（可选）」→「口蘑」，用来和库存对名字
+function baseName(name) {
+  return String(name || "")
+    .replace(/[（(][^）)]*[）)]/g, "")
+    .trim();
+}
+
+// 名字 → 一个固定的短 key，用来记「买到了没有」、对库存
 function keyOf(name) {
+  const s = baseName(name);
   let h = 5381;
-  for (let i = 0; i < name.length; i++) h = ((h << 5) + h + name.charCodeAt(i)) | 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
   return `i${(h >>> 0).toString(36)}`;
 }
 
@@ -21,8 +30,9 @@ function parseAmount(text) {
 const formatNumber = (n) => String(Math.round(n * 100) / 100);
 
 // planned: [{ dish, qty }]，qty 是点了几份（1 份 = 菜谱里写的用量）
-// checked、extras 来自 services/plan.js
-function buildShoppingList(planned, checked, extras) {
+// checked、extras 来自 services/plan.js；pantry 来自 services/pantry.js 的 getItems()
+function buildShoppingList(planned, checked, extras, pantry) {
+  const stock = pantry || {};
   const map = {};
   planned.forEach(({ dish, qty }) => {
     dish.ingredients.forEach((ing) => {
@@ -47,9 +57,14 @@ function buildShoppingList(planned, checked, extras) {
     });
   });
 
-  const toItem = (e) => {
+  const buy = [];
+  const unknown = [];
+  const stocked = [];
+  Object.keys(map).forEach((name) => {
+    const e = map[name];
     const key = keyOf(e.name);
-    return {
+    const item = stock[key];
+    const row = {
       key,
       name: e.name,
       amountText: e.units
@@ -58,22 +73,24 @@ function buildShoppingList(planned, checked, extras) {
         .join(" + "),
       dishesText: e.dishes.join("、"),
       checked: !!checked[key],
+      outOfStock: !!item && !item.inStock,
     };
-  };
-  const entries = Object.keys(map).map((name) => map[name]);
-  const buy = entries.filter((e) => !e.seasoning).map(toItem);
-  const seasoning = entries.filter((e) => e.seasoning).map(toItem);
+    if (item && item.inStock) stocked.push(row);
+    else if (!item && e.seasoning) unknown.push(row);
+    else buy.push(row);
+  });
   const extraItems = Object.keys(extras)
     .map((key) => ({ key, name: extras[key].name, createdAt: extras[key].createdAt, checked: !!checked[key] }))
     .sort((a, b) => a.createdAt - b.createdAt);
-  const all = buy.concat(seasoning, extraItems);
+  const todo = buy.concat(unknown, extraItems);
   return {
-    buy,
-    seasoning,
-    extras: extraItems,
-    total: all.length,
-    done: all.filter((i) => i.checked).length,
+    buy, // 要买的
+    unknown, // 调料，库存里没记录：家里有的话点「有」
+    stocked, // 家里有，不用买
+    extras: extraItems, // 自己加的
+    total: todo.length,
+    done: todo.filter((i) => i.checked).length,
   };
 }
 
-module.exports = { buildShoppingList, parseAmount, keyOf };
+module.exports = { buildShoppingList, parseAmount, keyOf, baseName };

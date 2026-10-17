@@ -2,23 +2,121 @@
   padding-bottom: 40rpx;
 }
 
-.stats {
+/* ---------- 做饭日历 ---------- */
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cal-arrow {
+  width: 72rpx;
+  text-align: center;
+  font-size: 44rpx;
+  line-height: 1;
+  color: var(--text-2);
+}
+
+.cal-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cal-count {
+  margin-left: 12rpx;
+  font-size: 24rpx;
+  font-weight: 400;
+  color: var(--wood);
+}
+
+.cal-row {
   display: flex;
 }
 
-.stat {
+.cal-row > view,
+.cal-row > text {
   flex: 1;
   text-align: center;
 }
 
-.stat-num {
-  font-size: 44rpx;
+.cal-week {
+  margin: 16rpx 0 6rpx;
+  font-size: 22rpx;
+  color: var(--text-3);
+}
+
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 84rpx;
+  margin: 4rpx;
+  padding-top: 8rpx;
+  border-radius: 14rpx;
+}
+
+.cal-num {
+  font-size: 26rpx;
+  line-height: 1.3;
+}
+
+.cal-dot {
+  font-size: 18rpx;
+  line-height: 1.4;
+  color: var(--wood);
+}
+
+/* 做了饭的日子：底色标出来 */
+.cal-day.cooked {
+  background: var(--apricot);
+}
+
+.cal-day.cooked .cal-num {
   font-weight: 700;
 }
 
-.stat-label {
-  font-size: 24rpx;
+.cal-day.today .cal-num {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.cal-day.future .cal-num {
+  color: #d6d6db;
+}
+
+.cal-day.selected {
+  background: var(--yolk);
+}
+
+.cal-day.selected .cal-dot {
+  color: var(--pan);
+}
+
+.cal-stats {
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 22rpx;
   color: var(--text-3);
+}
+
+/* 选中某一天 */
+.day-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 28rpx 32rpx 12rpx;
+}
+
+.day-bar-title {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.day-bar-all {
+  font-size: 24rpx;
+  color: var(--wood);
 }
 
 .add-log {
@@ -29,6 +127,10 @@
   text-align: center;
   font-size: 26rpx;
   color: var(--wood);
+}
+
+.empty.small {
+  padding: 60rpx 48rpx;
 }
 
 /* ---------- 按月份、日期分组 ---------- */

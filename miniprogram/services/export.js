@@ -1,7 +1,9 @@
-// 数据导出：把菜谱、分类、做菜记录、今日菜单打包成一个 .json 文件，可以选择把照片也一起打包。
+// 数据导出：把菜谱、分类、做菜记录、菜篮、库存、想吃清单打包成一个 .json 文件，可以选择把照片也一起打包。
 // 免费的云开发环境万一以后要收费或者停用了，有这个文件就能把数据完整搬走。
 const store = require("./store");
 const planService = require("./plan");
+const pantryService = require("./pantry");
+const wishService = require("./wish");
 const imageService = require("./image");
 const cloud = require("./cloud");
 
@@ -10,8 +12,8 @@ const FORMAT = 1;
 
 const pad = (n) => (n < 10 ? `0${n}` : String(n));
 
-// 菜品成品照、步骤照片、做菜记录的照片（小图可以重新生成，不带）
-function photoIds(dishes, logs) {
+// 菜品成品照、步骤照片、做菜记录和想吃清单的照片（小图可以重新生成，不带）
+function photoIds(dishes, logs, wishes) {
   const ids = [];
   const add = (id) => {
     if (imageService.isCloudFile(id) && ids.indexOf(id) < 0) ids.push(id);
@@ -21,6 +23,7 @@ function photoIds(dishes, logs) {
     d.steps.forEach((s) => add(s.image));
   });
   logs.forEach((l) => add(l.photo));
+  (wishes || []).forEach((w) => add(w.photo));
   return ids;
 }
 
@@ -33,7 +36,7 @@ async function summary() {
     categoryCount: store.listCategories().length,
     dishCount: dishes.length,
     logCount: logs.length,
-    photoCount: photoIds(dishes, logs).length,
+    photoCount: photoIds(dishes, logs, wishService.list()).length,
   };
 }
 
@@ -54,13 +57,15 @@ async function buildFile({ withPhotos, onProgress }) {
     dishes,
     logs,
     plan: planService.getPlan(),
+    pantry: pantryService.getItems(),
+    wishes: wishService.list(),
     photos: {}, // 云文件 ID → 照片内容（base64）
   };
   const fs = wx.getFileSystemManager();
   let failedPhotos = 0;
   if (withPhotos) {
     cloud.init();
-    const ids = photoIds(dishes, logs);
+    const ids = photoIds(dishes, logs, data.wishes);
     for (let i = 0; i < ids.length; i++) {
       progress(`正在打包照片 ${i + 1}/${ids.length}`);
       try {

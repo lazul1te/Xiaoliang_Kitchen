@@ -1,0 +1,188 @@
+// 数据导入：读「数据导出」生成的备份文件，或者整理好的菜谱文件（格式一样），把里面的菜谱和做菜记录加进来。
+// - 已经有同名的菜就跳过，重复导入不会多出一份
+// - 分类按名字对上，没有就新建
+// - 文件里带的照片重新传到云存储；没带照片的，沿用原来的云文件 ID（同一个云环境里还能显示）
+// - 做菜记录只导入能对上菜的，同一道菜、同一时间的记录已经有了就跳过（「做过几次」按记录算，不用另外改）
+// - 库存、想吃清单按名字合并，已经有的不重复加
+const cloud = require("./cloud");
+const store = require("./store");
+const dishService = require("./dish");
+const categoryService = require("./category");
+const imageService = require("./image");
+const pantryService = require("./pantry");
+const wishService = require("./wish");
+const { normalizeLog, timeOf } = require("../utils/log");
+
+const APP = "nashoucai-xiaobenben";
+const FORMAT = 1;
+const UNCATEGORIZED = "未分类";
+
+const nameOf = (v) => String((v && v.name) || "").trim();
+
+// 读文件、检查格式，返回 { data, summary }
+async function readFile(path) {
+  let data;
+  try {
+    data = JSON.parse(wx.getFileSystemManager().readFileSync(path, "utf8"));
+  } catch (e) {
+    throw new Error("文件打不开，可能不是完整的 .json 文件");
+  }
+  if (!data || data.app !== APP || !Array.isArray(data.dishes)) {
+    throw new Error("这不是「拿手菜小本本」的数据文件");
+  }
+  if (data.format > FORMAT) throw new Error("这个文件是更新的版本生成的，先把小程序更新到最新再导入");
+  await store.ensureLoaded();
+  const existing = {};
+  store.listDishes().forEach((d) => {
+    existing[d.name] = true;
+  });
+  const dishes = data.dishes.filter((d) => nameOf(d));
+  const skipNames = dishes.filter((d) => existing[nameOf(d)]).map(nameOf);
+  return {
+    data,
+    summary: {
+      dishCount: dishes.length,
+      newCount: dishes.length - skipNames.length,
+      skipNames,
+      logCount: Array.isArray(data.logs) ? data.logs.length : 0,
+      photoCount: Object.keys(data.photos || {}).length,
+    },
+  };
+}
+
+// 导入。onProgress(文字) 用来在页面上显示进度。
+// 返回 { added, skipped, logsAdded, logsError }
+async function importData(data, onProgress) {
+  const progress = onProgress || (() => {});
+  await store.ensureLoaded();
+  const fs = wx.getFileSystemManager();
+  const photos = data.photos || {};
+  const temps = [];
+
+  // 文件里的照片是 base64，先写成手机上的文件，后面保存菜、记录时会传到云存储
+  const toLocal = (ref) => {
+    if (!ref) return "";
+    if (photos[ref]) {
+      const path = `${wx.env.USER_DATA_PATH}/import-${temps.length}.jpg`;
+      fs.writeFileSync(path, photos[ref], "base64");
+      temps.push(path);
+      return path;
+    }
+    return imageService.isCloudFile(ref) ? ref : "";
+  };
+
+  try {
+    // 1. 分类：按文件里的顺序，补齐还没有的
+    const fileCats = (data.categories || []).filter(nameOf).sort((a, b) => (a.sort || 0) - (b.sort || 0));
+    const catName = {};
+    fileCats.forEach((c) => {
+      catName[c._id] = nameOf(c);
+    });
+    const existingNames = {};
+    store.listDishes().forEach((d) => {
+      existingNames[d.name] = d._id;
+    });
+    const dishes = data.dishes.filter(nameOf);
+    const toAdd = dishes.filter((d) => !existingNames[nameOf(d)]);
+    const needed = {};
+    toAdd.forEach((d) => {
+      needed[catName[d.categoryId] || UNCATEGORIZED] = true;
+    });
+    const names = fileCats.map(nameOf).concat(UNCATEGORIZED).filter((n, i, arr) => needed[n] && arr.indexOf(n) === i);
+    const categories = names.length ? await categoryService.ensureCategories(names) : store.listCategories();
+    const catIdByName = {};
+    categories.forEach((c) => {
+      catIdByName[c.name] = c._id;
+    });
+
+    // 2. 菜谱
+    const idMap = {}; // 文件里的菜 id → 现在的菜 id
+    let added = 0;
+    for (let i = 0; i < dishes.length; i++) {
+      const d = dishes[i];
+      const name = nameOf(d);
+      if (existingNames[name]) {
+        idMap[d._id] = existingNames[name];
+        continue;
+      }
+      progress(`正在导入第 ${i + 1}/${dishes.length} 道菜：${name}`);
+      const saved = await dishService.saveDish(
+        Object.assign({}, d, {
+          _id: "",
+          categoryId: catIdByName[catName[d.categoryId] || UNCATEGORIZED],
+          cover: toLocal(d.cover),
+          coverThumb: "",
+          steps: (d.steps || []).map((s) => Object.assign({}, s, { image: toLocal(s && s.image) })),
+        })
+      );
+      idMap[d._id] = saved._id;
+      existingNames[name] = saved._id;
+      added += 1;
+    }
+
+    // 3. 做菜记录
+    const logs = Array.isArray(data.logs) ? data.logs : [];
+    let logsAdded = 0;
+    let logsError = "";
+    for (let i = 0; i < logs.length; i++) {
+      const l = logs[i];
+      const dishId = idMap[l && l.dishId];
+      if (!dishId) continue;
+      const cookedAt = timeOf(l.cookedAt);
+      const dup = store.listLogs().some((x) => x.dishId === dishId && Math.abs(x.cookedAt - cookedAt) < 60 * 1000);
+      if (dup) continue;
+      progress(`正在导入做菜记录 ${i + 1}/${logs.length}`);
+      try {
+        const dish = store.getDish(dishId);
+        const log = normalizeLog(Object.assign({}, l, { _id: "", dishId, dishName: dish ? dish.name : l.dishName }));
+        const photo = toLocal(l.photo);
+        if (photo && !imageService.isCloudFile(photo)) {
+          const files = await imageService.uploadCover(photo, "logs");
+          log.photo = files.cover;
+          log.photoThumb = files.thumb;
+        } else {
+          log.photo = photo;
+          log.photoThumb = "";
+        }
+        const doc = Object.assign({}, log);
+        delete doc._id;
+        const res = await cloud.collection("cook_logs").add({ data: doc });
+        log._id = res._id;
+        store.putLog(log);
+        logsAdded += 1;
+      } catch (err) {
+        logsError = cloud.explain(err, "cook_logs").message; // 比如 cook_logs 集合还没建：菜已经导进来了，记录以后可以再导
+        break;
+      }
+    }
+
+    // 4. 库存：家里有的加进来（已经有的不动）
+    const pantry = data.pantry || {};
+    const inStock = Object.keys(pantry)
+      .map((k) => pantry[k])
+      .filter((i) => i && i.name && i.inStock !== false)
+      .map((i) => i.name);
+    if (inStock.length) pantryService.add(inStock);
+
+    // 5. 想吃清单：同名的已经有了就跳过；文件里的菜已经写成菜谱的也不用再加
+    const wishNames = {};
+    wishService.list().forEach((w) => {
+      wishNames[w.name] = true;
+    });
+    const wishes = (Array.isArray(data.wishes) ? data.wishes : []).filter((w) => nameOf(w) && !wishNames[nameOf(w)] && !existingNames[nameOf(w)]);
+    for (let i = 0; i < wishes.length; i++) {
+      progress(`正在导入想吃清单 ${i + 1}/${wishes.length}`);
+      await wishService.save({ name: nameOf(wishes[i]), photo: toLocal(wishes[i].photo), note: wishes[i].note });
+    }
+
+    return { added, skipped: dishes.length - added, logsAdded, logsError };
+  } finally {
+    temps.forEach((p) => {
+      try {
+        fs.unlinkSync(p);
+      } catch (e) {}
+    });
+  }
+}
+
+module.exports = { readFile, importData };

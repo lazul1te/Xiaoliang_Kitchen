@@ -1,0 +1,82 @@
+.wishes {
+  padding: 4rpx 0 40rpx;
+}
+
+.add {
+  margin: 20rpx 24rpx;
+  padding: 22rpx 0;
+  border: 2rpx dashed #d9cfc1;
+  border-radius: 20rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--wood);
+}
+
+.wish {
+  display: flex;
+  margin: 0 24rpx 16rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: #fff;
+}
+
+.wish-photo {
+  flex-shrink: 0;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+}
+
+.wish-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--apricot);
+  font-size: 60rpx;
+}
+
+.wish-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin-left: 20rpx;
+}
+
+.wish-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+/* 备注最多两行 */
+.wish-note {
+  display: -webkit-box;
+  margin-top: 6rpx;
+  overflow: hidden;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: var(--text-2);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.wish-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8rpx;
+}
+
+.wish-day {
+  font-size: 22rpx;
+  color: var(--text-3);
+}
+
+.wish-learn {
+  padding: 4rpx 20rpx;
+  border-radius: 24rpx;
+  background: var(--yolk);
+  font-size: 24rpx;
+  font-weight: 600;
+}

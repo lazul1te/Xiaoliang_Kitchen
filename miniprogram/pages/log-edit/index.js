@@ -19,7 +19,7 @@ Page({
     ratingLabels: ["点星星打个分", "不太行", "一般", "还不错", "好吃", "超好吃"],
     showCoverOption: false, // 「用这张照片当这道菜的成品照」
     useAsCover: false,
-    showPlanOption: false, // 「从今日菜单里划掉这道菜」
+    showPlanOption: false, // 「从菜篮里拿掉这道菜」
     removeFromPlan: false,
   },
 
@@ -40,7 +40,7 @@ Page({
     }
     const form = log
       ? { _id: log._id, dishId: log.dishId, date: dateValue(log.cookedAt), photo: log.photo, rating: log.rating, note: log.note, cook: log.cook }
-      : { _id: "", dishId: options.dishId || "", date: dateValue(Date.now()), photo: "", rating: 0, note: "", cook: logService.getCookName() };
+      : { _id: "", dishId: options.dishId || "", date: this.startDate(options.date), photo: "", rating: 0, note: "", cook: logService.getCookName() };
     // 修改记录时日期没动，就保留原来的时间
     this.originalDate = form.date;
     this.originalCookedAt = log ? log.cookedAt : 0;
@@ -52,6 +52,12 @@ Page({
       today: dateValue(Date.now()),
     });
     this.refreshDish();
+  },
+
+  // 从日历上点某一天来补记的，日期就用那天（不能晚于今天）
+  startDate(date) {
+    const today = dateValue(Date.now());
+    return /^\d{4}-\d{2}-\d{2}$/.test(date || "") && date <= today ? date : today;
   },
 
   refreshDish() {
