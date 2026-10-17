@@ -83,6 +83,36 @@
   display: none !important;
 }
 
+/* 读取中 / 读取失败 / 第一次用 */
+.state {
+  flex: 1;
+  padding: 120rpx 56rpx 0;
+  text-align: center;
+}
+
+.state-loading {
+  padding-top: 120rpx;
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
+.state .btn-primary,
+.state .btn-outline {
+  width: 440rpx;
+  margin: 40rpx auto 0;
+}
+
+.state .btn-outline {
+  margin-top: 24rpx;
+}
+
+.state-hint {
+  margin-top: 48rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
 .cat-list {
   flex-shrink: 0;
   width: 168rpx;
@@ -148,6 +178,10 @@
   padding: 20rpx 4rpx 30rpx;
   font-size: 24rpx;
   color: var(--text-3);
+}
+
+.section-add {
+  color: var(--wood);
 }
 
 .list-end {

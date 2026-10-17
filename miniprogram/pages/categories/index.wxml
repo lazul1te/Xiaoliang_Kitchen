@@ -1,0 +1,27 @@
+<view class="cats">
+  <view wx:if="{{loaded && !list.length}}" class="empty">
+    <view class="empty-emoji">🗂️</view>
+    <view class="empty-title">还没有分类</view>
+    <view class="empty-desc">比如：家常菜、汤羹、主食</view>
+  </view>
+
+  <view wx:if="{{list.length}}" class="card list">
+    <view wx:for="{{list}}" wx:key="_id" class="row">
+      <view class="row-main">
+        <text class="row-name">{{item.name}}</text>
+        <text class="row-count">{{item.count}} 道菜</text>
+      </view>
+      <view class="row-tools">
+        <text class="tool {{index === 0 ? 'disabled' : ''}}" data-index="{{index}}" data-dir="{{-1}}"
+              bindtap="onMove">↑</text>
+        <text class="tool {{index === list.length - 1 ? 'disabled' : ''}}" data-index="{{index}}" data-dir="{{1}}"
+              bindtap="onMove">↓</text>
+        <text class="tool" data-index="{{index}}" bindtap="onRename">改名</text>
+        <text class="tool danger" data-index="{{index}}" bindtap="onRemove">删除</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="hint">这里的顺序就是菜单左边的顺序。里面还有菜的分类不能删，先把菜改到别的分类。</view>
+  <view class="btn-primary add" bindtap="onAdd">＋ 新建分类</view>
+</view>

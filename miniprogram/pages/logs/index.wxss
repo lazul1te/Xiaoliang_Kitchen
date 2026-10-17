@@ -1,1 +1,127 @@
-/* 目前只有空状态，样式用 app.wxss 里的 .empty */
+.logs {
+  padding-bottom: 40rpx;
+}
+
+.stats {
+  display: flex;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+.add-log {
+  margin: 20rpx 24rpx 0;
+  padding: 22rpx 0;
+  border: 2rpx dashed #d9cfc1;
+  border-radius: 20rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--wood);
+}
+
+/* ---------- 按月份、日期分组 ---------- */
+
+.month {
+  margin-top: 32rpx;
+}
+
+.month-title {
+  padding: 0 32rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.month-count {
+  font-size: 24rpx;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.day-title {
+  padding: 20rpx 32rpx 10rpx;
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.log-card {
+  display: flex;
+  margin: 0 24rpx 16rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: #fff;
+}
+
+.log-photo {
+  flex-shrink: 0;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 16rpx;
+}
+
+.log-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--apricot);
+  font-size: 56rpx;
+}
+
+.log-info {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.log-dish {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.log-stars {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: var(--yolk);
+}
+
+/* 心得最多显示两行 */
+.log-note {
+  display: -webkit-box;
+  margin-top: 8rpx;
+  overflow: hidden;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: var(--text-2);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.log-cook {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--text-3);
+}
+
+.list-end {
+  padding: 24rpx 0;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-3);
+}

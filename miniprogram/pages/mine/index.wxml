@@ -23,15 +23,20 @@
   </view>
 
   <view class="card settings">
-    <view class="setting-item" data-name="分类管理" bindtap="onTodo">
+    <view class="setting-item" bindtap="onOpenCategories">
       <text>分类管理</text>
       <text class="arrow">›</text>
     </view>
-    <view class="setting-item" data-name="数据备份" bindtap="onTodo">
-      <text>数据备份</text>
+    <view class="setting-item" bindtap="onOpenExport">
+      <text>数据导出</text>
       <text class="arrow">›</text>
     </view>
   </view>
 
-  <view class="version">开发中 · 现在显示的是示例菜谱</view>
+  <view wx:if="{{sampleCount}}" class="card sample">
+    <view class="sample-text">菜单里还有 {{sampleCount}} 道示例菜，开始记自己的菜以后可以一起删掉。</view>
+    <view class="sample-btn" bindtap="onRemoveSamples">删除示例菜</view>
+  </view>
+
+  <view class="version">两个人共用一本菜谱，都能看、都能改</view>
 </view>

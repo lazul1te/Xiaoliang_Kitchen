@@ -1,0 +1,448 @@
+// 新增 / 编辑菜品：成品照、基本信息、标签、原料（主料/辅料/调料）、分步做法（可配图、可设计时）、小贴士
+const dishService = require("../../services/dish");
+const categoryService = require("../../services/category");
+const imageService = require("../../services/image");
+const ui = require("../../utils/ui");
+const { formatSeconds } = require("../../utils/dish");
+
+const STATUS_OPTIONS = [
+  { value: "wish", text: "想学" },
+  { value: "learning", text: "练习中" },
+  { value: "mastered", text: "拿手菜" },
+];
+const DIFFICULTY_LABELS = ["", "很简单", "简单", "中等", "有点难", "很难"];
+const PRESET_TAGS = ["快手", "下饭", "宴客", "素菜", "清淡", "辣", "早餐"];
+const GROUPS = [
+  { type: "main", label: "主料", placeholder: "比如：鸡蛋" },
+  { type: "side", label: "辅料", placeholder: "比如：葱" },
+  { type: "seasoning", label: "调料", placeholder: "比如：盐" },
+];
+const TIMER_SECONDS = [0, 10, 20, 30, 40, 50];
+const TIMER_RANGE = [
+  Array.from({ length: 181 }, (_, m) => `${m} 分`),
+  TIMER_SECONDS.map((s) => `${s} 秒`),
+];
+const NEW_CATEGORY = "＋ 新建分类";
+
+// 列表里每一行要有个不变的 key，删行、调顺序时输入框才不会串
+let keySeed = 0;
+const nextKey = () => (keySeed += 1);
+
+const unique = (list) => list.filter((x, i) => x && list.indexOf(x) === i);
+
+function emptyIngredient() {
+  return { key: nextKey(), name: "", amount: "", unit: "" };
+}
+
+// 表单里的一步，多带两个显示用的字段：计时文字、计时选择器停在哪
+function formStep(step) {
+  const timer = step.timer || 0;
+  return {
+    key: step.key || nextKey(),
+    text: step.text || "",
+    image: step.image || "",
+    timer,
+    timerText: timer > 0 ? formatSeconds(timer) : "",
+    timerValue: [Math.min(180, Math.floor(timer / 60)), Math.min(5, Math.round((timer % 60) / 10))],
+  };
+}
+
+// 菜品 → 表单
+function toForm(dish) {
+  return {
+    _id: dish._id,
+    name: dish.name,
+    categoryId: dish.categoryId,
+    cover: dish.cover,
+    status: dish.status,
+    difficulty: dish.difficulty,
+    duration: dish.duration ? String(dish.duration) : "",
+    servings: dish.servings ? String(dish.servings) : "",
+    tags: dish.tags.slice(),
+    tips: dish.tips,
+    groups: GROUPS.map((g) => ({
+      type: g.type,
+      label: g.label,
+      placeholder: g.placeholder,
+      items: dish.ingredients
+        .filter((i) => i.type === g.type)
+        .map((i) => ({ key: nextKey(), name: i.name, amount: i.amount, unit: i.unit })),
+    })),
+    steps: dish.steps.map(formStep),
+  };
+}
+
+function newForm(categoryId, categories) {
+  const valid = categories.some((c) => c._id === categoryId);
+  return {
+    _id: "",
+    name: "",
+    categoryId: valid ? categoryId : categories.length ? categories[0]._id : "",
+    cover: "",
+    status: "learning",
+    difficulty: 2,
+    duration: "",
+    servings: "2",
+    tags: [],
+    tips: "",
+    groups: GROUPS.map((g) => ({ type: g.type, label: g.label, placeholder: g.placeholder, items: [emptyIngredient()] })),
+    steps: [formStep({})],
+  };
+}
+
+// 表单 → 菜品。空行、多余的空格由 services 统一整理
+function fromForm(form) {
+  const ingredients = [];
+  form.groups.forEach((group) => {
+    group.items.forEach((item) => {
+      ingredients.push({ name: item.name, amount: item.amount, unit: item.unit, type: group.type });
+    });
+  });
+  return {
+    _id: form._id,
+    name: form.name,
+    categoryId: form.categoryId,
+    cover: form.cover,
+    status: form.status,
+    difficulty: form.difficulty,
+    duration: form.duration,
+    servings: form.servings,
+    tags: form.tags,
+    tips: form.tips,
+    ingredients,
+    steps: form.steps.map((s) => ({ text: s.text, image: s.image, timer: s.timer })),
+  };
+}
+
+Page({
+  data: {
+    form: null,
+    isEdit: false,
+    categoryNames: [NEW_CATEGORY],
+    pickerIndex: 0,
+    categoryName: "",
+    statusOptions: STATUS_OPTIONS,
+    stars: [1, 2, 3, 4, 5],
+    difficultyLabels: DIFFICULTY_LABELS,
+    tagChips: [], // [{ name, on }]
+    timerRange: TIMER_RANGE,
+  },
+
+  async onLoad(options) {
+    let categories;
+    let dishes;
+    try {
+      [categories, dishes] = await Promise.all([categoryService.listCategories(), dishService.listDishes()]);
+    } catch (err) {
+      await ui.alert("没读到数据", ui.errorText(err));
+      wx.navigateBack();
+      return;
+    }
+    const dish = options.id ? dishes.find((d) => d._id === options.id) : null;
+    if (options.id && !dish) {
+      await ui.alert("这道菜找不到了", "可能已经被删掉了");
+      wx.navigateBack();
+      return;
+    }
+    this.categories = categories;
+    // 打开时这道菜的修改时间：保存时拿它判断这期间对方有没有改过
+    this.baseUpdatedAt = dish ? dish.updatedAt : undefined;
+    // 用来提醒「已经有一道同名的菜」
+    this.otherNames = dishes.filter((d) => !dish || d._id !== dish._id).map((d) => d.name);
+    // 标签选项：常用标签 + 其他菜用过的标签
+    this.tagNames = unique(PRESET_TAGS.concat(...dishes.map((d) => d.tags)));
+    wx.setNavigationBarTitle({ title: dish ? "编辑菜谱" : "新增菜品" });
+    this.setData({ form: dish ? toForm(dish) : newForm(options.categoryId, categories), isEdit: !!dish });
+    this.refreshCategory();
+    this.refreshTags();
+  },
+
+  // ---------- 没保存就离开时提醒一下 ----------
+
+  markDirty() {
+    if (this.dirty) return;
+    this.dirty = true;
+    if (wx.enableAlertBeforeUnload) wx.enableAlertBeforeUnload({ message: "改动还没保存，确定要离开吗？" });
+  },
+
+  // 保存或删除成功后离开：先关掉提醒，再跳转
+  leave(go) {
+    const wasDirty = this.dirty;
+    this.dirty = false;
+    if (wasDirty && wx.disableAlertBeforeUnload) {
+      wx.disableAlertBeforeUnload({ complete: () => go() });
+    } else {
+      go();
+    }
+  },
+
+  // ---------- 成品照 ----------
+
+  async onChooseCover() {
+    const path = await imageService.choose();
+    if (!path) return;
+    this.setData({ "form.cover": path });
+    this.markDirty();
+  },
+
+  onRemoveCover() {
+    this.setData({ "form.cover": "" });
+    this.markDirty();
+  },
+
+  // ---------- 基本信息 ----------
+
+  // 菜名、耗时、份量、小贴士共用：data-field 写的是 form 里的字段名
+  onInput(e) {
+    this.setData({ [`form.${e.currentTarget.dataset.field}`]: e.detail.value });
+    this.markDirty();
+  },
+
+  refreshCategory() {
+    const index = this.categories.findIndex((c) => c._id === this.data.form.categoryId);
+    this.setData({
+      categoryNames: this.categories.map((c) => c.name).concat(NEW_CATEGORY),
+      pickerIndex: Math.max(0, index),
+      categoryName: index >= 0 ? this.categories[index].name : "",
+    });
+  },
+
+  onCategoryChange(e) {
+    const index = Number(e.detail.value);
+    if (index >= this.categories.length) {
+      this.createCategory();
+      return;
+    }
+    this.setData({ "form.categoryId": this.categories[index]._id });
+    this.refreshCategory();
+    this.markDirty();
+  },
+
+  async createCategory() {
+    const name = await ui.prompt({ title: "新建分类", placeholder: "比如：早餐" });
+    if (name === null) {
+      this.refreshCategory();
+      return;
+    }
+    wx.showLoading({ title: "正在新建", mask: true });
+    try {
+      const category = await categoryService.addCategory(name);
+      this.categories = await categoryService.listCategories();
+      wx.hideLoading();
+      this.setData({ "form.categoryId": category._id });
+      this.markDirty();
+    } catch (err) {
+      wx.hideLoading();
+      ui.toast(ui.errorText(err));
+    }
+    this.refreshCategory();
+  },
+
+  onStatusTap(e) {
+    this.setData({ "form.status": e.currentTarget.dataset.value });
+    this.markDirty();
+  },
+
+  onStarTap(e) {
+    this.setData({ "form.difficulty": e.currentTarget.dataset.value });
+    this.markDirty();
+  },
+
+  // ---------- 标签 ----------
+
+  refreshTags() {
+    const tags = this.data.form.tags;
+    this.setData({ tagChips: this.tagNames.map((name) => ({ name, on: tags.indexOf(name) >= 0 })) });
+  },
+
+  onTagTap(e) {
+    const tag = e.currentTarget.dataset.tag;
+    const tags = this.data.form.tags.slice();
+    const i = tags.indexOf(tag);
+    if (i >= 0) tags.splice(i, 1);
+    else tags.push(tag);
+    this.setData({ "form.tags": tags });
+    this.refreshTags();
+    this.markDirty();
+  },
+
+  async onAddTag() {
+    const tag = await ui.prompt({ title: "自定义标签", placeholder: "比如：孩子爱吃" });
+    if (!tag) return;
+    if (tag.length > 6) {
+      ui.toast("标签最多 6 个字");
+      return;
+    }
+    if (this.tagNames.indexOf(tag) < 0) this.tagNames.push(tag);
+    if (this.data.form.tags.indexOf(tag) < 0) this.setData({ "form.tags": this.data.form.tags.concat(tag) });
+    this.refreshTags();
+    this.markDirty();
+  },
+
+  // ---------- 原料 ----------
+
+  onIngInput(e) {
+    const { g, i, field } = e.currentTarget.dataset;
+    this.setData({ [`form.groups[${g}].items[${i}].${field}`]: e.detail.value });
+    this.markDirty();
+  },
+
+  onAddIng(e) {
+    const g = e.currentTarget.dataset.g;
+    this.setData({ [`form.groups[${g}].items`]: this.data.form.groups[g].items.concat(emptyIngredient()) });
+  },
+
+  onRemoveIng(e) {
+    const { g, i } = e.currentTarget.dataset;
+    const items = this.data.form.groups[g].items.slice();
+    items.splice(i, 1);
+    this.setData({ [`form.groups[${g}].items`]: items });
+    this.markDirty();
+  },
+
+  // ---------- 做法 ----------
+
+  onStepInput(e) {
+    this.setData({ [`form.steps[${e.currentTarget.dataset.i}].text`]: e.detail.value });
+    this.markDirty();
+  },
+
+  onAddStep() {
+    this.setData({ "form.steps": this.data.form.steps.concat(formStep({})) });
+  },
+
+  async onRemoveStep(e) {
+    const i = e.currentTarget.dataset.i;
+    const step = this.data.form.steps[i];
+    if (step.text.trim() || step.image) {
+      const ok = await ui.confirm({ title: `删除第 ${i + 1} 步？`, confirmText: "删除", danger: true });
+      if (!ok) return;
+    }
+    const steps = this.data.form.steps.slice();
+    steps.splice(i, 1);
+    this.setData({ "form.steps": steps });
+    this.markDirty();
+  },
+
+  // data-dir：-1 上移，1 下移
+  onMoveStep(e) {
+    const { i, dir } = e.currentTarget.dataset;
+    const j = i + dir;
+    const steps = this.data.form.steps.slice();
+    if (j < 0 || j >= steps.length) return;
+    const moved = steps[i];
+    steps[i] = steps[j];
+    steps[j] = moved;
+    this.setData({ "form.steps": steps });
+    this.markDirty();
+  },
+
+  async onStepImage(e) {
+    const i = e.currentTarget.dataset.i;
+    const path = await imageService.choose();
+    if (!path) return;
+    this.setData({ [`form.steps[${i}].image`]: path });
+    this.markDirty();
+  },
+
+  onRemoveStepImage(e) {
+    this.setData({ [`form.steps[${e.currentTarget.dataset.i}].image`]: "" });
+    this.markDirty();
+  },
+
+  setStepTimer(i, timer) {
+    const step = Object.assign({}, this.data.form.steps[i], { timer });
+    this.setData({ [`form.steps[${i}]`]: formStep(step) });
+    this.markDirty();
+  },
+
+  onStepTimerChange(e) {
+    const [m, s] = e.detail.value;
+    this.setStepTimer(e.currentTarget.dataset.i, m * 60 + TIMER_SECONDS[s]);
+  },
+
+  onClearTimer(e) {
+    this.setStepTimer(e.currentTarget.dataset.i, 0);
+  },
+
+  // ---------- 保存 / 删除 ----------
+
+  async onSave() {
+    if (this.saving) return;
+    const form = this.data.form;
+    const name = form.name.trim();
+    if (!name) {
+      ui.toast("先给这道菜起个名字");
+      return;
+    }
+    if (!form.categoryId) {
+      ui.toast("选一个分类");
+      return;
+    }
+    if (this.otherNames.indexOf(name) >= 0) {
+      const ok = await ui.confirm({
+        title: `已经有一道「${name}」了`,
+        content: "还要再存一道同名的菜吗？",
+        confirmText: "保存",
+      });
+      if (!ok) return;
+    }
+    this.saving = true;
+    let dish = await this.submit({ baseUpdatedAt: this.baseUpdatedAt });
+    if (dish === "CONFLICT") {
+      const ok = await ui.confirm({
+        title: "这道菜刚被改过",
+        content: "可能是对方刚刚也改了这道菜。要用你现在填的内容覆盖吗？",
+        confirmText: "覆盖",
+        danger: true,
+      });
+      dish = ok ? await this.submit({ force: true }) : null;
+    }
+    this.saving = false;
+    if (!dish) return;
+    const done = () => ui.toast("已保存");
+    this.leave(() => {
+      if (this.data.isEdit) wx.navigateBack({ success: done });
+      else wx.redirectTo({ url: `/pages/dish-detail/index?id=${dish._id}`, success: done });
+    });
+  },
+
+  // 提交到云上：成功返回菜品；对方刚改过返回 "CONFLICT"；其他失败弹窗说明，返回 null
+  async submit(options) {
+    wx.showLoading({ title: "保存中", mask: true });
+    try {
+      const dish = await dishService.saveDish(fromForm(this.data.form), options);
+      wx.hideLoading();
+      return dish;
+    } catch (err) {
+      wx.hideLoading();
+      if (err.code === "CONFLICT") return "CONFLICT";
+      ui.alert("保存失败", ui.errorText(err));
+      return null;
+    }
+  },
+
+  async onDelete() {
+    const ok = await ui.confirm({
+      title: `删除「${this.data.form.name}」？`,
+      content: "删除后两个人的菜单里都没有了，照片也会一起删掉，找不回来。",
+      confirmText: "删除",
+      danger: true,
+    });
+    if (!ok) return;
+    wx.showLoading({ title: "删除中", mask: true });
+    try {
+      await dishService.removeDish(this.data.form._id);
+    } catch (err) {
+      wx.hideLoading();
+      ui.alert("删除失败", ui.errorText(err));
+      return;
+    }
+    wx.hideLoading();
+    // 从详情页进来的，详情页也一起退掉
+    const pages = getCurrentPages();
+    const prev = pages[pages.length - 2];
+    const delta = prev && prev.route === "pages/dish-detail/index" ? 2 : 1;
+    this.leave(() => wx.navigateBack({ delta, success: () => ui.toast("已删除") }));
+  },
+});

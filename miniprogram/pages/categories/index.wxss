@@ -1,0 +1,64 @@
+.cats {
+  padding-bottom: 60rpx;
+}
+
+.list {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 0;
+}
+
+.row + .row {
+  border-top: 2rpx solid var(--line);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.row-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.row-count {
+  margin-left: 16rpx;
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+.row-tools {
+  display: flex;
+  align-items: center;
+}
+
+.tool {
+  margin-left: 28rpx;
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.tool.disabled {
+  color: #e0d8cc;
+}
+
+.tool.danger {
+  color: var(--danger);
+}
+
+.hint {
+  margin: 24rpx 40rpx 0;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+.add {
+  margin: 40rpx 48rpx 0;
+}

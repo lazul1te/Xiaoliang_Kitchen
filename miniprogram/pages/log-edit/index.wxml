@@ -1,0 +1,71 @@
+<view wx:if="{{form}}" class="log-edit">
+  <!-- 成品照：点一下拍照或从相册选 -->
+  <view class="photo-box" bindtap="onChoosePhoto">
+    <image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
+    <view wx:else class="photo-empty">
+      <text class="photo-icon">📷</text>
+      <text>拍一张成品照</text>
+    </view>
+    <view wx:if="{{form.photo}}" class="photo-actions">
+      <text class="photo-btn">换一张</text>
+      <text class="photo-btn" catchtap="onRemovePhoto">删除</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <picker wx:if="{{!dishLocked}}" range="{{dishNames}}" value="{{dishIndex}}" bindchange="onDishChange">
+      <view class="field">
+        <text class="label">做的菜</text>
+        <text class="value {{dishName ? '' : 'placeholder'}}">{{dishName || '选一道菜'}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </picker>
+    <view wx:else class="field">
+      <text class="label">做的菜</text>
+      <text class="value">{{dishName}}</text>
+    </view>
+    <picker mode="date" value="{{form.date}}" end="{{today}}" bindchange="onDateChange">
+      <view class="field">
+        <text class="label">哪天做的</text>
+        <text class="value">{{form.date}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </picker>
+    <view class="field">
+      <text class="label">好吃程度</text>
+      <view class="stars">
+        <text wx:for="{{stars}}" wx:key="*this" class="star {{form.rating >= item ? 'on' : ''}}"
+              data-value="{{item}}" bindtap="onStarTap">★</text>
+        <text class="star-text">{{ratingLabels[form.rating]}}</text>
+      </view>
+    </view>
+    <view class="field">
+      <text class="label">掌勺</text>
+      <input class="input" value="{{form.cook}}" placeholder="谁做的" maxlength="10"
+             data-field="cook" bindinput="onInput" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">心得</view>
+    <textarea class="text-input" value="{{form.note}}" placeholder="这次哪里好、哪里要改，比如：盐少放一点，番茄多炒一会儿"
+              auto-height maxlength="-1" cursor-spacing="80" data-field="note" bindinput="onInput" />
+  </view>
+
+  <view wx:if="{{showCoverOption || showPlanOption}}" class="card">
+    <view wx:if="{{showCoverOption}}" class="option" bindtap="onToggleCover">
+      <view class="checkbox {{useAsCover ? 'on' : ''}}">{{useAsCover ? '✓' : ''}}</view>
+      <text>用这张照片当这道菜的成品照</text>
+    </view>
+    <view wx:if="{{showPlanOption}}" class="option" bindtap="onTogglePlan">
+      <view class="checkbox {{removeFromPlan ? 'on' : ''}}">{{removeFromPlan ? '✓' : ''}}</view>
+      <text>从今日菜单里划掉这道菜</text>
+    </view>
+  </view>
+</view>
+
+<!-- 底部保存栏 -->
+<view wx:if="{{form}}" class="save-bar">
+  <view wx:if="{{isEdit}}" class="delete-btn" bindtap="onDelete">删除</view>
+  <view class="btn-primary save-btn" bindtap="onSave">{{isEdit ? '保存' : '打卡'}}</view>
+</view>

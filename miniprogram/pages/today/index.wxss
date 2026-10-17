@@ -14,12 +14,116 @@
   color: var(--wood);
 }
 
+/* ---------- 买菜清单 ---------- */
+
 .shopping {
   margin: 8rpx 0 40rpx;
 }
 
+.shopping-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.shopping-title {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.shopping-progress {
+  font-size: 24rpx;
+  color: var(--scallion);
+}
+
 .shopping-hint {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+.shop-group {
+  margin-top: 20rpx;
+}
+
+.shop-label {
+  padding-bottom: 6rpx;
+  font-size: 24rpx;
+  color: var(--wood);
+}
+
+.shop-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.check {
+  flex-shrink: 0;
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 20rpx;
+  border: 3rpx solid #d9cfc1;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 36rpx;
+  color: #fff;
+}
+
+.shop-row.done .check {
+  border-color: var(--scallion);
+  background: var(--scallion);
+}
+
+.shop-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.shop-name {
+  font-size: 28rpx;
+}
+
+.shop-amount {
+  flex-shrink: 0;
+  margin-left: 16rpx;
   font-size: 26rpx;
-  line-height: 1.7;
   color: var(--text-2);
+}
+
+.shop-dishes {
+  margin-top: 2rpx;
+  font-size: 22rpx;
+  color: var(--text-3);
+}
+
+/* 买到了：变淡、划掉 */
+.shop-row.done .shop-name,
+.shop-row.done .shop-amount {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+
+.shop-remove {
+  flex-shrink: 0;
+  width: 56rpx;
+  text-align: center;
+  font-size: 36rpx;
+  color: var(--text-3);
+}
+
+.shop-add {
+  padding: 20rpx 0 4rpx;
+  font-size: 26rpx;
+  color: var(--wood);
 }

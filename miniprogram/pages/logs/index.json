@@ -1,3 +1,5 @@
 {
-  "navigationBarTitleText": "做菜记录"
+  "navigationBarTitleText": "做菜记录",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

@@ -9,6 +9,7 @@ page {
   --text-2: #6e6e76; /* 次要文字 */
   --text-3: #a0a0a8; /* 提示文字 */
   --line: #f2e8da; /* 分隔线 */
+  --danger: #e5534b; /* 删除 */
 
   background: var(--cream);
   color: var(--pan);

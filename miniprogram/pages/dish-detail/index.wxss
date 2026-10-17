@@ -101,6 +101,12 @@
   color: var(--text-2);
 }
 
+/* 还没填原料、做法时的提示 */
+.none {
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
 /* ---------- 原料 ---------- */
 
 .ing-group {
@@ -193,6 +199,69 @@
   font-size: 26rpx;
   line-height: 1.7;
   color: var(--text-2);
+}
+
+/* ---------- 做菜记录 ---------- */
+
+.logs-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.logs-add {
+  font-size: 26rpx;
+  color: var(--wood);
+}
+
+.mini-log {
+  display: flex;
+  padding: 16rpx 0;
+  border-top: 2rpx solid var(--line);
+}
+
+.mini-photo {
+  flex-shrink: 0;
+  width: 112rpx;
+  height: 112rpx;
+  margin-right: 20rpx;
+  border-radius: 12rpx;
+}
+
+.mini-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mini-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.mini-stars {
+  color: var(--yolk);
+}
+
+.mini-note {
+  margin-top: 4rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.mini-cook {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--text-3);
+}
+
+.logs-more {
+  padding-top: 16rpx;
+  border-top: 2rpx solid var(--line);
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--wood);
 }
 
 /* ---------- 底部操作栏 ---------- */

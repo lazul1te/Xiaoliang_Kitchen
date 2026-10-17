@@ -1,0 +1,278 @@
+/* 上面一条 + 中间滑动区 + 下面按钮，正好铺满一屏 */
+.cook {
+  position: relative;
+  height: 100vh;
+  background: #fff;
+}
+
+/* ---------- 上面 ---------- */
+
+.top {
+  height: 120rpx;
+  padding: 20rpx 32rpx 0;
+  background: var(--cream);
+}
+
+.top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step-label {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.ing-btn {
+  padding: 8rpx 24rpx;
+  border-radius: 30rpx;
+  background: #fff;
+  font-size: 24rpx;
+  color: var(--wood);
+}
+
+.bar {
+  height: 10rpx;
+  margin-top: 20rpx;
+  border-radius: 5rpx;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 5rpx;
+  background: var(--yolk);
+  transition: width 0.25s;
+}
+
+/* 正在走的计时，浮在滑动区上面 */
+.running {
+  position: absolute;
+  top: 132rpx;
+  right: 24rpx;
+  left: 24rpx;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.running-chip {
+  margin: 0 12rpx 12rpx 0;
+  padding: 8rpx 20rpx;
+  border-radius: 28rpx;
+  background: var(--pan);
+  font-size: 24rpx;
+  color: #fff;
+}
+
+/* ---------- 中间：每一步 ---------- */
+
+.swiper {
+  height: calc(100vh - 120rpx - 136rpx - env(safe-area-inset-bottom));
+}
+
+.page {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 72rpx 48rpx 40rpx;
+}
+
+.step-no {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--wood);
+}
+
+/* 字大一点，站在灶台边也看得清 */
+.step-text {
+  margin-top: 20rpx;
+  font-size: 44rpx;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+.step-img {
+  display: block;
+  width: 100%;
+  margin-top: 28rpx;
+  border-radius: 16rpx;
+}
+
+.timer {
+  margin-top: 40rpx;
+  padding: 32rpx;
+  border-radius: 24rpx;
+  background: var(--cream);
+  text-align: center;
+}
+
+.timer-time {
+  font-size: 96rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 4rpx;
+}
+
+.timer.running .timer-time {
+  color: var(--wood);
+}
+
+.timer.done .timer-time {
+  color: var(--scallion);
+}
+
+.timer-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20rpx;
+}
+
+.timer-btn {
+  margin: 0 12rpx;
+  padding: 0 40rpx;
+  border: 2rpx solid var(--pan);
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  line-height: 72rpx;
+}
+
+.timer-btn.main {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  font-weight: 600;
+}
+
+/* 最后一页 */
+.finish {
+  text-align: center;
+}
+
+.finish-emoji {
+  margin-top: 80rpx;
+  font-size: 120rpx;
+}
+
+.finish-title {
+  margin-top: 20rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.finish-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
+.finish-btn {
+  width: 440rpx;
+  margin: 48rpx auto 0;
+}
+
+.finish-btn + .finish-btn {
+  margin-top: 24rpx;
+}
+
+.finish-skip {
+  margin-top: 36rpx;
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
+/* ---------- 下面 ---------- */
+
+.bottom {
+  display: flex;
+  height: calc(136rpx + env(safe-area-inset-bottom));
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(59, 59, 66, 0.06);
+}
+
+.nav-btn {
+  flex: 1;
+  height: 96rpx;
+  border: 2rpx solid var(--pan);
+  border-radius: 48rpx;
+  text-align: center;
+  font-size: 32rpx;
+  line-height: 92rpx;
+}
+
+.nav-btn + .nav-btn {
+  margin-left: 24rpx;
+}
+
+.nav-btn.main {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  font-weight: 600;
+}
+
+.nav-btn.disabled {
+  border-color: var(--line);
+  color: var(--text-3);
+}
+
+/* ---------- 原料清单 ---------- */
+
+.sheet-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.sheet {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 80vh;
+  padding: 36rpx 40rpx calc(32rpx + env(safe-area-inset-bottom));
+  border-radius: 32rpx 32rpx 0 0;
+  background: #fff;
+  overflow-y: auto;
+}
+
+.sheet-title {
+  margin-bottom: 16rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.sheet-none {
+  font-size: 26rpx;
+  color: var(--text-3);
+}
+
+.sheet-group + .sheet-group {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx dashed var(--line);
+}
+
+.sheet-label {
+  font-size: 24rpx;
+  color: var(--wood);
+}
+
+.sheet-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10rpx 0;
+  font-size: 32rpx;
+}
+
+.sheet-amount {
+  color: var(--text-2);
+}
+
+.sheet-close {
+  margin-top: 28rpx;
+}

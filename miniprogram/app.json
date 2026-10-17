@@ -4,7 +4,12 @@
     "pages/today/index",
     "pages/logs/index",
     "pages/mine/index",
-    "pages/dish-detail/index"
+    "pages/dish-detail/index",
+    "pages/dish-edit/index",
+    "pages/categories/index",
+    "pages/cook/index",
+    "pages/log-edit/index",
+    "pages/export/index"
   ],
   "window": {
     "backgroundColor": "#FFF8EE",

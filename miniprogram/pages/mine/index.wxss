@@ -71,6 +71,28 @@
   color: var(--text-3);
 }
 
+.sample {
+  display: flex;
+  align-items: center;
+}
+
+.sample-text {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.sample-btn {
+  flex-shrink: 0;
+  margin-left: 20rpx;
+  padding: 8rpx 24rpx;
+  border: 2rpx solid var(--danger);
+  border-radius: 28rpx;
+  font-size: 24rpx;
+  color: var(--danger);
+}
+
 .version {
   margin-top: 40rpx;
   text-align: center;

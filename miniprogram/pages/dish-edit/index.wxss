@@ -1,0 +1,345 @@
+/* 底部留出保存栏的高度 */
+.edit {
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+}
+
+/* ---------- 成品照 ---------- */
+
+.cover-box {
+  position: relative;
+  height: 360rpx;
+  margin: 20rpx 24rpx 0;
+  border-radius: 20rpx;
+  overflow: hidden;
+  background: var(--apricot);
+}
+
+.cover-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cover-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 26rpx;
+  color: var(--wood);
+}
+
+.cover-icon {
+  margin-bottom: 8rpx;
+  font-size: 64rpx;
+}
+
+.cover-actions {
+  position: absolute;
+  right: 16rpx;
+  bottom: 16rpx;
+  display: flex;
+}
+
+.cover-btn {
+  margin-left: 12rpx;
+  padding: 6rpx 22rpx;
+  border-radius: 24rpx;
+  background: rgba(59, 59, 66, 0.72);
+  font-size: 22rpx;
+  color: #fff;
+}
+
+/* ---------- 基本信息 ---------- */
+
+.field {
+  display: flex;
+  align-items: center;
+  min-height: 92rpx;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.card > .field:last-child {
+  border-bottom: none;
+}
+
+.label {
+  flex-shrink: 0;
+  width: 130rpx;
+  font-size: 28rpx;
+  color: var(--text-2);
+}
+
+.input {
+  flex: 1;
+  height: 92rpx;
+  font-size: 28rpx;
+}
+
+.input.short {
+  flex: none;
+  width: 140rpx;
+}
+
+.unit {
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.value {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.value.placeholder {
+  color: var(--text-3);
+}
+
+.arrow {
+  font-size: 36rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+/* 选项小按钮：熟练度、标签 */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 10rpx 0;
+}
+
+.chip {
+  margin: 6rpx 16rpx 6rpx 0;
+  padding: 8rpx 24rpx;
+  border-radius: 28rpx;
+  background: var(--cream);
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.chip.on {
+  background: var(--yolk);
+  color: var(--pan);
+  font-weight: 600;
+}
+
+.chip.add {
+  padding: 6rpx 22rpx;
+  border: 2rpx dashed #d9cfc1;
+  background: #fff;
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+}
+
+.star {
+  padding: 0 6rpx;
+  font-size: 40rpx;
+  color: #e6dccd;
+}
+
+.star.on {
+  color: var(--yolk);
+}
+
+.star-text {
+  margin-left: 12rpx;
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+/* ---------- 原料 ---------- */
+
+.group + .group {
+  margin-top: 12rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx dashed var(--line);
+}
+
+.group-label {
+  margin-bottom: 10rpx;
+  font-size: 24rpx;
+  color: var(--wood);
+}
+
+.ing-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.ing-input {
+  height: 72rpx;
+  padding: 0 16rpx;
+  border-radius: 12rpx;
+  background: var(--cream);
+  font-size: 26rpx;
+}
+
+.ing-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.ing-amount {
+  width: 140rpx;
+  margin-left: 12rpx;
+}
+
+.ing-unit {
+  width: 110rpx;
+  margin-left: 12rpx;
+}
+
+.row-remove {
+  width: 56rpx;
+  text-align: center;
+  font-size: 36rpx;
+  color: var(--text-3);
+}
+
+.row-add {
+  padding: 12rpx 0;
+  font-size: 26rpx;
+  color: var(--wood);
+}
+
+.hint {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* ---------- 做法 ---------- */
+
+.step {
+  padding: 16rpx 0 20rpx;
+  border-bottom: 2rpx dashed var(--line);
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.step-no {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: var(--yolk);
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 44rpx;
+}
+
+.step-tools {
+  display: flex;
+}
+
+.tool {
+  margin-left: 28rpx;
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.tool.danger {
+  color: var(--danger);
+}
+
+/* 多行输入框：做法每一步、小贴士 */
+.text-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120rpx;
+  padding: 16rpx;
+  border-radius: 12rpx;
+  background: var(--cream);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.step-img-box {
+  position: relative;
+  width: 240rpx;
+  height: 180rpx;
+  margin-top: 16rpx;
+}
+
+.step-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+}
+
+.img-remove {
+  position: absolute;
+  top: -14rpx;
+  right: -14rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: var(--pan);
+  text-align: center;
+  font-size: 28rpx;
+  line-height: 38rpx;
+  color: #fff;
+}
+
+.step-extra {
+  display: flex;
+  align-items: center;
+  margin-top: 14rpx;
+}
+
+.extra-btn {
+  margin-right: 16rpx;
+  padding: 6rpx 20rpx;
+  border: 2rpx solid var(--line);
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.extra-btn.on {
+  border-color: var(--yolk);
+  background: #fff2d9;
+  color: var(--wood);
+}
+
+.extra-clear {
+  font-size: 22rpx;
+  color: var(--text-3);
+}
+
+/* ---------- 底部保存栏 ---------- */
+
+.save-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(59, 59, 66, 0.06);
+}
+
+.delete-btn {
+  flex-shrink: 0;
+  width: 120rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--danger);
+}
+
+.save-btn {
+  flex: 1;
+}

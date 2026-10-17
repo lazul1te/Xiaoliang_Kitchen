@@ -1,6 +1,7 @@
 <view wx:if="{{notFound}}" class="empty">
   <view class="empty-emoji">🍽️</view>
   <view class="empty-title">这道菜找不到了</view>
+  <view class="empty-desc">可能已经被删掉了</view>
 </view>
 
 <view wx:elif="{{dish}}" class="detail">
@@ -22,13 +23,13 @@
     </view>
     <view class="facts">
       <view class="fact">
-        <text class="fact-value">{{dish.duration}}</text>
-        <text class="fact-unit">分钟</text>
+        <text class="fact-value">{{dish.duration || '—'}}</text>
+        <text wx:if="{{dish.duration}}" class="fact-unit">分钟</text>
         <view class="fact-label">耗时</view>
       </view>
       <view class="fact">
-        <text class="fact-value">{{dish.servings}}</text>
-        <text class="fact-unit">人份</text>
+        <text class="fact-value">{{dish.servings || '—'}}</text>
+        <text wx:if="{{dish.servings}}" class="fact-unit">人份</text>
         <view class="fact-label">份量</view>
       </view>
       <view class="fact">
@@ -36,16 +37,17 @@
         <view class="fact-label">难度</view>
       </view>
     </view>
-    <view class="cook-line">{{dish.cookLine}}</view>
+    <view class="cook-line">{{dish.cookLine}}<text wx:if="{{dish.updatedText}}"> · {{dish.updatedText}}改过</text></view>
   </view>
 
   <!-- 原料 -->
   <view class="card">
     <view class="card-title">原料</view>
+    <view wx:if="{{!dish.ingredientGroups.length}}" class="none">还没写原料，点左下角「编辑」补上</view>
     <view wx:for="{{dish.ingredientGroups}}" wx:key="type" wx:for-item="group" class="ing-group">
       <view class="ing-label">{{group.label}}</view>
       <view class="ing-items">
-        <view wx:for="{{group.items}}" wx:key="name" class="ing-row">
+        <view wx:for="{{group.items}}" wx:key="key" class="ing-row">
           <text>{{item.name}}</text>
           <text class="ing-amount">{{item.amountText}}</text>
         </view>
@@ -55,11 +57,12 @@
 
   <!-- 做法 -->
   <view class="card">
-    <view class="card-title">做法 · {{dish.steps.length}} 步</view>
-    <view wx:for="{{dish.steps}}" wx:key="text" class="step">
+    <view class="card-title">做法{{dish.steps.length ? ' · ' + dish.steps.length + ' 步' : ''}}</view>
+    <view wx:if="{{!dish.steps.length}}" class="none">还没写做法</view>
+    <view wx:for="{{dish.steps}}" wx:key="key" class="step">
       <view class="step-no">{{index + 1}}</view>
       <view class="step-body">
-        <view class="step-text">{{item.text}}</view>
+        <view wx:if="{{item.text}}" class="step-text">{{item.text}}</view>
         <image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
         <view wx:if="{{item.timerText}}" class="step-timer">⏱ 计时 {{item.timerText}}</view>
       </view>
@@ -70,6 +73,27 @@
   <view wx:if="{{dish.tips}}" class="card tips">
     <view class="card-title">小贴士</view>
     <view class="tips-text">{{dish.tips}}</view>
+  </view>
+
+  <!-- 做菜记录 -->
+  <view class="card">
+    <view class="logs-head">
+      <text class="card-title">做菜记录{{logCount ? ' · ' + logCount + ' 次' : ''}}</text>
+      <text class="logs-add" bindtap="onAddLog">＋ 记一次</text>
+    </view>
+    <view wx:if="{{!logs.length}}" class="none">还没打过卡。点下面的「开始做」，做完打个卡</view>
+    <view wx:for="{{logs}}" wx:key="_id" class="mini-log" data-id="{{item._id}}" bindtap="onOpenLog">
+      <image wx:if="{{item.photo}}" class="mini-photo" src="{{item.photo}}" mode="aspectFill" />
+      <view class="mini-info">
+        <view class="mini-head">
+          <text>{{item.dayText}}</text>
+          <text wx:if="{{item.stars}}" class="mini-stars">{{item.stars}}</text>
+        </view>
+        <view wx:if="{{item.note}}" class="mini-note">{{item.note}}</view>
+        <view wx:if="{{item.cook}}" class="mini-cook">掌勺：{{item.cook}}</view>
+      </view>
+    </view>
+    <view wx:if="{{logCount > logs.length}}" class="logs-more" bindtap="onAllLogs">在「记录」里看全部 ›</view>
   </view>
 </view>
 

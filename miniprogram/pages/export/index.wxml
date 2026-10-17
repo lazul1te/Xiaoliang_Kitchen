@@ -1,0 +1,41 @@
+<view class="export">
+  <view class="card">
+    <view class="card-title">为什么要导出</view>
+    <view class="para">菜谱都存在微信云开发的免费环境里，平时不用管。免费活动写的是到 2026 年底，以后万一要收费或者停用，有这个文件就能把数据完整搬走。隔一阵子导出一次比较保险。</view>
+  </view>
+
+  <view wx:if="{{summary}}" class="card">
+    <view class="row"><text>分类</text><text class="row-value">{{summary.categoryCount}} 个</text></view>
+    <view class="row"><text>菜谱</text><text class="row-value">{{summary.dishCount}} 道</text></view>
+    <view class="row"><text>做菜记录</text><text class="row-value">{{summary.logCount}} 条</text></view>
+    <view class="row" bindtap="onTogglePhotos">
+      <view class="option">
+        <view class="checkbox {{withPhotos ? 'on' : ''}}">{{withPhotos ? '✓' : ''}}</view>
+        <text>照片也一起打包（{{summary.photoCount}} 张）</text>
+      </view>
+    </view>
+    <view class="hint">不带照片时文件很小；带上照片会大一些，生成也要等一会儿。</view>
+  </view>
+
+  <view class="card">
+    <view class="step">
+      <view class="step-no">1</view>
+      <view class="step-main">
+        <view class="step-title">生成备份文件</view>
+        <view wx:if="{{status === 'working'}}" class="step-desc">{{progress}}</view>
+        <view wx:elif="{{status === 'ready'}}" class="step-desc ok">
+          已生成：{{file.sizeText}}{{withPhotos ? '，带了 ' + file.photoCount + ' 张照片' : ''}}{{file.failedPhotos ? '（' + file.failedPhotos + ' 张没下载下来）' : ''}}
+        </view>
+      </view>
+      <view class="step-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onBuild">{{status === 'ready' ? '重新生成' : '生成'}}</view>
+    </view>
+    <view class="step">
+      <view class="step-no">2</view>
+      <view class="step-main">
+        <view class="step-title">发到微信聊天里保存</view>
+        <view class="step-desc">建议发给「文件传输助手」，电脑上登录微信也能另存一份</view>
+      </view>
+      <view class="step-btn main {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSend">发送</view>
+    </view>
+  </view>
+</view>

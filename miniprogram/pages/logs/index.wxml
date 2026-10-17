@@ -1,6 +1,46 @@
-<view class="empty">
+<view wx:if="{{loaded && !months.length}}" class="empty">
   <view class="empty-emoji">📒</view>
   <view class="empty-title">还没有做菜记录</view>
-  <view class="empty-desc">以后每做完一道菜就打个卡</view>
-  <view class="empty-desc">成品照和心得会按日期记在这里</view>
+  <view class="empty-desc">在菜谱详情页点「开始做」，做完打个卡</view>
+  <view class="empty-desc">以前做过的菜也可以补记</view>
+  <view class="btn-primary" bindtap="onAddLog">补一条记录</view>
+</view>
+
+<view wx:elif="{{loaded}}" class="logs">
+  <view class="card stats">
+    <view class="stat">
+      <view class="stat-num">{{stats.thisMonth}}</view>
+      <view class="stat-label">本月下厨</view>
+    </view>
+    <view class="stat">
+      <view class="stat-num">{{stats.total}}</view>
+      <view class="stat-label">一共下厨</view>
+    </view>
+    <view class="stat">
+      <view class="stat-num">{{stats.dishCount}}</view>
+      <view class="stat-label">道菜做过</view>
+    </view>
+  </view>
+
+  <view class="add-log" bindtap="onAddLog">＋ 补一条记录</view>
+
+  <view wx:for="{{months}}" wx:key="key" wx:for-item="month" class="month">
+    <view class="month-title">{{month.title}}<text class="month-count"> · 下厨 {{month.count}} 次</text></view>
+    <view wx:for="{{month.days}}" wx:key="key" wx:for-item="day" class="day">
+      <view class="day-title">{{day.title}}</view>
+      <view wx:for="{{day.logs}}" wx:key="_id" class="log-card" data-id="{{item._id}}" bindtap="onOpenLog">
+        <image wx:if="{{item.photo}}" class="log-photo" src="{{item.photo}}" mode="aspectFill" />
+        <view wx:else class="log-photo log-photo-empty">🍳</view>
+        <view class="log-info">
+          <view class="log-head">
+            <text class="log-dish">{{item.dishName}}</text>
+            <text wx:if="{{item.stars}}" class="log-stars">{{item.stars}}</text>
+          </view>
+          <view wx:if="{{item.note}}" class="log-note">{{item.note}}</view>
+          <view wx:if="{{item.cook}}" class="log-cook">掌勺：{{item.cook}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+  <view class="list-end">— 下拉可以刷新 —</view>
 </view>

@@ -1,0 +1,76 @@
+<view wx:if="{{notFound}}" class="empty">
+  <view class="empty-emoji">🍽️</view>
+  <view class="empty-title">这道菜找不到了</view>
+  <view class="empty-desc">可能已经被删掉了</view>
+</view>
+
+<view wx:elif="{{dish}}" class="cook">
+  <!-- 上面：第几步、进度、原料 -->
+  <view class="top">
+    <view class="top-row">
+      <text class="step-label">{{stepLabel}}</text>
+      <view class="ing-btn" bindtap="onToggleIngredients">🥕 看原料</view>
+    </view>
+    <view class="bar"><view class="bar-fill" style="width: {{progress}}%"></view></view>
+  </view>
+
+  <!-- 正在走的计时，点一下跳到那一步 -->
+  <view wx:if="{{running.length}}" class="running">
+    <view wx:for="{{running}}" wx:key="index" class="running-chip" data-i="{{item.index}}" bindtap="onJumpStep">
+      ⏱ {{item.label}}
+    </view>
+  </view>
+
+  <!-- 中间：每一步一页，左右滑动 -->
+  <swiper class="swiper" current="{{current}}" duration="250" bindchange="onSwipe">
+    <swiper-item wx:for="{{steps}}" wx:key="key">
+      <scroll-view scroll-y class="page">
+        <view class="step-no">第 {{index + 1}} 步</view>
+        <view class="step-text">{{item.text}}</view>
+        <image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
+        <view wx:if="{{item.hasTimer}}" class="timer {{item.timerState}}">
+          <view class="timer-time">{{item.timerText}}</view>
+          <view class="timer-actions">
+            <view class="timer-btn main" data-i="{{index}}" bindtap="onTimerMain">{{item.timerAction}}</view>
+            <view wx:if="{{item.timerState !== 'idle'}}" class="timer-btn" data-i="{{index}}" bindtap="onTimerReset">重置</view>
+          </view>
+        </view>
+      </scroll-view>
+    </swiper-item>
+
+    <!-- 最后一页 -->
+    <swiper-item>
+      <view class="page finish">
+        <view class="finish-emoji">{{total ? '🎉' : '📝'}}</view>
+        <view class="finish-title">{{total ? '做好啦！' : '这道菜还没写做法'}}</view>
+        <view class="finish-desc">{{total ? '拍张照、记两句，下次做得更好' : '可以先去把步骤写上，也可以直接打卡'}}</view>
+        <view class="btn-primary finish-btn" bindtap="onFinish">打个卡</view>
+        <view wx:if="{{!total}}" class="btn-outline finish-btn" bindtap="onEditDish">去写做法</view>
+        <view class="finish-skip" bindtap="onBack">不记了，返回</view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <!-- 下面：上一步 / 下一步 -->
+  <view class="bottom">
+    <view class="nav-btn {{current === 0 ? 'disabled' : ''}}" bindtap="onPrev">上一步</view>
+    <view wx:if="{{current !== total}}" class="nav-btn main" bindtap="onNext">{{current === total - 1 ? '做完了' : '下一步'}}</view>
+    <view wx:else class="nav-btn main" bindtap="onFinish">打个卡</view>
+  </view>
+
+  <!-- 原料清单（从下面弹出来） -->
+  <view wx:if="{{showIngredients}}" class="sheet-mask" bindtap="onToggleIngredients">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-title">{{dish.name}} · 原料</view>
+      <view wx:if="{{!dish.ingredientGroups.length}}" class="sheet-none">还没写原料</view>
+      <view wx:for="{{dish.ingredientGroups}}" wx:key="type" wx:for-item="group" class="sheet-group">
+        <view class="sheet-label">{{group.label}}</view>
+        <view wx:for="{{group.items}}" wx:key="key" class="sheet-row">
+          <text>{{item.name}}</text>
+          <text class="sheet-amount">{{item.amountText}}</text>
+        </view>
+      </view>
+      <view class="btn-outline sheet-close" bindtap="onToggleIngredients">收起</view>
+    </view>
+  </view>
+</view>
