@@ -1,5 +1,6 @@
 // 菜单：点单式首页（左分类、右菜品、底部点菜栏）
 const dishService = require("../../services/dish");
+const diagnose = require("../../services/diagnose");
 const categoryService = require("../../services/category");
 const planService = require("../../services/plan");
 const ui = require("../../utils/ui");
@@ -241,8 +242,14 @@ Page({
     ui.photoHint();
   },
 
-  onOpenWishes() {
-    wx.navigateTo({ url: "/pages/wishes/index" });
+  // 搜不到的菜：记到想吃清单，菜名带过去
+  onWishFromSearch() {
+    wx.navigateTo({ url: `/pages/wish-edit/index?name=${encodeURIComponent(this.data.keyword.trim())}` });
+  },
+
+  // 读不到菜谱时：看看是哪个集合、哪项设置的问题
+  onDiagnose() {
+    return diagnose.run();
   },
 
   // 右上角「...」→ 转发给对方（体验版只有体验成员能打开）

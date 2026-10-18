@@ -17,7 +17,9 @@ Page({
     }
     wx.setNavigationBarTitle({ title: wish ? "想吃的" : "记一个想吃的" });
     this.setData({
-      form: wish ? { key: wish.key, name: wish.name, photo: wish.photo, note: wish.note } : { key: "", name: "", photo: "", note: "" },
+      form: wish
+        ? { key: wish.key, name: wish.name, photo: wish.photo, note: wish.note }
+        : { key: "", name: decodeURIComponent(options.name || "").slice(0, 20), photo: "", note: "" },
       isEdit: !!wish,
     });
   },

@@ -8,7 +8,8 @@ const { groupByMonth, logStats, buildMonth, dateValue, dayText, toLogCard, timeO
 
 Page({
   data: {
-    cal: null, // { title, weeks, monthCount }
+    cal: null, // { title, weeks, monthCount, dishCount, topDishId, topCount }
+    calSummary: "", // 本月小结：下厨几次、几道菜、最常做哪道
     selected: "", // 选中的日期 "2026-10-02"，空表示看全部
     dayTitle: "",
     dayLogs: [], // 选中那天的记录（卡片）
@@ -63,8 +64,13 @@ Page({
   renderCalendar() {
     const selected = this.data.selected;
     const dayLogs = selected ? this.logs.filter((l) => dateValue(l.cookedAt) === selected) : [];
+    const cal = buildMonth(this.calYear, this.calMonth, this.logs);
+    const top = cal.topDishId ? this.names[cal.topDishId] : "";
     this.setData({
-      cal: buildMonth(this.calYear, this.calMonth, this.logs),
+      cal,
+      calSummary: cal.monthCount
+        ? `这个月下厨 ${cal.monthCount} 次 · 做了 ${cal.dishCount} 道菜` + (top ? ` · 最常做「${top}」` : "")
+        : "这个月还没下厨",
       dayLogs: dayLogs.map((l) => toLogCard(l, this.names)),
       dayTitle: selected ? `${dayText(timeOf(selected))} · 做了 ${dayLogs.length} 道菜` : "",
     });
@@ -112,7 +118,9 @@ Page({
     wx.navigateTo({ url: `/pages/log-edit/index?id=${e.currentTarget.dataset.id}` });
   },
 
-  onAddLog() {
-    wx.navigateTo({ url: "/pages/log-edit/index" });
+  // 记一笔：点开了某一天就记在那天，不然记在今天。同一天可以记好几道
+  onAddLog(e) {
+    const date = (e && e.currentTarget.dataset.date) || "";
+    wx.navigateTo({ url: date ? `/pages/log-edit/index?date=${date}` : "/pages/log-edit/index" });
   },
 });

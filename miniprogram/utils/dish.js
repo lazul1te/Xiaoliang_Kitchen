@@ -143,4 +143,25 @@ function matchKeyword(dish, keyword) {
   );
 }
 
-module.exports = { normalizeDish, toCard, toDetail, matchKeyword, formatMonthDay, formatSeconds };
+// 用量一格写完：「2个」「2 个」「1/2小勺」「1.5两」→ 数字和单位分开；「适量」「少许」「一把」整个当用量
+function splitAmount(text) {
+  const s = String(text || "").trim();
+  const m = /^(\d+\/\d+|\d+(?:\.\d+)?)\s*(.*)$/.exec(s);
+  return m ? { amount: m[1], unit: m[2].trim() } : { amount: s, unit: "" };
+}
+
+// 「10分钟」「1分30秒」「90秒」「1.5小时」「半小时」→ 秒；只写数字按分钟算
+function parseDuration(v) {
+  if (typeof v === "number") return v > 0 ? Math.round(v * 60) : 0;
+  const s = String(v || "").trim();
+  if (!s) return 0;
+  if (/^\d+(\.\d+)?$/.test(s)) return Math.round(Number(s) * 60);
+  const h = /(\d+(?:\.\d+)?)\s*(?:个)?小时/.exec(s);
+  const m = /(\d+(?:\.\d+)?)\s*分/.exec(s);
+  const sec = /(\d+)\s*秒/.exec(s);
+  let total = (h ? Number(h[1]) * 3600 : 0) + (m ? Number(m[1]) * 60 : 0) + (sec ? Number(sec[1]) : 0);
+  if (/半小时/.test(s)) total += 1800;
+  return Math.round(total);
+}
+
+module.exports = { normalizeDish, toCard, toDetail, matchKeyword, formatMonthDay, formatSeconds, splitAmount, parseDuration };

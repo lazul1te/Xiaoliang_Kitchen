@@ -1,0 +1,34 @@
+<view wx:if="{{show}}" class="sheet-mask" bindtap="onClose">
+  <view class="sheet dp-sheet" catchtap="noop">
+    <view class="dp-head">
+      <text class="sheet-title">选一道菜</text>
+      <text class="dp-close hit" bindtap="onClose">×</text>
+    </view>
+    <view class="dp-search">
+      <icon type="search" size="14" color="#A0A0A8" />
+      <input class="dp-input" value="{{keyword}}" placeholder="搜菜名、原料或标签" bindinput="onInput" />
+      <icon wx:if="{{keyword}}" type="clear" size="16" color="#C4C4CA" bindtap="onClear" />
+    </view>
+    <scroll-view scroll-y class="dp-list">
+      <block wx:if="{{keyword}}">
+        <view wx:if="{{!results.length}}" class="dp-empty">没找到「{{keyword}}」</view>
+        <view wx:for="{{results}}" wx:key="_id" class="dp-row {{item._id === selected ? 'on' : ''}}"
+              data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onPick">
+          <text class="dp-name">{{item.name}}</text>
+          <text wx:if="{{item._id === selected}}" class="dp-check">✓</text>
+        </view>
+      </block>
+      <block wx:else>
+        <view wx:if="{{!sections.length}}" class="dp-empty">还没有菜，先去菜单里加几道</view>
+        <view wx:for="{{sections}}" wx:key="key" wx:for-item="section">
+          <view class="dp-title">{{section.title}}</view>
+          <view wx:for="{{section.items}}" wx:key="_id" class="dp-row {{item._id === selected ? 'on' : ''}}"
+                data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onPick">
+            <text class="dp-name">{{item.name}}</text>
+            <text wx:if="{{item._id === selected}}" class="dp-check">✓</text>
+          </view>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+</view>

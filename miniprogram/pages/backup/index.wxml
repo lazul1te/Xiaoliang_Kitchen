@@ -1,0 +1,34 @@
+<view class="backup">
+  <view class="card list">
+    <view class="row" bindtap="onOpenExport">
+      <view class="row-main">
+        <view class="row-title">备份到微信</view>
+        <view class="row-desc">把菜谱、记录和照片打包成一个文件，发到微信或者存到电脑</view>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="row" bindtap="onOpenImport">
+      <view class="row-main">
+        <view class="row-title">从文件导入</view>
+        <view class="row-desc">从微信聊天选文件，或者粘贴复制的内容</view>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">一次加好几道新菜</view>
+    <view class="para">拿一份导入模板，照着例子改好，再用「从文件导入」导进来。在手机上可以复制模板，在备忘录里改，改好复制回来粘贴。</view>
+    <view class="rules">
+      <view class="rule">· 只有菜名必填，其他不想写的整行删掉</view>
+      <view class="rule">· 原料一样写一项：「土豆 2个」「盐 适量」</view>
+      <view class="rule">· 要计时的步骤写「8分钟」，做菜时会有计时按钮</view>
+      <view class="rule">· 照片导入以后在菜的编辑页里加</view>
+    </view>
+    <view class="tpl-actions">
+      <view class="tpl-btn" bindtap="onCopyTemplate">复制模板</view>
+      <view class="tpl-btn" bindtap="onSendTemplate">发到微信</view>
+      <view wx:if="{{canSaveToDisk}}" class="tpl-btn" bindtap="onSaveTemplate">存到电脑</view>
+    </view>
+  </view>
+</view>

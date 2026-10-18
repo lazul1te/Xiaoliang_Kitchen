@@ -25,6 +25,8 @@
 }
 
 .ing-btn {
+  display: flex;
+  align-items: center;
   padding: 8rpx 24rpx;
   border-radius: 30rpx;
   background: #fff;
@@ -59,6 +61,8 @@
 }
 
 .running-chip {
+  display: flex;
+  align-items: center;
   margin: 0 12rpx 12rpx 0;
   padding: 8rpx 20rpx;
   border-radius: 28rpx;

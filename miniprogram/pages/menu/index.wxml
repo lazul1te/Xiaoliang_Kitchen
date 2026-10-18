@@ -1,24 +1,27 @@
 <import src="/templates/dish-card.wxml" />
 
 <view class="menu-page">
-  <!-- 顶部：标语 + 搜索 + 新菜 -->
+  <!-- 顶部：搜索 + 新菜 -->
   <view class="header">
-    <view class="slogan">好好做饭，也好好记录</view>
     <view class="search-row">
       <view class="search-box">
         <icon type="search" size="14" color="#A0A0A8" />
-        <input class="search-input" value="{{keyword}}" placeholder="搜菜名、原料或标签，比如：鸡蛋"
+        <input class="search-input" value="{{keyword}}" placeholder="搜菜名、原料或标签"
                placeholder-class="search-placeholder" confirm-type="search" bindinput="onSearchInput" />
         <icon wx:if="{{keyword}}" type="clear" size="16" color="#C4C4CA" bindtap="onClearSearch" />
       </view>
-      <view class="wish-btn" bindtap="onOpenWishes">💭 想吃</view>
       <view class="add-btn" bindtap="onAddDish">＋ 新菜</view>
     </view>
   </view>
 
   <!-- 搜索结果 -->
   <scroll-view wx:if="{{searching}}" class="search-list" scroll-y>
-    <view wx:if="{{!searchResults.length}}" class="search-empty">没找到「{{keyword}}」，换个词试试</view>
+    <view wx:if="{{!searchResults.length}}" class="search-empty">
+      <view>没找到「{{keyword}}」</view>
+      <view class="search-wish" bindtap="onWishFromSearch">
+        <image class="ic" src="/images/icons/wish.png" />记到想吃清单，以后慢慢学
+      </view>
+    </view>
     <block wx:for="{{searchResults}}" wx:key="_id">
       <template is="dishCard" data="{{dish: item, basket: basket, broken: broken}}" />
     </block>
@@ -26,15 +29,29 @@
 
   <!-- 左分类 + 右菜品。搜索时只是隐藏，回来还停在原来的位置 -->
   <view class="body {{searching ? 'is-hidden' : ''}}">
-    <view wx:if="{{status === 'loading'}}" class="state">
-      <view class="state-loading">正在读取菜谱…</view>
-    </view>
+    <!-- 第一次读取：灰色占位，和真的菜单长得一样 -->
+    <block wx:if="{{status === 'loading'}}">
+      <view class="cat-list">
+        <view wx:for="{{[1, 2, 3, 4]}}" wx:key="*this" class="sk-cat"><view class="sk sk-cat-bar"></view></view>
+      </view>
+      <view class="dish-list">
+        <view class="sk sk-title"></view>
+        <view wx:for="{{[1, 2, 3, 4]}}" wx:key="*this" class="dish-card">
+          <view class="sk cover"></view>
+          <view class="dish-info">
+            <view class="sk sk-line"></view>
+            <view class="sk sk-line short"></view>
+          </view>
+        </view>
+      </view>
+    </block>
 
     <view wx:elif="{{status === 'error'}}" class="state">
       <view class="empty-emoji">📡</view>
       <view class="empty-title">没读到菜谱</view>
       <view class="empty-desc">{{errorText}}</view>
       <view class="btn-primary" bindtap="onRetry">重试</view>
+      <view class="btn-outline" bindtap="onDiagnose">检查一下云开发</view>
     </view>
 
     <!-- 第一次用：云上还没有任何分类和菜 -->

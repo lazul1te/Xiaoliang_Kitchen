@@ -32,7 +32,9 @@
   align-items: center;
   justify-content: center;
   background: var(--apricot);
+  color: var(--wood);
   font-size: 60rpx;
+  font-weight: 700;
 }
 
 .wish-info {

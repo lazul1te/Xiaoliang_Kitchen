@@ -4,6 +4,7 @@ const dishService = require("../../services/dish");
 const planService = require("../../services/plan");
 const pantryService = require("../../services/pantry");
 const ui = require("../../utils/ui");
+const fileUtil = require("../../utils/file");
 const { toCard } = require("../../utils/dish");
 const { buildShoppingList } = require("../../utils/shopping");
 
@@ -123,6 +124,24 @@ Page({
     }
     planService.addExtra(name);
     return this.refresh();
+  },
+
+  // 复制没买的东西，发到微信里给对方或者自己看
+  onCopyList() {
+    const { shopping, items } = this.data;
+    const line = (i) => `· ${i.name}${i.amountText ? " " + i.amountText : ""}`;
+    const groups = [
+      ["", shopping.buy.filter((i) => !i.checked)],
+      ["调料（家里有没有看一眼）", shopping.unknown.filter((i) => !i.checked)],
+      ["另外要买", shopping.extras.filter((i) => !i.checked)],
+    ].filter(([, list]) => list.length);
+    if (!groups.length) {
+      ui.toast("都买齐了");
+      return;
+    }
+    const head = `买菜清单（${items.map((d) => d.name).join("、")}）`;
+    const body = groups.map(([title, list]) => (title ? `${title}：\n` : "") + list.map(line).join("\n")).join("\n\n");
+    fileUtil.copyText(`${head}\n${body}`);
   },
 
   onRemoveExtra(e) {

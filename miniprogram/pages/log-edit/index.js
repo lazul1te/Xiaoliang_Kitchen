@@ -6,15 +6,26 @@ const imageService = require("../../services/image");
 const ui = require("../../utils/ui");
 const { dateValue, dateToTime } = require("../../utils/log");
 
+// 以前写过的掌勺名字（最近的在前，最多 4 个）
+function recentCooks(logs, lastName) {
+  const names = [];
+  [lastName].concat(logs.map((l) => l.cook)).forEach((n) => {
+    const name = String(n || "").trim();
+    if (name && names.indexOf(name) < 0) names.push(name);
+  });
+  return names.slice(0, 4);
+}
+
 Page({
   data: {
     form: null, // { _id, dishId, date, photo, rating, note, cook }
     isEdit: false,
     dishLocked: false, // 从某道菜进来的，不用再选菜
-    dishNames: [],
-    dishIndex: 0,
     dishName: "",
+    showDishPicker: false, // 选菜面板
     today: "",
+    yesterday: "",
+    cookNames: [], // 以前写过的掌勺名字，点一下就行
     stars: [1, 2, 3, 4, 5],
     ratingLabels: ["点星星打个分", "不太行", "一般", "还不错", "好吃", "超好吃"],
     showCoverOption: false, // 「用这张照片当这道菜的成品照」
@@ -25,9 +36,11 @@ Page({
 
   async onLoad(options) {
     let log = null;
+    let logs = [];
     try {
       this.dishes = await dishService.listDishes();
       if (options.id) log = await logService.getLog(options.id);
+      logs = await logService.listLogs().catch(() => []);
     } catch (err) {
       await ui.alert("没读到数据", ui.errorText(err));
       wx.navigateBack();
@@ -50,6 +63,8 @@ Page({
       isEdit: !!log,
       dishLocked: !log && !!options.dishId,
       today: dateValue(Date.now()),
+      yesterday: dateValue(Date.now() - 24 * 3600 * 1000),
+      cookNames: recentCooks(logs, logService.getCookName()),
     });
     this.refreshDish();
   },
@@ -65,8 +80,6 @@ Page({
     const dish = this.dishes[index];
     const inPlan = !this.data.isEdit && !!dish && !!planService.getBasket()[dish._id];
     this.setData({
-      dishNames: this.dishes.map((d) => d.name),
-      dishIndex: Math.max(0, index),
       dishName: dish ? dish.name : this.data.form.dishId ? "这道菜已经删掉了" : "",
       showPlanOption: inPlan,
       removeFromPlan: inPlan,
@@ -99,16 +112,35 @@ Page({
 
   // ---------- 表单 ----------
 
-  onDishChange(e) {
-    const dish = this.dishes[Number(e.detail.value)];
-    if (!dish) return;
-    this.setData({ "form.dishId": dish._id });
+  onOpenDishPicker() {
+    this.setData({ showDishPicker: true });
+  },
+
+  onCloseDishPicker() {
+    this.setData({ showDishPicker: false });
+  },
+
+  async onDishPicked(e) {
+    const id = e.detail.id;
+    // 面板里的菜可能是刚刚新加的，这里的列表里还没有
+    if (!this.dishes.some((d) => d._id === id)) this.dishes = await dishService.listDishes();
+    this.setData({ showDishPicker: false, "form.dishId": id });
     this.refreshDish();
+    this.markDirty();
+  },
+
+  onQuickDate(e) {
+    this.setData({ "form.date": e.currentTarget.dataset.date });
     this.markDirty();
   },
 
   onDateChange(e) {
     this.setData({ "form.date": e.detail.value });
+    this.markDirty();
+  },
+
+  onPickCook(e) {
+    this.setData({ "form.cook": e.currentTarget.dataset.name });
     this.markDirty();
   },
 

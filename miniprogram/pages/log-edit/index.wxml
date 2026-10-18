@@ -3,7 +3,7 @@
   <view class="photo-box" bindtap="onChoosePhoto">
     <cloud-image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
     <view wx:else class="photo-empty">
-      <text class="photo-icon">📷</text>
+      <image class="ic xl" src="/images/icons/camera-wood.png" />
       <text>拍一张成品照</text>
     </view>
     <view wx:if="{{form.photo}}" class="photo-actions">
@@ -13,24 +13,27 @@
   </view>
 
   <view class="card">
-    <picker wx:if="{{!dishLocked}}" range="{{dishNames}}" value="{{dishIndex}}" bindchange="onDishChange">
-      <view class="field">
-        <text class="label">做的菜</text>
-        <text class="value {{dishName ? '' : 'placeholder'}}">{{dishName || '选一道菜'}}</text>
-        <text class="arrow">›</text>
-      </view>
-    </picker>
+    <!-- 选菜：弹出可以搜索、按分类排好的面板（菜多了比滚轮好找） -->
+    <view wx:if="{{!dishLocked}}" class="field" bindtap="onOpenDishPicker">
+      <text class="label">做的菜</text>
+      <text class="value {{dishName ? '' : 'placeholder'}}">{{dishName || '选一道菜'}}</text>
+      <text class="arrow">›</text>
+    </view>
     <view wx:else class="field">
       <text class="label">做的菜</text>
       <text class="value">{{dishName}}</text>
     </view>
-    <picker mode="date" value="{{form.date}}" end="{{today}}" bindchange="onDateChange">
-      <view class="field">
-        <text class="label">哪天做的</text>
-        <text class="value">{{form.date}}</text>
-        <text class="arrow">›</text>
+    <!-- 日期：多数是今天、昨天，点一下就行；别的日子再打开日期选择 -->
+    <view class="field field-wrap">
+      <text class="label">哪天做的</text>
+      <view class="chips">
+        <view class="chip {{form.date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onQuickDate">今天</view>
+        <view class="chip {{form.date === yesterday ? 'on' : ''}}" data-date="{{yesterday}}" bindtap="onQuickDate">昨天</view>
+        <picker mode="date" value="{{form.date}}" end="{{today}}" bindchange="onDateChange">
+          <view class="chip {{form.date !== today && form.date !== yesterday ? 'on' : ''}}">{{form.date !== today && form.date !== yesterday ? form.date : '其他日子'}}</view>
+        </picker>
       </view>
-    </picker>
+    </view>
     <view class="field">
       <text class="label">好吃程度</text>
       <view class="stars">
@@ -39,10 +42,17 @@
         <text class="star-text">{{ratingLabels[form.rating]}}</text>
       </view>
     </view>
-    <view class="field">
+    <!-- 掌勺：以前写过的名字点一下就行 -->
+    <view class="field field-wrap">
       <text class="label">掌勺</text>
-      <input class="input" value="{{form.cook}}" placeholder="谁做的" maxlength="10"
-             data-field="cook" bindinput="onInput" />
+      <view class="cook-box">
+        <input class="input" value="{{form.cook}}" placeholder="谁做的" maxlength="10"
+               data-field="cook" bindinput="onInput" />
+        <view wx:if="{{cookNames.length}}" class="chips">
+          <view wx:for="{{cookNames}}" wx:key="*this" class="chip {{form.cook === item ? 'on' : ''}}"
+                data-name="{{item}}" bindtap="onPickCook">{{item}}</view>
+        </view>
+      </view>
     </view>
   </view>
 
@@ -69,3 +79,5 @@
   <view wx:if="{{isEdit}}" class="delete-btn" bindtap="onDelete">删除</view>
   <view class="btn-primary save-btn" bindtap="onSave">{{isEdit ? '保存' : '打卡'}}</view>
 </view>
+
+<dish-picker show="{{showDishPicker}}" selected="{{form.dishId}}" bind:select="onDishPicked" bind:close="onCloseDishPicker" />

@@ -10,13 +10,13 @@
   <view class="add" bindtap="onAdd">＋ 记一个想吃的</view>
   <view wx:for="{{list}}" wx:key="key" class="wish" data-key="{{item.key}}" bindtap="onOpen">
     <cloud-image wx:if="{{item.photo}}" class="wish-photo" src="{{item.photo}}" mode="aspectFill" />
-    <view wx:else class="wish-photo wish-photo-empty">💭</view>
+    <view wx:else class="wish-photo wish-photo-empty">{{item.initial}}</view>
     <view class="wish-info">
       <view class="wish-name">{{item.name}}</view>
       <view wx:if="{{item.note}}" class="wish-note">{{item.note}}</view>
       <view class="wish-foot">
         <text class="wish-day">{{item.dayText}}</text>
-        <text class="wish-learn" data-key="{{item.key}}" catchtap="onLearn">开始学 ›</text>
+        <text class="wish-learn hit" data-key="{{item.key}}" catchtap="onLearn">开始学 ›</text>
       </view>
     </view>
   </view>

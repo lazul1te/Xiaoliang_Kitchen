@@ -1,0 +1,77 @@
+/* 面板外框、标题用 app.wxss 的 .sheet-mask / .sheet / .sheet-title；这里的类名都带 dp- 前缀，免得和页面撞名 */
+.dp-sheet {
+  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+}
+
+.dp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dp-close {
+  padding: 0 8rpx;
+  font-size: 44rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+.dp-search {
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  padding: 0 24rpx;
+  border-radius: 36rpx;
+  background: var(--cream);
+}
+
+.dp-input {
+  flex: 1;
+  margin: 0 12rpx;
+  font-size: var(--fs-sub);
+}
+
+.dp-list {
+  height: 60vh;
+  margin-top: 12rpx;
+}
+
+.dp-title {
+  padding: 20rpx 4rpx 8rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.dp-row {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 0 8rpx;
+  border-bottom: 2rpx solid var(--line);
+  font-size: var(--fs-body);
+}
+
+.dp-row.on {
+  font-weight: 600;
+}
+
+.dp-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dp-check {
+  margin-left: 16rpx;
+  color: var(--scallion);
+  font-weight: 700;
+}
+
+.dp-empty {
+  padding: 80rpx 0;
+  text-align: center;
+  font-size: var(--fs-sub);
+  color: var(--text-3);
+}

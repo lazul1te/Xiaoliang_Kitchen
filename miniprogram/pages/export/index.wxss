@@ -2,11 +2,6 @@
   padding-bottom: 60rpx;
 }
 
-.para {
-  font-size: 26rpx;
-  line-height: 1.7;
-  color: var(--text-2);
-}
 
 .row {
   display: flex;
@@ -42,11 +37,6 @@
   background: var(--yolk);
 }
 
-.hint {
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: var(--text-3);
-}
 
 /* ---------- 两步 ---------- */
 
@@ -107,6 +97,38 @@
   border-color: var(--yolk);
   background: var(--yolk);
   font-weight: 600;
+}
+
+/* 第 2 步：几种存法 */
+.save-actions {
+  display: flex;
+  margin: 0 0 16rpx 64rpx;
+}
+
+.save-btn {
+  flex: 1;
+  padding: 0 8rpx;
+  border: 2rpx solid var(--pan);
+  border-radius: 32rpx;
+  text-align: center;
+  font-size: var(--fs-sub);
+  line-height: 64rpx;
+}
+
+.save-btn + .save-btn {
+  margin-left: 16rpx;
+}
+
+.save-btn.main {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  font-weight: 600;
+}
+
+.save-btn.disabled {
+  border-color: var(--line);
+  background: #fff;
+  color: var(--text-3);
 }
 
 .step-btn.disabled {

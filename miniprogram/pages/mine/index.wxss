@@ -5,12 +5,12 @@
 .profile {
   display: flex;
   align-items: center;
-  padding: 48rpx 40rpx 24rpx;
+  padding: 36rpx 40rpx 16rpx;
 }
 
 .logo {
-  width: 120rpx;
-  height: 120rpx;
+  width: 96rpx;
+  height: 96rpx;
   border-radius: 50%;
 }
 
@@ -19,13 +19,13 @@
 }
 
 .app-name {
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 700;
 }
 
 .app-slogan {
-  margin-top: 6rpx;
-  font-size: 26rpx;
+  margin-top: 4rpx;
+  font-size: var(--fs-small);
   color: var(--text-2);
 }
 
@@ -39,13 +39,52 @@
 }
 
 .stat-num {
-  font-size: 44rpx;
+  font-size: var(--fs-xl);
   font-weight: 700;
 }
 
 .stat-label {
-  font-size: 24rpx;
+  font-size: var(--fs-small);
   color: var(--text-3);
+}
+
+/* 常用的两个大方块 */
+.tiles {
+  display: flex;
+  margin: 20rpx 24rpx 0;
+}
+
+.tile {
+  flex: 1;
+  padding: 28rpx;
+  background: #fff;
+  border-radius: 20rpx;
+}
+
+.tile + .tile {
+  margin-left: 20rpx;
+}
+
+.tile-icon {
+  display: block;
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.tile-name {
+  margin-top: 16rpx;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.tile-note {
+  margin-top: 4rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.tile-note.warn {
+  color: var(--danger);
 }
 
 .settings {
@@ -56,29 +95,20 @@
 .setting-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 30rpx 0;
-  font-size: 28rpx;
+  padding: 28rpx 0;
+  font-size: var(--fs-body);
+}
+
+.setting-name {
+  flex: 1;
 }
 
 .setting-item + .setting-item {
   border-top: 2rpx solid var(--line);
 }
 
-.setting-right {
-  display: flex;
-  align-items: center;
-}
 
-.setting-note {
-  margin-right: 12rpx;
-  font-size: 24rpx;
-  color: var(--text-3);
-}
 
-.setting-note.warn {
-  color: var(--danger);
-}
 
 .arrow {
   font-size: 36rpx;
@@ -108,9 +138,17 @@
   color: var(--danger);
 }
 
-.version {
-  margin-top: 40rpx;
+.footer {
+  margin-top: 48rpx;
   text-align: center;
-  font-size: 22rpx;
+  font-size: var(--fs-tiny);
+  line-height: 1.8;
   color: var(--text-3);
+}
+
+.footer-link {
+  display: inline-block;
+  margin-top: 8rpx;
+  color: var(--text-2);
+  text-decoration: underline;
 }

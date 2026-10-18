@@ -13,6 +13,7 @@ const imageService = require("./image");
 const pantryService = require("./pantry");
 const wishService = require("./wish");
 const { normalizeLog, timeOf } = require("../utils/log");
+const { parseDuration } = require("../utils/dish");
 
 const APP = "nashoucai-xiaobenben";
 const FORMAT = 1;
@@ -27,7 +28,7 @@ const INGREDIENT_KEYS = [
   ["辅料", "side"],
   ["调料", "seasoning"],
 ];
-const NUMBER = "(\\d+(?:\\.\\d+)?|\\d+\\/\\d+)";
+const NUMBER = "(\\d+\\/\\d+|\\d+(?:\\.\\d+)?)";
 const WORD_AMOUNT = /^(.+?)\s*(适量|少许|少量|若干|一点|一把|一小把|半个|半根|一个|一根)$/;
 
 // 「土豆 2个」「番茄 2 个」「鸡蛋2个」「盐 适量」「葱 一把」→ { name, amount, unit, type }
@@ -44,22 +45,8 @@ function parseIngredient(text, type) {
   return { name: s + tail, amount: "", unit: "", type };
 }
 
-// 「10分钟」「1分30秒」「90秒」「1.5小时」「半小时」→ 秒；只写数字按分钟算
-function parseSeconds(v) {
-  if (typeof v === "number") return v > 0 ? Math.round(v * 60) : 0;
-  const s = String(v || "").trim();
-  if (!s) return 0;
-  if (/^\d+(\.\d+)?$/.test(s)) return Math.round(Number(s) * 60);
-  const h = /(\d+(?:\.\d+)?)\s*(?:个)?小时/.exec(s);
-  const m = /(\d+(?:\.\d+)?)\s*分/.exec(s);
-  const sec = /(\d+)\s*秒/.exec(s);
-  let total = (h ? Number(h[1]) * 3600 : 0) + (m ? Number(m[1]) * 60 : 0) + (sec ? Number(sec[1]) : 0);
-  if (/半小时/.test(s)) total += 1800;
-  return Math.round(total);
-}
-
 function stepOf(v) {
-  if (v && typeof v === "object") return { text: String(v["步骤"] || v.text || "").trim(), image: "", timer: parseSeconds(v["计时"]) };
+  if (v && typeof v === "object") return { text: String(v["步骤"] || v.text || "").trim(), image: "", timer: parseDuration(v["计时"]) };
   return { text: String(v || "").trim(), image: "", timer: 0 };
 }
 
@@ -87,7 +74,7 @@ function fromTemplate(raw) {
         categoryId: catId[cat],
         status: STATUS_NAMES[String(d["熟练度"] || "").trim()] || "wish",
         difficulty: parseInt(d["难度"], 10) || 0,
-        duration: Math.round(parseSeconds(d["用时"]) / 60),
+        duration: Math.round(parseDuration(d["用时"]) / 60),
         servings: parseInt(d["几人份"], 10) || 0,
         tags: (Array.isArray(d["标签"]) ? d["标签"] : []).map((t) => String(t).trim()).filter(Boolean),
         ingredients,
@@ -100,8 +87,8 @@ function fromTemplate(raw) {
 }
 
 // 手写的文件常见小错：开头有 BOM（Windows 记事本）、最后一项后面多了逗号，这两种直接容忍；
-// 别的错误告诉对方大概在第几行
-function parseJson(text) {
+// 别的错误告诉对方大概在第几行。what：「文件」或「复制的内容」，用在提示里
+function parseJson(text, what) {
   const clean = String(text).replace(/^\uFEFF/, "");
   try {
     return JSON.parse(clean);
@@ -114,7 +101,7 @@ function parseJson(text) {
       const pos = /position (\d+)/.exec(msg);
       const n = lineNo ? Number(lineNo[1]) : pos ? clean.slice(0, Number(pos[1])).split("\n").length : 0;
       const line = n ? `（第 ${n} 行附近）` : "";
-      throw new Error(`文件格式不对${line}：检查一下引号、逗号、冒号是不是英文半角的，有没有少写逗号`);
+      throw new Error(`${what}格式不对${line}：检查一下引号、逗号、冒号是不是英文半角的，有没有少写逗号`);
     }
   }
 }
@@ -127,10 +114,20 @@ async function readFile(path) {
   } catch (e) {
     throw new Error("文件打不开，可能不是完整的 .json 文件");
   }
-  let data = parseJson(text);
+  return inspect(parseJson(text, "文件"));
+}
+
+// 粘贴导入：复制的文字（备份文件、导入模板的内容），返回 { data, summary }
+async function readText(text) {
+  if (!String(text || "").trim()) throw new Error("剪贴板里是空的：先把要导入的内容全选复制，再来点「粘贴」");
+  return inspect(parseJson(text, "复制的内容"));
+}
+
+async function inspect(raw) {
+  let data = raw;
   if (data && Array.isArray(data["菜谱"])) data = fromTemplate(data);
   if (!data || data.app !== APP || !Array.isArray(data.dishes)) {
-    throw new Error("这不是「拿手菜小本本」的数据文件");
+    throw new Error("这不是「拿手菜小本本」的数据：要用「备份到微信」生成的文件，或者照着导入模板写的菜谱");
   }
   if (data.format > FORMAT) throw new Error("这个文件是更新的版本生成的，先把小程序更新到最新再导入");
   await store.ensureLoaded();
@@ -287,4 +284,4 @@ async function importData(data, onProgress) {
   }
 }
 
-module.exports = { readFile, importData, parseIngredient, parseSeconds };
+module.exports = { readFile, readText, importData, parseIngredient };

@@ -2,11 +2,6 @@
   padding-bottom: 60rpx;
 }
 
-.para {
-  font-size: 26rpx;
-  line-height: 1.7;
-  color: var(--text-2);
-}
 
 .para + .para {
   margin-top: 12rpx;
@@ -77,6 +72,41 @@
 }
 
 /* 文件里有什么 */
+/* 两种选法 + 怎么把本地文件弄进来 */
+.pick {
+  margin: 0 0 16rpx 64rpx;
+}
+
+.pick-actions {
+  display: flex;
+}
+
+.pick-btn {
+  flex: 1;
+  padding: 0 12rpx;
+  border: 2rpx solid var(--pan);
+  border-radius: 32rpx;
+  text-align: center;
+  font-size: var(--fs-sub);
+  line-height: 64rpx;
+}
+
+.pick-btn + .pick-btn {
+  margin-left: 16rpx;
+}
+
+.pick-btn.disabled {
+  border-color: var(--line);
+  color: var(--text-3);
+}
+
+.pick-help {
+  margin-top: 16rpx;
+  font-size: var(--fs-tiny);
+  line-height: 1.7;
+  color: var(--text-3);
+}
+
 .summary {
   margin: 0 0 8rpx 64rpx;
   padding: 16rpx 20rpx;

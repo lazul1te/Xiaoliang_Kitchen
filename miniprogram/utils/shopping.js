@@ -82,12 +82,14 @@ function buildShoppingList(planned, checked, extras, pantry) {
   const extraItems = Object.keys(extras)
     .map((key) => ({ key, name: extras[key].name, createdAt: extras[key].createdAt, checked: !!checked[key] }))
     .sort((a, b) => a.createdAt - b.createdAt);
+  // 勾掉（买到）的沉到每组最下面，没买的一直在上面
+  const sink = (list) => list.filter((i) => !i.checked).concat(list.filter((i) => i.checked));
   const todo = buy.concat(unknown, extraItems);
   return {
-    buy, // 要买的
-    unknown, // 调料，库存里没记录：家里有的话点「有」
+    buy: sink(buy), // 要买的
+    unknown: sink(unknown), // 调料，库存里没记录：家里有的话点「有」
     stocked, // 家里有，不用买
-    extras: extraItems, // 自己加的
+    extras: sink(extraItems), // 自己加的
     total: todo.length,
     done: todo.filter((i) => i.checked).length,
   };

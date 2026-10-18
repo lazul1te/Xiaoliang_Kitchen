@@ -11,6 +11,15 @@ page {
   --line: #f2e8da; /* 分隔线 */
   --danger: #e5534b; /* 删除 */
 
+  /* 字号：统一用这几档 */
+  --fs-xl: 40rpx; /* 大数字 */
+  --fs-lg: 32rpx; /* 空状态标题 */
+  --fs-title: 30rpx; /* 卡片标题、菜名 */
+  --fs-body: 28rpx; /* 正文 */
+  --fs-sub: 26rpx; /* 说明文字 */
+  --fs-small: 24rpx; /* 辅助文字、小按钮 */
+  --fs-tiny: 22rpx; /* 角标、标签 */
+
   background: var(--cream);
   color: var(--pan);
   font-size: 28rpx;
@@ -39,8 +48,87 @@ button::after {
 
 .card-title {
   margin-bottom: 16rpx;
-  font-size: 30rpx;
+  font-size: var(--fs-title);
   font-weight: 700;
+}
+
+/* 说明文字、小提示、「还没有……」：各页统一用这几个 */
+.para {
+  font-size: var(--fs-sub);
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+.hint {
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+.none {
+  font-size: var(--fs-sub);
+  color: var(--text-3);
+}
+
+/* 线条小图标（images/icons，源文件在 design/icons），跟在文字前面 */
+.ic {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 8rpx;
+  vertical-align: -6rpx;
+}
+
+.ic.sm {
+  width: 28rpx;
+  height: 28rpx;
+  vertical-align: -4rpx;
+}
+
+.ic.lg {
+  width: 44rpx;
+  height: 44rpx;
+  margin-right: 16rpx;
+  vertical-align: -12rpx;
+}
+
+.ic.xl {
+  width: 64rpx;
+  height: 64rpx;
+  margin: 0 0 8rpx;
+}
+
+/* 看着小的按钮：能点的范围往外扩一圈，手指好按（和加减号一样的做法）。
+   只加在没有绝对定位、没用 ::after 的元素上 */
+.hit {
+  position: relative;
+}
+
+.hit::after {
+  content: "";
+  position: absolute;
+  top: -20rpx;
+  right: -16rpx;
+  bottom: -20rpx;
+  left: -16rpx;
+}
+
+/* 加载中的占位块 */
+.sk {
+  background: #f3e8d8;
+  border-radius: 12rpx;
+  animation: sk-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes sk-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
 }
 
 .btn-primary {
@@ -111,19 +199,96 @@ button::after {
 
 .empty-title {
   margin-top: 16rpx;
-  font-size: 32rpx;
+  font-size: var(--fs-lg);
   font-weight: 600;
 }
 
 .empty-desc {
   margin-top: 8rpx;
-  font-size: 26rpx;
+  font-size: var(--fs-sub);
   color: var(--text-3);
 }
 
 .empty .btn-primary {
   display: inline-block;
   margin-top: 40rpx;
+}
+
+/* ---------- 选项按钮：点一下就选上（分类、熟练度、标签、计时、日期、掌勺……） ---------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 10rpx 0;
+}
+
+.chip {
+  margin: 6rpx 16rpx 6rpx 0;
+  padding: 8rpx 24rpx;
+  border-radius: 28rpx;
+  background: var(--cream);
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.chip.on {
+  background: var(--yolk);
+  color: var(--pan);
+  font-weight: 600;
+}
+
+.chip.add {
+  padding: 6rpx 22rpx;
+  border: 2rpx dashed #d9cfc1;
+  background: #fff;
+}
+
+/* ---------- 从底部弹出的面板（选计时、选菜……） ---------- */
+.sheet-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(59, 59, 66, 0.45);
+}
+
+.sheet {
+  width: 100%;
+  padding: 32rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-radius: 28rpx 28rpx 0 0;
+}
+
+.sheet-title {
+  margin-bottom: 16rpx;
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.sheet .chip {
+  padding: 14rpx 28rpx;
+  font-size: var(--fs-sub);
+}
+
+.sheet-foot {
+  display: flex;
+  margin-top: 24rpx;
+}
+
+.sheet-btn {
+  flex: 1;
+  border-radius: 40rpx;
+  background: var(--cream);
+  text-align: center;
+  font-size: var(--fs-body);
+  line-height: 80rpx;
+}
+
+.sheet-btn + .sheet-btn {
+  margin-left: 20rpx;
 }
 
 /* ---------- 菜品卡片（templates/dish-card.wxml） ---------- */
@@ -134,6 +299,12 @@ button::after {
   padding: 20rpx;
   background: #fff;
   border-radius: 20rpx;
+}
+
+/* 已经点进菜篮的菜：淡黄底，一眼看出点了哪些 */
+.dish-card.picked {
+  background: #fff6e2;
+  box-shadow: inset 0 0 0 2rpx #ffe2a8;
 }
 
 .cover {

@@ -102,10 +102,6 @@
 }
 
 /* 还没填原料、做法时的提示 */
-.none {
-  font-size: 26rpx;
-  color: var(--text-3);
-}
 
 /* ---------- 原料 ---------- */
 
@@ -180,12 +176,13 @@
 }
 
 .step-timer {
-  display: inline-block;
-  margin-top: 10rpx;
-  padding: 2rpx 16rpx;
-  border-radius: 20rpx;
-  background: var(--cream);
-  font-size: 22rpx;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12rpx;
+  padding: 4rpx 18rpx 4rpx 14rpx;
+  border-radius: 24rpx;
+  background: #fff2d9;
+  font-size: var(--fs-small);
   color: var(--wood);
 }
 
@@ -278,12 +275,22 @@
   box-shadow: 0 -4rpx 20rpx rgba(59, 59, 66, 0.06);
 }
 
+/* 编辑：图标 + 小字，给「开始做」多留地方 */
 .action-edit {
   flex-shrink: 0;
-  width: 96rpx;
-  text-align: center;
-  font-size: 26rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80rpx;
+  font-size: var(--fs-tiny);
+  line-height: 1.3;
   color: var(--text-2);
+}
+
+.action-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-bottom: 4rpx;
 }
 
 .action-basket {

@@ -30,11 +30,6 @@
   color: var(--wood);
 }
 
-.cover-icon {
-  margin-bottom: 8rpx;
-  font-size: 64rpx;
-}
-
 .cover-actions {
   position: absolute;
   right: 16rpx;
@@ -71,6 +66,21 @@
   color: var(--text-2);
 }
 
+/* 选项比较多、会换行的一行（分类）：标签靠上 */
+.field-wrap {
+  align-items: flex-start;
+  padding: 10rpx 0;
+}
+
+.field-wrap .label {
+  padding-top: 14rpx;
+}
+
+.field-wrap .chips {
+  flex: 1;
+  padding: 0;
+}
+
 .input {
   flex: 1;
   height: 92rpx;
@@ -103,32 +113,6 @@
 }
 
 /* 选项小按钮：熟练度、标签 */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 10rpx 0;
-}
-
-.chip {
-  margin: 6rpx 16rpx 6rpx 0;
-  padding: 8rpx 24rpx;
-  border-radius: 28rpx;
-  background: var(--cream);
-  font-size: 24rpx;
-  color: var(--text-2);
-}
-
-.chip.on {
-  background: var(--yolk);
-  color: var(--pan);
-  font-weight: 600;
-}
-
-.chip.add {
-  padding: 6rpx 22rpx;
-  border: 2rpx dashed #d9cfc1;
-  background: #fff;
-}
 
 .stars {
   display: flex;
@@ -184,13 +168,8 @@
   min-width: 0;
 }
 
-.ing-amount {
-  width: 140rpx;
-  margin-left: 12rpx;
-}
-
-.ing-unit {
-  width: 110rpx;
+.ing-qty {
+  width: 220rpx;
   margin-left: 12rpx;
 }
 
@@ -209,9 +188,6 @@
 
 .hint {
   margin-top: 12rpx;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: var(--text-3);
 }
 
 /* ---------- 做法 ---------- */
@@ -244,14 +220,15 @@
 }
 
 .tool {
-  margin-left: 28rpx;
-  font-size: 24rpx;
-  color: var(--text-2);
+  margin-left: 32rpx;
 }
 
-.tool.danger {
-  color: var(--danger);
+.tool-icon {
+  display: block;
+  width: 36rpx;
+  height: 36rpx;
 }
+
 
 /* 多行输入框：做法每一步、小贴士 */
 .text-input {
@@ -299,6 +276,8 @@
 }
 
 .extra-btn {
+  display: flex;
+  align-items: center;
   margin-right: 16rpx;
   padding: 6rpx 20rpx;
   border: 2rpx solid var(--line);

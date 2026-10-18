@@ -21,6 +21,7 @@ Page({
       list: wishService.list().map((w) => ({
         key: w.key,
         name: w.name,
+        initial: w.name.slice(0, 1),
         photo: w.photoThumb || w.photo,
         note: w.note,
         dayText: w.createdAt ? `${formatMonthDay(w.createdAt)}记的` : "",

@@ -9,7 +9,7 @@
   <view class="top">
     <view class="top-row">
       <text class="step-label">{{stepLabel}}</text>
-      <view class="ing-btn" bindtap="onToggleIngredients">🥕 看原料</view>
+      <view class="ing-btn" bindtap="onToggleIngredients"><image class="ic sm" src="/images/icons/list-wood.png" />看原料</view>
     </view>
     <view class="bar"><view class="bar-fill" style="width: {{progress}}%"></view></view>
   </view>
@@ -17,7 +17,7 @@
   <!-- 正在走的计时，点一下跳到那一步 -->
   <view wx:if="{{running.length}}" class="running">
     <view wx:for="{{running}}" wx:key="index" class="running-chip" data-i="{{item.index}}" bindtap="onJumpStep">
-      ⏱ {{item.label}}
+      <image class="ic sm" src="/images/icons/timer-white.png" />{{item.label}}
     </view>
   </view>
 

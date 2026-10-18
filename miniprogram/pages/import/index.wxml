@@ -1,18 +1,26 @@
 <view class="import">
   <view class="card">
-    <view class="card-title">能导入什么</view>
-    <view class="para">「数据导出」生成的备份文件、整理好的菜谱文件，或者照着导入模板写的菜谱（.json）。先把文件发到微信聊天里（比如「文件传输助手」），再在这里选。</view>
-    <view class="para">已经有同名的菜会跳过，重复导入不会多出一份；分类按名字对上，没有就新建。</view>
+    <view class="para">可以导入备份文件，或者照着导入模板写好的菜谱。同名的菜会跳过，不会重复。</view>
   </view>
 
   <view class="card">
     <view class="step">
       <view class="step-no">1</view>
       <view class="step-main">
-        <view class="step-title">选文件</view>
+        <view class="step-title">选要导入的内容</view>
         <view wx:if="{{file}}" class="step-desc">{{file.name}}</view>
       </view>
-      <view class="step-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onChoose">{{file ? '换一个' : '从聊天记录选'}}</view>
+    </view>
+    <view class="pick">
+      <view class="pick-actions">
+        <view class="pick-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onChoose">从微信聊天选文件</view>
+        <view class="pick-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onPaste">粘贴复制的内容</view>
+      </view>
+      <view class="pick-help">
+        <view>· 手机里的文件：在「文件」或文件管理里选中它，分享到微信「文件传输助手」，再回来选</view>
+        <view>· 电脑上的文件：拖进电脑微信的「文件传输助手」，再回来选</view>
+        <view>· 不想经过聊天：用备忘录、记事本打开文件，全选复制，再点「粘贴复制的内容」</view>
+      </view>
     </view>
 
     <view wx:if="{{file}}" class="summary">

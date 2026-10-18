@@ -39,24 +39,21 @@
 }
 
 .tool {
-  margin-left: 28rpx;
-  font-size: 26rpx;
-  color: var(--text-2);
+  margin-left: 32rpx;
 }
 
 .tool.disabled {
-  color: #e0d8cc;
+  opacity: 0.25;
 }
 
-.tool.danger {
-  color: var(--danger);
+.tool-icon {
+  display: block;
+  width: 36rpx;
+  height: 36rpx;
 }
 
 .hint {
   margin: 24rpx 40rpx 0;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: var(--text-3);
 }
 
 .add {

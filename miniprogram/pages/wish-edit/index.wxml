@@ -2,7 +2,7 @@
   <view class="photo-box" bindtap="onChoosePhoto">
     <cloud-image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
     <view wx:else class="photo-empty">
-      <text class="photo-icon">📷</text>
+      <image class="ic xl" src="/images/icons/camera-wood.png" />
       <text>加一张图（拍照、截图都行）</text>
     </view>
     <view wx:if="{{form.photo}}" class="photo-actions">

@@ -27,13 +27,26 @@
 
 .shopping-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
 }
 
 .shopping-title {
-  font-size: 30rpx;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-title);
   font-weight: 700;
+}
+
+.shop-copy {
+  display: flex;
+  align-items: center;
+  margin-left: 24rpx;
+  padding: 6rpx 18rpx;
+  border: 2rpx solid var(--line);
+  border-radius: 24rpx;
+  font-size: var(--fs-small);
+  color: var(--text-2);
 }
 
 .shopping-progress {

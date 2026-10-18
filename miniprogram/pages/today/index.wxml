@@ -37,10 +37,11 @@
 
   <view class="card shopping">
     <view class="shopping-head">
-      <text class="shopping-title">🛒 买菜清单</text>
+      <view class="shopping-title"><image class="ic lg" src="/images/icons/cart.png" />买菜清单</view>
       <text class="shopping-progress">已买 {{shopping.done}}/{{shopping.total}}</text>
+      <view class="shop-copy hit" bindtap="onCopyList"><image class="ic sm" src="/images/icons/copy-gray.png" />复制</view>
     </view>
-    <view class="shopping-hint">按菜谱用量 × 份数算好了，家里库存里有的不用买。买到一样点一下，两个人都能看到</view>
+    <view class="shopping-hint">按菜谱用量 × 份数算好了，家里有的不用买。买到一样点一下，两个人都能看到；点「复制」可以发到微信里</view>
 
     <view wx:if="{{shopping.buy.length}}" class="shop-group">
       <view class="shop-label">要买的</view>

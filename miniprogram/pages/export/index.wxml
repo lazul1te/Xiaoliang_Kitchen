@@ -1,7 +1,6 @@
 <view class="export">
   <view class="card">
-    <view class="card-title">为什么要导出</view>
-    <view class="para">菜谱都存在微信云开发的免费环境里，平时不用管。免费活动写的是到 2026 年底，以后万一要收费或者停用，有这个文件就能把数据完整搬走。隔一阵子导出一次比较保险。</view>
+    <view class="para">菜谱存在微信云开发的免费环境里（活动写的是到 2026 年底）。隔一阵子备份一次，万一以后要搬家，有这个文件就能完整搬走。</view>
   </view>
 
   <view wx:if="{{summary}}" class="card">
@@ -32,10 +31,14 @@
     <view class="step">
       <view class="step-no">2</view>
       <view class="step-main">
-        <view class="step-title">发到微信聊天里保存</view>
-        <view class="step-desc">建议发给「文件传输助手」，电脑上登录微信也能另存一份</view>
+        <view class="step-title">存起来</view>
+        <view class="step-desc">发到「文件传输助手」最方便；在聊天里点开文件，右上角「…」可以存到手机{{canSaveToDisk ? '。在电脑上可以直接存到电脑' : ''}}</view>
       </view>
-      <view class="step-btn main {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSend">发送</view>
+    </view>
+    <view class="save-actions">
+      <view class="save-btn main {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSend">发到微信</view>
+      <view wx:if="{{canSaveToDisk}}" class="save-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSaveToDisk">存到电脑</view>
+      <view wx:if="{{!withPhotos}}" class="save-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onCopy">复制成文字</view>
     </view>
   </view>
 </view>

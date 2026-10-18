@@ -64,7 +64,7 @@
       <view class="step-body">
         <view wx:if="{{item.text}}" class="step-text">{{item.text}}</view>
         <cloud-image wx:if="{{item.image}}" class="step-img" src="{{item.image}}" mode="widthFix" />
-        <view wx:if="{{item.timerText}}" class="step-timer">⏱ 计时 {{item.timerText}}</view>
+        <view wx:if="{{item.timerText}}" class="step-timer"><image class="ic sm" src="/images/icons/timer-wood.png" />计时 {{item.timerText}}</view>
       </view>
     </view>
   </view>
@@ -99,7 +99,10 @@
 
 <!-- 底部操作栏 -->
 <view wx:if="{{dish}}" class="action-bar">
-  <view class="action-edit" bindtap="onEdit">编辑</view>
+  <view class="action-edit" bindtap="onEdit">
+    <image class="action-icon" src="/images/icons/edit.png" />
+    <text>编辑</text>
+  </view>
   <view class="action-basket">
     <view wx:if="{{qty === 0}}" class="btn-outline" bindtap="onPlus">加入菜篮</view>
     <view wx:else class="stepper big">

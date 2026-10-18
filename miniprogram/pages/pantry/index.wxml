@@ -1,6 +1,6 @@
 <view class="pantry">
   <view class="card">
-    <view class="para">家里常备的东西记在这里，买菜清单会自动对比，家里有的就不提醒买了。哪样用完了点一下「用完了」，下次买菜清单里就会出现。</view>
+    <view class="para">家里常备的东西记在这里，买菜清单会跳过家里有的。哪样用完了点「用完了」，下次就会出现在买菜清单里。</view>
     <view class="add-row">
       <input class="add-input" value="{{input}}" placeholder="加一样，比如：生抽 米 面粉" confirm-type="done"
              bindinput="onInput" bindconfirm="onAdd" />

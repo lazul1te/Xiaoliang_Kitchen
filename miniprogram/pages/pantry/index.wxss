@@ -2,11 +2,6 @@
   padding-bottom: 60rpx;
 }
 
-.para {
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: var(--text-2);
-}
 
 .add-row {
   display: flex;
@@ -74,10 +69,6 @@
   color: var(--text-3);
 }
 
-.none {
-  font-size: 26rpx;
-  color: var(--text-3);
-}
 
 .item {
   display: flex;

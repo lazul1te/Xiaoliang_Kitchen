@@ -4,7 +4,7 @@ const categoryService = require("../../services/category");
 const imageService = require("../../services/image");
 const wishService = require("../../services/wish");
 const ui = require("../../utils/ui");
-const { formatSeconds } = require("../../utils/dish");
+const { formatSeconds, splitAmount, parseDuration } = require("../../utils/dish");
 
 const STATUS_OPTIONS = [
   { value: "wish", text: "想学" },
@@ -18,12 +18,11 @@ const GROUPS = [
   { type: "side", label: "辅料", placeholder: "比如：葱" },
   { type: "seasoning", label: "调料", placeholder: "比如：盐" },
 ];
-const TIMER_SECONDS = [0, 10, 20, 30, 40, 50];
-const TIMER_RANGE = [
-  Array.from({ length: 181 }, (_, m) => `${m} 分`),
-  TIMER_SECONDS.map((s) => `${s} 秒`),
-];
-const NEW_CATEGORY = "＋ 新建分类";
+// 计时面板里的常用时长（秒）
+const TIMER_PRESETS = [30, 60, 120, 180, 300, 480, 600, 900, 1200, 1800, 2700, 3600].map((value) => ({
+  value,
+  text: value < 60 ? `${value}秒` : value < 3600 ? `${value / 60}分钟` : `${value / 3600}小时`,
+}));
 
 // 列表里每一行要有个不变的 key，删行、调顺序时输入框才不会串
 let keySeed = 0;
@@ -31,8 +30,9 @@ const nextKey = () => (keySeed += 1);
 
 const unique = (list) => list.filter((x, i) => x && list.indexOf(x) === i);
 
+// 原料一行：名称 + 用量（数字和单位写在一格里，比如「2个」，保存时再拆开）
 function emptyIngredient() {
-  return { key: nextKey(), name: "", amount: "", unit: "" };
+  return { key: nextKey(), name: "", qty: "" };
 }
 
 // 表单里的一步，多带两个显示用的字段：计时文字、计时选择器停在哪
@@ -44,7 +44,6 @@ function formStep(step) {
     image: step.image || "",
     timer,
     timerText: timer > 0 ? formatSeconds(timer) : "",
-    timerValue: [Math.min(180, Math.floor(timer / 60)), Math.min(5, Math.round((timer % 60) / 10))],
   };
 }
 
@@ -68,7 +67,7 @@ function toForm(dish) {
       placeholder: g.placeholder,
       items: dish.ingredients
         .filter((i) => i.type === g.type)
-        .map((i) => ({ key: nextKey(), name: i.name, amount: i.amount, unit: i.unit })),
+        .map((i) => ({ key: nextKey(), name: i.name, qty: `${i.amount}${i.unit}` })),
     })),
     steps: dish.steps.map(formStep),
   };
@@ -98,7 +97,8 @@ function fromForm(form) {
   const ingredients = [];
   form.groups.forEach((group) => {
     group.items.forEach((item) => {
-      ingredients.push({ name: item.name, amount: item.amount, unit: item.unit, type: group.type });
+      const { amount, unit } = splitAmount(item.qty);
+      ingredients.push({ name: item.name, amount, unit, type: group.type });
     });
   });
   return {
@@ -122,14 +122,14 @@ Page({
   data: {
     form: null,
     isEdit: false,
-    categoryNames: [NEW_CATEGORY],
-    pickerIndex: 0,
-    categoryName: "",
+    categories: [], // [{ _id, name }]，点一下选上
     statusOptions: STATUS_OPTIONS,
     stars: [1, 2, 3, 4, 5],
     difficultyLabels: DIFFICULTY_LABELS,
     tagChips: [], // [{ name, on }]
-    timerRange: TIMER_RANGE,
+    timerPresets: TIMER_PRESETS,
+    timerStep: -1, // 正在给第几步选计时，-1 表示没打开
+    timerCurrent: 0,
   },
 
   async onLoad(options) {
@@ -211,23 +211,16 @@ Page({
   },
 
   refreshCategory() {
-    const index = this.categories.findIndex((c) => c._id === this.data.form.categoryId);
-    this.setData({
-      categoryNames: this.categories.map((c) => c.name).concat(NEW_CATEGORY),
-      pickerIndex: Math.max(0, index),
-      categoryName: index >= 0 ? this.categories[index].name : "",
-    });
+    this.setData({ categories: this.categories.map((c) => ({ _id: c._id, name: c.name })) });
   },
 
-  onCategoryChange(e) {
-    const index = Number(e.detail.value);
-    if (index >= this.categories.length) {
-      this.createCategory();
-      return;
-    }
-    this.setData({ "form.categoryId": this.categories[index]._id });
-    this.refreshCategory();
+  onCategoryTap(e) {
+    this.setData({ "form.categoryId": e.currentTarget.dataset.id });
     this.markDirty();
+  },
+
+  onNewCategory() {
+    return this.createCategory();
   },
 
   async createCategory() {
@@ -368,14 +361,44 @@ Page({
     this.markDirty();
   },
 
-  onStepTimerChange(e) {
-    const [m, s] = e.detail.value;
-    this.setStepTimer(e.currentTarget.dataset.i, m * 60 + TIMER_SECONDS[s]);
-  },
-
   onClearTimer(e) {
     this.setStepTimer(e.currentTarget.dataset.i, 0);
   },
+
+  // 计时面板：常用时长点一下；别的时长写「25分钟」「1分30秒」
+  onOpenTimer(e) {
+    const i = Number(e.currentTarget.dataset.i);
+    this.setData({ timerStep: i, timerCurrent: this.data.form.steps[i].timer });
+  },
+
+  onCloseTimer() {
+    this.setData({ timerStep: -1 });
+  },
+
+  onPickTimer(e) {
+    this.setStepTimer(this.data.timerStep, Number(e.currentTarget.dataset.value));
+    this.onCloseTimer();
+  },
+
+  async onCustomTimer() {
+    const i = this.data.timerStep;
+    const text = await ui.prompt({ title: "计时多久", placeholder: "比如：25分钟、1分30秒、90秒" });
+    if (text === null) return;
+    const seconds = parseDuration(text);
+    if (seconds <= 0 || seconds > 6 * 3600) {
+      ui.toast("没看懂，写成「25分钟」「1分30秒」这样");
+      return;
+    }
+    this.setStepTimer(i, seconds);
+    this.onCloseTimer();
+  },
+
+  onNoTimer() {
+    this.setStepTimer(this.data.timerStep, 0);
+    this.onCloseTimer();
+  },
+
+  noop() {},
 
   // ---------- 保存 / 删除 ----------
 

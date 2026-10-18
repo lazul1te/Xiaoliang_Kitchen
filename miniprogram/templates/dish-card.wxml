@@ -8,7 +8,7 @@
   点击事件 onOpenDish / onPlus / onMinus / onCoverError 由使用它的页面提供；样式在 app.wxss。
 -->
 <template name="dishCard">
-  <view class="dish-card" data-id="{{dish._id}}" bindtap="onOpenDish">
+  <view class="dish-card {{basket[dish._id] > 0 ? 'picked' : ''}}" data-id="{{dish._id}}" bindtap="onOpenDish">
     <cloud-image wx:if="{{dish.cover && !broken[dish.cover]}}" class="cover" src="{{dish.cover}}" mode="aspectFill"
            data-src="{{dish.cover}}" binderror="onCoverError" />
     <view wx:else class="cover cover-placeholder">{{dish.initial}}</view>

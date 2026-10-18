@@ -1,10 +1,9 @@
-// 我的：小程序信息、菜谱统计、设置入口
+// 我的：菜谱统计、常用的（想吃清单、库存）放大方块，不常用的（备份与导入、检查云开发）收起来
 const dishService = require("../../services/dish");
 const planService = require("../../services/plan");
 const pantryService = require("../../services/pantry");
 const wishService = require("../../services/wish");
-const cloud = require("../../services/cloud");
-const photo = require("../../services/photo");
+const diagnose = require("../../services/diagnose");
 const ui = require("../../utils/ui");
 
 Page({
@@ -13,6 +12,7 @@ Page({
     sampleCount: 0, // 还剩几道示例菜
     wishCount: 0, // 想吃清单里有几个
     outCount: 0, // 库存里几样用完了
+    stockCount: 0, // 库存里家里有几样
   },
 
   onShow() {
@@ -39,6 +39,7 @@ Page({
       sampleCount: dishes.filter((d) => d.sample).length,
       wishCount: wishService.list().length,
       outCount: pantryService.list().outOfStock.length,
+      stockCount: pantryService.list().inStock.length,
     });
   },
 
@@ -50,25 +51,21 @@ Page({
     wx.navigateTo({ url: "/pages/pantry/index" });
   },
 
-  // 四个集合挨个读一下，看是不是都建好了；再试试照片的云函数
-  async onCheckDatabase() {
-    wx.showLoading({ title: "检查中", mask: true });
-    let photos = [];
-    try {
-      (await dishService.listDishes()).forEach((d) => photos.push(d.coverThumb || d.cover));
-    } catch (e) {}
-    const results = (await cloud.checkCollections()).concat(await photo.check(photos));
-    wx.hideLoading();
-    const lines = results.map((r) => `${r.ok ? "✅" : "❌"} ${r.name}：${r.text}`);
-    const tips = [];
-    if (results.some((r) => !r.ok && r.name !== "照片")) {
-      tips.push(`数据库：没建的集合在云开发控制台「数据库」里新建，四个集合的权限都设成自定义安全规则 ${cloud.SHARED_RULE}`);
-    }
-    if (results.some((r) => r.needsFunction)) {
-      tips.push("照片：在开发者工具左边的 cloudfunctions 里右键 photo 文件夹，选「上传并部署：云端安装依赖」，部署好以后重新打开小程序");
-    }
-    const tip = tips.length ? `\n\n${tips.join("\n\n")}` : "\n\n都正常";
-    ui.alert("云数据库检查", lines.join("\n") + tip);
+  // 底部小字「遇到问题？检查一下云开发」
+  onCheckDatabase() {
+    return diagnose.run();
+  },
+
+  onGoMenu() {
+    wx.switchTab({ url: "/pages/menu/index" });
+  },
+
+  onGoLogs() {
+    wx.switchTab({ url: "/pages/logs/index" });
+  },
+
+  onOpenBackup() {
+    wx.navigateTo({ url: "/pages/backup/index" });
   },
 
   onOpenCategories() {
@@ -93,13 +90,5 @@ Page({
       ui.alert("没删成", ui.errorText(err));
     }
     await this.refresh();
-  },
-
-  onOpenExport() {
-    wx.navigateTo({ url: "/pages/export/index" });
-  },
-
-  onOpenImport() {
-    wx.navigateTo({ url: "/pages/import/index" });
   },
 });

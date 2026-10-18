@@ -2,7 +2,7 @@
 <template name="logCard">
   <view class="log-card" data-id="{{_id}}" bindtap="onOpenLog">
     <cloud-image wx:if="{{photo}}" class="log-photo" src="{{photo}}" mode="aspectFill" />
-    <view wx:else class="log-photo log-photo-empty">🍳</view>
+    <view wx:else class="log-photo log-photo-empty">{{initial}}</view>
     <view class="log-info">
       <view class="log-head">
         <text class="log-dish">{{dishName}}</text>
@@ -18,13 +18,11 @@
   <!-- 做饭日历 -->
   <view class="card calendar">
     <view class="cal-head">
-      <text class="cal-arrow" bindtap="onPrevMonth">‹</text>
-      <view class="cal-title">
-        <text>{{cal.title}}</text>
-        <text class="cal-count">下厨 {{cal.monthCount}} 次</text>
-      </view>
-      <text class="cal-arrow" bindtap="onNextMonth">›</text>
+      <text class="cal-arrow hit" bindtap="onPrevMonth">‹</text>
+      <view class="cal-title">{{cal.title}}</view>
+      <text class="cal-arrow hit" bindtap="onNextMonth">›</text>
     </view>
+    <view class="cal-summary">{{calSummary}}</view>
     <view class="cal-row cal-week">
       <text>一</text><text>二</text><text>三</text><text>四</text><text>五</text><text>六</text><text>日</text>
     </view>
@@ -36,7 +34,7 @@
         <text wx:if="{{d.count}}" class="cal-dot">{{d.count > 1 ? d.count + '道' : '●'}}</text>
       </view>
     </view>
-    <view class="cal-stats">一共下厨 {{stats.total}} 次 · 做过 {{stats.dishCount}} 道不同的菜</view>
+    <view class="cal-stats">一共下厨 {{stats.total}} 次 · 做过 {{stats.dishCount}} 道不同的菜 · 点日子看那天</view>
   </view>
 
   <!-- 选中某一天 -->
@@ -45,6 +43,7 @@
       <text class="day-bar-title">{{dayTitle}}</text>
       <text class="day-bar-all" bindtap="onShowAll">看全部</text>
     </view>
+    <view class="add-log" data-date="{{selected}}" bindtap="onAddLog">＋ 这天再记一道</view>
     <block wx:for="{{dayLogs}}" wx:key="_id">
       <template is="logCard" data="{{...item}}" />
     </block>
@@ -52,11 +51,11 @@
 
   <!-- 全部记录 -->
   <block wx:else>
-    <view class="add-log" bindtap="onAddLog">＋ 补一条记录</view>
+    <view class="add-log" bindtap="onAddLog">＋ 记一笔</view>
     <view wx:if="{{!months.length}}" class="empty small">
       <view class="empty-emoji">📒</view>
       <view class="empty-title">还没有做菜记录</view>
-      <view class="empty-desc">在菜谱详情页点「开始做」，做完打个卡</view>
+      <view class="empty-desc">在菜谱详情页点「开始做」，做完打个卡；以前做过的，点日历上那天补记</view>
     </view>
     <view wx:for="{{months}}" wx:key="key" wx:for-item="month" class="month">
       <view class="month-title">{{month.title}}<text class="month-count"> · 下厨 {{month.count}} 次</text></view>

@@ -1,6 +1,10 @@
-// 数据导入：从微信聊天记录里选一个 .json 文件（数据导出生成的备份，或者整理好的菜谱），把菜谱和做菜记录加进来
+// 从文件导入：两种拿到内容的办法
+// - 从微信聊天里选 .json 文件（手机上的文件先分享到「文件传输助手」，电脑上的文件拖进去）
+// - 粘贴：用备忘录、记事本打开文件，全选复制，再点「粘贴复制的内容」（不用经过聊天）
+// 内容可以是备份文件，也可以是照着导入模板写的菜谱
 const importService = require("../../services/import");
 const ui = require("../../utils/ui");
+const fileUtil = require("../../utils/file");
 
 Page({
   data: {
@@ -24,15 +28,32 @@ Page({
   async readFile(tempFile) {
     try {
       const { data, summary } = await importService.readFile(tempFile.path);
-      this.importing = data;
-      this.setData({
-        status: "ready",
-        result: null,
-        file: Object.assign(summary, { name: tempFile.name, skipText: summary.skipNames.join("、") }),
-      });
+      this.showReady(data, summary, tempFile.name);
     } catch (err) {
       ui.alert("打不开这个文件", ui.errorText(err));
     }
+  },
+
+  // 粘贴：读剪贴板里复制的文字
+  async onPaste() {
+    if (this.data.status === "working") return;
+    const text = await fileUtil.readClipboard();
+    if (text === null) return;
+    try {
+      const { data, summary } = await importService.readText(text);
+      this.showReady(data, summary, "复制的内容");
+    } catch (err) {
+      ui.alert("导入不了", ui.errorText(err));
+    }
+  },
+
+  showReady(data, summary, name) {
+    this.importing = data;
+    this.setData({
+      status: "ready",
+      result: null,
+      file: Object.assign(summary, { name, skipText: summary.skipNames.join("、") }),
+    });
   },
 
   async onImport() {

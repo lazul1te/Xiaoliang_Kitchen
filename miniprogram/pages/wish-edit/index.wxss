@@ -27,10 +27,6 @@
   color: var(--wood);
 }
 
-.photo-icon {
-  margin-bottom: 8rpx;
-  font-size: 64rpx;
-}
 
 .photo-actions {
   position: absolute;

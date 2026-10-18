@@ -8,14 +8,7 @@
 
 .header {
   flex-shrink: 0;
-  padding: 8rpx 24rpx 20rpx;
-}
-
-.slogan {
-  margin-bottom: 14rpx;
-  font-size: 24rpx;
-  color: var(--text-3);
-  letter-spacing: 2rpx;
+  padding: 16rpx 24rpx 20rpx;
 }
 
 .search-row {
@@ -44,17 +37,6 @@
   color: var(--text-3);
 }
 
-.wish-btn {
-  flex-shrink: 0;
-  height: 72rpx;
-  margin-left: 16rpx;
-  padding: 0 22rpx;
-  border-radius: 36rpx;
-  background: #fff;
-  font-size: 26rpx;
-  line-height: 72rpx;
-  color: var(--text-2);
-}
 
 .add-btn {
   flex-shrink: 0;
@@ -79,8 +61,18 @@
 .search-empty {
   padding: 120rpx 0;
   text-align: center;
-  font-size: 26rpx;
+  font-size: var(--fs-sub);
   color: var(--text-3);
+}
+
+.search-wish {
+  display: inline-block;
+  margin-top: 28rpx;
+  padding: 16rpx 32rpx;
+  border-radius: 40rpx;
+  background: #fff;
+  font-size: var(--fs-sub);
+  color: var(--pan);
 }
 
 /* ---------- 左分类 + 右菜品 ---------- */
@@ -102,10 +94,29 @@
   text-align: center;
 }
 
-.state-loading {
-  padding-top: 120rpx;
-  font-size: 26rpx;
-  color: var(--text-3);
+/* 加载占位：分类栏的灰条、菜品卡片的灰块 */
+.sk-cat {
+  padding: 32rpx 28rpx;
+}
+
+.sk-cat-bar {
+  height: 28rpx;
+}
+
+.sk-title {
+  width: 120rpx;
+  height: 26rpx;
+  margin: 24rpx 4rpx 18rpx;
+}
+
+.sk-line {
+  height: 28rpx;
+  margin-top: 8rpx;
+}
+
+.sk-line.short {
+  width: 50%;
+  margin-top: 20rpx;
 }
 
 .state .btn-primary,

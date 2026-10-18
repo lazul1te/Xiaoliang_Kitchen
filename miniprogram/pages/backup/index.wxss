@@ -1,0 +1,72 @@
+.backup {
+  padding-bottom: 40rpx;
+}
+
+.list {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 0;
+}
+
+.row + .row {
+  border-top: 2rpx solid var(--line);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.row-desc {
+  margin-top: 4rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.arrow {
+  margin-left: 16rpx;
+  font-size: 36rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+.rules {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  background: var(--cream);
+}
+
+.rule {
+  font-size: var(--fs-small);
+  line-height: 1.8;
+  color: var(--text-2);
+}
+
+.tpl-actions {
+  display: flex;
+  margin-top: 24rpx;
+}
+
+.tpl-btn {
+  flex: 1;
+  border: 2rpx solid var(--pan);
+  border-radius: 32rpx;
+  text-align: center;
+  font-size: var(--fs-sub);
+  line-height: 64rpx;
+}
+
+.tpl-btn + .tpl-btn {
+  margin-left: 16rpx;
+}

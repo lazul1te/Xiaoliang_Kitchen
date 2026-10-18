@@ -11,6 +11,7 @@
     "pages/log-edit/index",
     "pages/export/index",
     "pages/import/index",
+    "pages/backup/index",
     "pages/pantry/index",
     "pages/wishes/index",
     "pages/wish-edit/index"
@@ -55,7 +56,8 @@
     ]
   },
   "usingComponents": {
-    "cloud-image": "/components/cloud-image/index"
+    "cloud-image": "/components/cloud-image/index",
+    "dish-picker": "/components/dish-picker/index"
   },
   "sitemapLocation": "sitemap.json",
   "style": "v2",
