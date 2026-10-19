@@ -257,14 +257,12 @@ function paintCard(ctx, data) {
   if (data.stamp) stamp(ctx, data.stamp, right - 50, CARD_H - 70, 26);
 }
 
+// 整张画布导出。不传 x/y/width/height（默认就是整张画布；canvas 2d 下这几个按什么单位算，文档没写清楚），
+// 只写输出的大小，免得按屏幕像素密度再放大一遍
 function toImage(canvas) {
   return new Promise((resolve, reject) => {
     wx.canvasToTempFilePath({
       canvas,
-      x: 0,
-      y: 0,
-      width: canvas.width,
-      height: canvas.height,
       destWidth: canvas.width,
       destHeight: canvas.height,
       fileType: "png",
