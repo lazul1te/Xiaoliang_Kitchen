@@ -28,7 +28,7 @@
     </view>
     <view wx:for="{{cal.weeks}}" wx:key="key" wx:for-item="week" class="cal-row">
       <view wx:for="{{week.days}}" wx:key="key" wx:for-item="d"
-            class="cal-day {{d.count ? 'cooked' : ''}} {{d.isToday ? 'today' : ''}} {{d.isFuture ? 'future' : ''}} {{d.date === selected ? 'selected' : ''}}"
+            class="cal-day {{d.count ? 'cooked' : ''}} {{d.isToday ? 'today' : ''}} {{d.isFuture ? 'future' : ''}} {{d.date && d.date === selected ? 'selected' : ''}}"
             data-date="{{d.date}}" data-count="{{d.count}}" data-future="{{d.isFuture}}" bindtap="onTapDay">
         <text class="cal-num">{{d.day}}</text>
         <text wx:if="{{d.count}}" class="cal-dot">{{d.count > 1 ? d.count + '道' : '●'}}</text>

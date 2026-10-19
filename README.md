@@ -9,6 +9,10 @@
 
 能打开这个小程序的人（管理员和体验成员）共用一本菜谱，都能看、都能改。它是原生小程序（JavaScript）加微信云开发，不用自己的服务器。用免费环境和体验版就能一直用，不花钱。
 
+| 菜单 | 菜篮和买菜清单 | 我的 |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/menu.png" width="220" alt="菜单"> | <img src="docs/screenshots/basket.png" width="220" alt="菜篮和买菜清单"> | <img src="docs/screenshots/mine.png" width="220" alt="我的"> |
+
 ## 功能
 
 - **菜单**：左边分类，右边菜品卡片。能按菜名、原料、标签搜；搜不到的一键记进想吃清单。
@@ -193,7 +197,9 @@ cloudfunctions/
 tests/                 自动测试（check.js）；fixtures/ 里是测试用的导入文件
 scripts/               build-icons.mjs：把 design/ 里的 SVG 导出成 PNG
 design/                头像、Tab 图标和界面小图标的源文件、品牌信息、菜品照片原图（不会打包进小程序）
-docs/菜谱导入模板.json  自己写新菜用的导入模板
+docs/
+├── 菜谱导入模板.json   自己写新菜用的导入模板
+└── screenshots/       README 里的截图
 imports/               自己生成的导入文件（不进 git）
 ```
 

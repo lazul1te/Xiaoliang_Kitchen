@@ -479,6 +479,15 @@ function newPage(pagePath) {
 const lastCall = (type) => calls.filter((c) => c[0] === type).pop();
 const countCalls = (type) => calls.filter((c) => c[0] === type).length;
 const ev = (dataset, detail) => ({ currentTarget: { dataset }, detail: detail || {} });
+// 按 WXML 里写的 class 表达式，算出某个元素实际有哪些 class（{{ }} 里是普通的 JS 表达式）
+function classOf(pagePath, marker, scope) {
+  const wxml = fs.readFileSync(path.join(root, pagePath + ".wxml"), "utf8");
+  const m = wxml.match(new RegExp(`class="(${marker}[^"]*)"`));
+  assert.ok(m, `${pagePath}.wxml 里找不到 class="${marker}…"`);
+  const names = Object.keys(scope);
+  const value = (expr) => new Function(...names, `return (${expr});`)(...names.map((k) => scope[k]));
+  return m[1].replace(/\{\{(.+?)\}\}/g, (_, expr) => String(value(expr) || "")).split(/\s+/).filter(Boolean);
+}
 const rowOf = (name) => cloudDB.dishes.find((d) => d.name === name);
 const planDoc = () => (cloudDB.plans || []).find((p) => p._id === "current") || {};
 const sharedDoc = (id) => (cloudDB.plans || []).find((p) => p._id === id) || {};
@@ -1978,6 +1987,24 @@ async function smoke() {
   logsPageDay.renderCalendar();
   assert.strictEqual(logsPageDay.data.dayLogs.length, before2 + 2, "选中的这天马上显示新记的");
   ok("同一天记好几道：记录页「记一笔」「这天再记一道」都能进去，保存不受限制");
+
+  // ======== 日历：没选日子时，月初月末的空格子不能显示成选中（bug：以前是一整块黄的） ========
+  const gridPage = newPage("pages/logs/index");
+  gridPage.onLoad();
+  gridPage.onShow();
+  await flush();
+  const calCells = () => gridPage.data.cal.weeks.reduce((all, w) => all.concat(w.days), []);
+  const selectedCells = () =>
+    calCells().filter((d) => classOf("pages/logs/index", "cal-day ", { d, selected: gridPage.data.selected }).includes("selected"));
+  gridPage.calYear = 2026;
+  gridPage.calMonth = 9; // 2026 年 10 月：1 号是周四，前面空 3 格，后面空 1 格
+  gridPage.renderCalendar();
+  assert.strictEqual(calCells().filter((d) => !d.date).length, 4);
+  assert.deepStrictEqual(selectedCells(), [], "没选日子：一个格子都不显示成选中");
+  gridPage.setData({ selected: "2026-10-02" });
+  gridPage.renderCalendar();
+  assert.deepStrictEqual(selectedCells().map((d) => d.date), ["2026-10-02"], "选了哪天，就只有那天显示成选中");
+  ok("日历：月初月末的空格子不会显示成选中");
 }
 
 staticChecks();
