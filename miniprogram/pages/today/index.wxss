@@ -148,6 +148,38 @@
 
 /* ---------- 下单以后：点菜单（小票） ---------- */
 
+/* 点菜单的日子过了还没开饭 */
+.banner {
+  margin-bottom: 20rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 20rpx;
+  background: #fff6e2;
+  box-shadow: inset 0 0 0 2rpx #ffe2a8;
+}
+
+.banner-text {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.banner-acts {
+  display: flex;
+  margin-top: 16rpx;
+}
+
+.banner-btn {
+  margin-right: 16rpx;
+  padding: 8rpx 28rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  font-size: var(--fs-small);
+}
+
+.banner-btn.pri {
+  background: var(--yolk);
+  font-weight: 600;
+}
+
 .ticket {
   position: relative;
   padding: 28rpx 32rpx 32rpx;

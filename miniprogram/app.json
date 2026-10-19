@@ -9,6 +9,7 @@
     "pages/categories/index",
     "pages/cook/index",
     "pages/log-edit/index",
+    "pages/meal/index",
     "pages/export/index",
     "pages/import/index",
     "pages/backup/index",

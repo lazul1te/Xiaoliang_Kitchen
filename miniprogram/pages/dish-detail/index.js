@@ -1,6 +1,7 @@
 // 菜品详情：原料、分步做法、小贴士、做菜记录；底部可以加入菜篮、编辑、开始做
 const dishService = require("../../services/dish");
 const logService = require("../../services/log");
+const mealService = require("../../services/meal");
 const planService = require("../../services/plan");
 const ui = require("../../utils/ui");
 const { toDetail } = require("../../utils/dish");
@@ -38,9 +39,13 @@ Page({
   async load() {
     let dish;
     let logs = [];
+    const meals = {}; // 开饭时一起记的：记录自己没照片，就用那顿饭的整桌照片
     try {
       dish = await dishService.getDish(this.dishId);
       logs = (await logService.listLogs()).filter((l) => l.dishId === this.dishId);
+      (await mealService.listMeals()).forEach((m) => {
+        meals[m._id] = m;
+      });
     } catch (err) {
       ui.alert("没读到这道菜", ui.errorText(err));
       return;
@@ -53,7 +58,7 @@ Page({
     wx.setNavigationBarTitle({ title: dish.name });
     this.setData({
       dish: toDetail(dish),
-      logs: logs.slice(0, RECENT_LOGS).map((l) => toLogCard(l)),
+      logs: logs.slice(0, RECENT_LOGS).map((l) => toLogCard(l, null, meals)),
       logCount: logs.length,
       notFound: false,
       heroBroken: false,

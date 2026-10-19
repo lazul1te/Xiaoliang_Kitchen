@@ -49,6 +49,7 @@ Page({
     flavorChips: [], // [{ name, on }]
     names: [], // 以前写过的名字，点一下就行
     ticket: null, // 已下单：点菜单（utils/order.js 的 ticketOf）
+    overdue: "", // 点菜单上的日子已经过了：「10月19日的晚饭做了吗？」
     shopping: null, // 买菜清单 { buy, unknown, stocked, extras, total, done }
     hasPlan: false,
     showShopping: false, // 下单前买菜清单先收起来
@@ -120,6 +121,7 @@ Page({
     const shopping = buildShoppingList(planned, plan.checked, plan.extras, pantryService.getItems());
     const stage = plan.order && planned.length ? "ordered" : planned.length || shopping.extras.length ? "picking" : "empty";
     const ticket = stage === "ordered" ? ticketOf(plan.order, planned) : null;
+    const overdue = ticket && ticket.date < this.data.today ? `${ticket.dateText.split(" ")[0]}的${ticket.meal}做了吗？` : "";
     const form = this.data.form;
     this.setData({
       stage,
@@ -128,6 +130,7 @@ Page({
       count: planned.reduce((sum, p) => sum + p.qty, 0),
       slowText: slowestText(planned),
       ticket,
+      overdue,
       shopping,
       hasPlan: stage !== "empty",
       flavorChips: this.flavorChips(form.flavors),
@@ -266,6 +269,16 @@ Page({
     if (!ok) return;
     planService.cancelOrder();
     return this.refresh();
+  },
+
+  // 做好了：去开饭页，一次把这顿的菜都记下来
+  onFinishMeal() {
+    wx.navigateTo({ url: "/pages/meal/index" });
+  },
+
+  // 忘了开饭：按点菜单上那天记
+  onOverdueDone() {
+    wx.navigateTo({ url: `/pages/meal/index?date=${this.data.ticket.date}` });
   },
 
   // 小票、卡片要画的内容

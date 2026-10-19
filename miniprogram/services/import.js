@@ -4,6 +4,7 @@
 // - 分类按名字对上，没有就新建
 // - 文件里带的照片重新传到云存储；没带照片的，沿用原来的云文件 ID（同一个云环境里还能显示）
 // - 做菜记录只导入能对上菜的，同一道菜、同一时间的记录已经有了就跳过（「做过几次」按记录算，不用另外改）
+// - 开饭记下的每一顿：同一时间记的已经有了就跳过；做菜记录跟着换成新的那一顿
 // - 库存、想吃清单按名字合并，已经有的不重复加
 const cloud = require("./cloud");
 const store = require("./store");
@@ -12,7 +13,9 @@ const categoryService = require("./category");
 const imageService = require("./image");
 const pantryService = require("./pantry");
 const wishService = require("./wish");
+const mealService = require("./meal");
 const { normalizeLog, timeOf } = require("../utils/log");
+const { normalizeMeal } = require("../utils/meal");
 const { parseDuration } = require("../utils/dish");
 
 const APP = "nashoucai-xiaobenben";
@@ -219,7 +222,41 @@ async function importData(data, onProgress) {
       added += 1;
     }
 
-    // 3. 做菜记录
+    // 3. 每一顿：菜对得上的才导入；同一时间记的已经有了就用那一顿
+    const mealMap = {}; // 文件里这一顿的 id → 现在的 id
+    const meals = Array.isArray(data.meals) ? data.meals : [];
+    let mealsError = "";
+    for (let i = 0; i < meals.length; i++) {
+      const m = normalizeMeal(meals[i] || {});
+      const items = m.items.map((it) => Object.assign({}, it, { dishId: idMap[it.dishId] })).filter((it) => it.dishId);
+      if (!items.length) continue;
+      const same = store.listMeals().find((x) => x.createdAt === m.createdAt && x.date === m.date);
+      if (same) {
+        mealMap[m._id] = same._id;
+        continue;
+      }
+      progress(`正在导入第 ${i + 1}/${meals.length} 顿饭`);
+      try {
+        const meal = normalizeMeal(Object.assign({}, m, { _id: mealService.newMealId(), items }));
+        const photo = toLocal(m.photo);
+        if (photo && !imageService.isCloudFile(photo)) {
+          const files = await imageService.uploadCover(photo, "logs");
+          meal.photo = files.cover;
+          meal.photoThumb = files.thumb;
+        } else {
+          meal.photo = photo;
+          meal.photoThumb = "";
+        }
+        await cloud.collection("meals").add({ data: meal });
+        store.putMeal(meal);
+        mealMap[m._id] = meal._id;
+      } catch (err) {
+        mealsError = cloud.explain(err, "meals").message; // 比如 meals 集合还没建：记录照样导入，只是不按顿合在一起
+        break;
+      }
+    }
+
+    // 4. 做菜记录
     const logs = Array.isArray(data.logs) ? data.logs : [];
     let logsAdded = 0;
     let logsError = "";
@@ -233,7 +270,7 @@ async function importData(data, onProgress) {
       progress(`正在导入做菜记录 ${i + 1}/${logs.length}`);
       try {
         const dish = store.getDish(dishId);
-        const log = normalizeLog(Object.assign({}, l, { _id: "", dishId, dishName: dish ? dish.name : l.dishName }));
+        const log = normalizeLog(Object.assign({}, l, { _id: "", dishId, dishName: dish ? dish.name : l.dishName, mealId: mealMap[l.mealId] || "" }));
         const photo = toLocal(l.photo);
         if (photo && !imageService.isCloudFile(photo)) {
           const files = await imageService.uploadCover(photo, "logs");
@@ -255,7 +292,7 @@ async function importData(data, onProgress) {
       }
     }
 
-    // 4. 库存：家里有的加进来（已经有的不动）
+    // 5. 库存：家里有的加进来（已经有的不动）
     const pantry = data.pantry || {};
     const inStock = Object.keys(pantry)
       .map((k) => pantry[k])
@@ -263,7 +300,7 @@ async function importData(data, onProgress) {
       .map((i) => i.name);
     if (inStock.length) pantryService.add(inStock);
 
-    // 5. 想吃清单：同名的已经有了就跳过；文件里的菜已经写成菜谱的也不用再加
+    // 6. 想吃清单：同名的已经有了就跳过；文件里的菜已经写成菜谱的也不用再加
     const wishNames = {};
     wishService.list().forEach((w) => {
       wishNames[w.name] = true;
@@ -274,7 +311,7 @@ async function importData(data, onProgress) {
       await wishService.save({ name: nameOf(wishes[i]), photo: toLocal(wishes[i].photo), note: wishes[i].note });
     }
 
-    return { added, skipped: dishes.length - added, logsAdded, logsError };
+    return { added, skipped: dishes.length - added, logsAdded, logsError: logsError || mealsError };
   } finally {
     temps.forEach((p) => {
       try {

@@ -1,0 +1,208 @@
+/* 底部留出保存栏的高度 */
+.meal {
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+}
+
+/* ---------- 整桌照片（跟打卡页一样） ---------- */
+
+.photo-box {
+  position: relative;
+  height: 400rpx;
+  margin: 20rpx 24rpx 0;
+  border-radius: 20rpx;
+  overflow: hidden;
+  background: var(--apricot);
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.photo-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: var(--fs-sub);
+  color: var(--wood);
+}
+
+.photo-actions {
+  position: absolute;
+  right: 16rpx;
+  bottom: 16rpx;
+  display: flex;
+}
+
+.photo-btn {
+  margin-left: 12rpx;
+  padding: 6rpx 22rpx;
+  border-radius: 24rpx;
+  background: rgba(59, 59, 66, 0.72);
+  font-size: var(--fs-tiny);
+  color: #fff;
+}
+
+/* ---------- 做了哪些 ---------- */
+
+.card-title + .hint {
+  margin-top: -8rpx;
+  margin-bottom: 8rpx;
+}
+
+.m-dish {
+  display: flex;
+  align-items: center;
+  min-height: 92rpx;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.m-dish:last-child {
+  border-bottom: none;
+}
+
+.m-pick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+}
+
+.m-name {
+  min-width: 0;
+  font-size: var(--fs-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-qty {
+  flex-shrink: 0;
+  margin-left: 8rpx;
+  font-size: var(--fs-sub);
+  color: var(--text-3);
+}
+
+.m-dish.off .m-name {
+  color: var(--text-3);
+}
+
+.m-left {
+  flex-shrink: 0;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.checkbox {
+  flex-shrink: 0;
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+  border: 3rpx solid #d9cfc1;
+  border-radius: 10rpx;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 36rpx;
+  color: var(--pan);
+}
+
+.checkbox.on {
+  border-color: var(--yolk);
+  background: var(--yolk);
+}
+
+.stars {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.star {
+  padding: 0 4rpx;
+  font-size: 36rpx;
+  color: #e6dccd;
+}
+
+.star.on {
+  color: var(--yolk);
+}
+
+/* ---------- 哪天、哪一顿、掌勺（跟打卡页一样） ---------- */
+
+.field {
+  display: flex;
+  align-items: center;
+  min-height: 92rpx;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.card > .field:last-child {
+  border-bottom: none;
+}
+
+.label {
+  flex-shrink: 0;
+  width: 150rpx;
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+
+.field-wrap {
+  align-items: flex-start;
+  padding: 10rpx 0;
+}
+
+.field-wrap .label {
+  padding-top: 14rpx;
+}
+
+.field-wrap .chips {
+  flex: 1;
+  padding: 0;
+}
+
+.text-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 160rpx;
+  padding: 16rpx;
+  border-radius: 12rpx;
+  background: var(--cream);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+
+.m-foot {
+  margin: 24rpx 24rpx 0;
+  text-align: center;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+/* ---------- 底部保存栏 ---------- */
+
+.save-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(59, 59, 66, 0.06);
+}
+
+.save-btn {
+  flex: 1;
+}
+
+.save-btn.disabled {
+  background: #efeff1;
+  color: var(--text-3);
+}

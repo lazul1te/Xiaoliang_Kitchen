@@ -44,6 +44,7 @@ function normalizeLog(l) {
     rating: int(l.rating, 0, 5), // 好吃程度，0 表示没打分
     note: text(l.note), // 心得
     cook: text(l.cook), // 掌勺的人
+    mealId: text(l.mealId), // 开饭时一起记的：属于哪一顿（meals 集合），单独打卡的是空的
     createdAt: Number(l.createdAt) || now,
     updatedAt: Number(l.updatedAt) || now,
   };
@@ -59,15 +60,17 @@ function dayText(ts) {
   return `${d.getMonth() + 1}月${d.getDate()}日 周${WEEKDAYS[d.getDay()]}`;
 }
 
-// 记录页、详情页里的一条记录
-function toLogCard(log, dishNames) {
+// 记录页、详情页里的一条记录。meals：{ mealId: 一顿饭 }，这条记录自己没有照片时用那顿饭的整桌照片
+function toLogCard(log, dishNames, meals) {
   const name = (dishNames && dishNames[log.dishId]) || log.dishName || "这道菜已经删掉了";
+  const meal = meals && log.mealId ? meals[log.mealId] : null;
   return {
     _id: log._id,
     dishId: log.dishId,
     dishName: name,
+    mealId: log.mealId,
     initial: name.slice(0, 1), // 没有照片时，用菜名第一个字当占位图
-    photo: log.photoThumb || log.photo,
+    photo: log.photoThumb || log.photo || (meal ? meal.photoThumb || meal.photo : ""),
     stars: log.rating ? "★".repeat(log.rating) + "☆".repeat(5 - log.rating) : "",
     note: log.note,
     cook: log.cook,
@@ -76,8 +79,8 @@ function toLogCard(log, dishNames) {
 }
 
 // 按月份、再按日期分组：[{ key, title, count, days: [{ key, title, logs: [卡片] }] }]
-// logs 要先按时间倒序排好
-function groupByMonth(logs, dishNames) {
+// logs 要先按时间倒序排好；meals 见 toLogCard
+function groupByMonth(logs, dishNames, meals) {
   const months = [];
   logs.forEach((log) => {
     const d = new Date(log.cookedAt);
@@ -93,7 +96,7 @@ function groupByMonth(logs, dishNames) {
       day = { key: dayKey, title: dayKey, logs: [] };
       month.days.push(day);
     }
-    day.logs.push(toLogCard(log, dishNames));
+    day.logs.push(toLogCard(log, dishNames, meals));
     month.count += 1;
   });
   return months;

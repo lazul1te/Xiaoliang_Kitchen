@@ -41,9 +41,17 @@
   <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
 </view>
 
-<view wx:else class="today {{stage === 'picking' && items.length ? 'has-bar' : ''}}">
+<view wx:else class="today {{(stage === 'picking' && items.length) || stage === 'ordered' ? 'has-bar' : ''}}">
   <!-- ========== 下单以后：点菜单 ========== -->
   <block wx:if="{{stage === 'ordered'}}">
+    <!-- 点菜单上的日子过了还没开饭：问一下做了没有 -->
+    <view wx:if="{{overdue}}" class="banner">
+      <text class="banner-text">{{overdue}}</text>
+      <view class="banner-acts">
+        <text class="banner-btn pri" bindtap="onOverdueDone">做了，记一下</text>
+        <text class="banner-btn" bindtap="onCancelOrder">没做，撤单</text>
+      </view>
+    </view>
     <view class="ticket">
       <view class="t-top"><text>拿手菜小本本</text><text>{{ticket.dateText}}</text></view>
       <view class="t-title"><text class="t-name">点菜单</text><text class="t-no">{{ticket.noText}}</text></view>
@@ -193,6 +201,12 @@
 <view wx:if="{{stage === 'picking' && items.length}}" class="order-bar">
   <text class="order-bar-text">{{slowText || '共 ' + count + ' 份'}}</text>
   <view class="btn-primary order-btn" bindtap="onPlaceOrder">下单</view>
+</view>
+
+<!-- 下单以后：做好了就开饭 -->
+<view wx:if="{{stage === 'ordered'}}" class="order-bar">
+  <text class="order-bar-text">买齐了、做好了，就开饭吧</text>
+  <view class="btn-primary order-btn" bindtap="onFinishMeal">做好了，开饭</view>
 </view>
 
 <!-- 画点菜单图片用的画布，不显示出来 -->

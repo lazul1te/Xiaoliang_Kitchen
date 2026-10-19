@@ -4,6 +4,7 @@ const cloud = require("./cloud");
 const store = require("./store");
 const imageService = require("./image");
 const planService = require("./plan");
+const mealService = require("./meal");
 const storage = require("../utils/storage");
 const { normalizeLog } = require("../utils/log");
 
@@ -116,6 +117,7 @@ async function removeLog(id) {
   }
   store.removeLog(id);
   imageService.remove([old.photo, old.photoThumb]);
+  await mealService.removeIfEmpty(old.mealId); // 这一顿的菜都删光了，这一顿也删掉
 }
 
 module.exports = { listLogs, getLog, getCookName, saveLog, removeLog };

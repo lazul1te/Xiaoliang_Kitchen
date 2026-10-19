@@ -234,7 +234,10 @@ global.wx = {
     calls.push(["navigateBack", o.delta || 1]);
     if (o.success) o.success();
   },
-  switchTab: (o) => calls.push(["switchTab", o.url]),
+  switchTab: (o) => {
+    calls.push(["switchTab", o.url]);
+    if (o.success) o.success();
+  },
   setNavigationBarTitle: (o) => calls.push(["title", o.title]),
   enableAlertBeforeUnload: () => calls.push(["alertOn"]),
   disableAlertBeforeUnload: (o) => {
@@ -638,6 +641,32 @@ function staticChecks() {
     // WXML 表达式里不能调用方法（比如 indexOf），只能用运算符
     for (const expr of src.match(/{{[^}]*}}/g) || []) {
       if (/\.\w+\(/.test(expr)) fail(`${rel(file)}: 表达式里调用了方法 ${expr}`);
+    }
+    // 套在一起的 wx:for 序号名一样（默认都叫 index）时，里面那层的 {{index}} 是里面的序号，不是外面的：
+    // 里面那层要用 wx:for-index 换个名字
+    const loops = []; // 外面几层 wx:for 的序号名
+    const opened = []; // 还没关上的标签
+    const tagRe = /<(\/?)([a-zA-Z][\w-]*)((?:\s+[^\s=>"'\/]+(?:\s*=\s*"[^"]*")?)*)\s*(\/?)>/g;
+    let t;
+    while ((t = tagRe.exec(src))) {
+      const [, closing, name, attrs, selfClosing] = t;
+      if (closing) {
+        const top = opened.pop();
+        if (top && top.loop) {
+          loops.pop();
+          const inside = src.slice(top.bodyStart, t.index);
+          if (top.shadows && new RegExp(`{{[^}]*\\b${top.indexName}\\b`).test(inside)) {
+            fail(`${rel(file)}: <${top.name} wx:for> 套在另一个 wx:for 里，序号都叫 ${top.indexName}，里面用的是里层的序号；给里层加 wx:for-index`);
+          }
+        }
+        continue;
+      }
+      if (selfClosing) continue;
+      const loop = /\swx:for="/.test(attrs);
+      const indexName = (/\swx:for-index="([^"]+)"/.exec(attrs) || [])[1] || "index";
+      // 里层自己的属性（比如 data-i="{{index}}"）也算里层
+      opened.push({ name, loop, indexName, shadows: loop && loops.includes(indexName), bodyStart: t.index });
+      if (loop) loops.push(indexName);
     }
   }
   ok("WXML tags balanced, no method calls in expressions");
@@ -2168,6 +2197,157 @@ async function smoke() {
   await flush();
   assert.strictEqual(basketO2.data.stage, "empty");
   ok("点菜单：确认（哪一顿、口味、谁点的）、下单、对方看得到、加菜标「加」、存成图片、发给对方、撤单、编号往下数");
+
+  // ======== 开饭啦：一次把这顿的菜都记下来，没做的留在菜篮；记录页按顿显示；分享这顿饭；再来一单 ========
+  launchApp("me");
+  const POTATO = idOf("土豆肉丝炒饭");
+  const countOf = async (name) => (await dishNow(name)).cookCount;
+  const before3 = { lurou: await countOf("台式卤肉饭"), potato: await countOf("土豆肉丝炒饭") };
+  svc("plan").addMany({ [LUROU]: 1, [WINGS]: 2, [LETTUCE]: 1, [POTATO]: 1 });
+  await flush();
+  const basketM = newPage("pages/today/index");
+  basketM.onLoad();
+  basketM.onShow();
+  await flush();
+  basketM.onPickMeal(ev({ meal: "晚饭" }));
+  await basketM.onPlaceOrder();
+  await flush();
+  basketM.onToggleItem(ev({ key: basketM.data.shopping.buy[0].key })); // 买到了一样
+  modalAnswers.push({ confirm: true, content: "牛奶" });
+  await basketM.onAddExtra();
+  await flush();
+  basketM.onFinishMeal();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/meal/index"]);
+  const mealPage = newPage("pages/meal/index");
+  await mealPage.onLoad({});
+  const mi = (id) => mealPage.data.dishes.findIndex((d) => d.dishId === id);
+  assert.deepStrictEqual(
+    [mealPage.data.dishes.length, mealPage.data.madeCount, mealPage.data.date, mealPage.data.meal, mealPage.data.cook, mealPage.data.orderText],
+    [4, 4, dateValue(Date.now()), "晚饭", "小亮", "点菜单 No.003"],
+    "默认全勾上；哪天、哪一顿、掌勺跟着点菜单"
+  );
+  await mealPage.onChoosePhoto();
+  mealPage.onToggleDish(ev({ i: mi(POTATO) })); // 炒饭这次没做
+  assert.strictEqual(mealPage.data.madeCount, 3);
+  mealPage.onStar(ev({ i: mi(LUROU), value: 5 }));
+  mealPage.onStar(ev({ i: mi(WINGS), value: 4 }));
+  mealPage.onStar(ev({ i: mi(LETTUCE), value: 2 }));
+  mealPage.onStar(ev({ i: mi(LETTUCE), value: 2 })); // 再点一下同一颗星 = 不打分
+  mealPage.onStar(ev({ i: mi(LETTUCE), value: 3 }));
+  mealPage.onNoteInput({ detail: { value: "卤肉炖得很烂，下次少放点糖" } });
+  // meals 集合还没建：提示怎么建；建好以后在这一页重试，不会多记
+  delete cloudDB.meals;
+  const logsBefore = cloudDB.cook_logs.length;
+  await mealPage.onSave();
+  assert.strictEqual(lastCall("modal")[1], "没记上");
+  assert.ok(/meals/.test(lastCall("modal")[2]), lastCall("modal")[2]);
+  assert.ok(planItems()[LUROU] && planDoc().order, "没记上就还在菜篮里");
+  cloudDB.meals = [];
+  await mealPage.onSave();
+  await flush();
+  assert.strictEqual(cloudDB.meals.length, 1);
+  const meal1 = cloudDB.meals[0];
+  assert.deepStrictEqual(
+    [meal1.no, meal1.meal, meal1.date, meal1.cook, meal1.orderedBy, meal1.note],
+    [3, "晚饭", dateValue(Date.now()), "小亮", "小鱼", "卤肉炖得很烂，下次少放点糖"]
+  );
+  assert.deepStrictEqual(meal1.items.map((i) => [i.dishId, i.qty]).sort(), [[LUROU, 1], [WINGS, 2], [LETTUCE, 1]].sort());
+  assert.ok(/\/logs\//.test(meal1.photo) && cloudFiles[meal1.photo] && cloudFiles[meal1.photoThumb], "整桌照片传到云存储");
+  const mealLogs = cloudDB.cook_logs.filter((l) => l.mealId === meal1._id);
+  assert.strictEqual(cloudDB.cook_logs.length, logsBefore + 3, "重试没有多记");
+  assert.deepStrictEqual(mealLogs.map((l) => [l.dishId, l.rating, l.cook, dateValue(l.cookedAt)]).sort(), [[LUROU, 5, "小亮", dateValue(Date.now())], [WINGS, 4, "小亮", dateValue(Date.now())], [LETTUCE, 3, "小亮", dateValue(Date.now())]].sort());
+  assert.deepStrictEqual([await countOf("台式卤肉饭"), await countOf("土豆肉丝炒饭")], [before3.lurou + 1, before3.potato], "做过几次跟着记录变");
+  assert.deepStrictEqual(planItems(), { [POTATO]: 1 }, "没做的留在菜篮");
+  assert.ok(!planDoc().order, "点菜单收起来了");
+  assert.deepStrictEqual(Object.values(planDoc().extras).map((x) => x.name), ["牛奶"], "还剩菜，买菜清单先不动");
+  assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/logs/index"]);
+  assert.deepStrictEqual(lastCall("toast"), ["toast", "记好了！这顿 3 道菜"]);
+  assert.strictEqual(dev().dev_cook_name, "小亮");
+  // 记录页：直接选中那天，同一顿的菜合成一张卡片
+  const logsM = newPage("pages/logs/index");
+  logsM.onLoad();
+  logsM.onShow();
+  await flush();
+  assert.strictEqual(logsM.data.selected, dateValue(Date.now()), "开完饭直接看那天");
+  const mealEntry = logsM.data.dayEntries.find((e) => e.type === "meal");
+  assert.ok(mealEntry, "那天有一张「一顿饭」的卡片");
+  assert.deepStrictEqual(
+    [mealEntry.meal.title, mealEntry.meal.noText, mealEntry.meal.photo, mealEntry.meal.peopleText, mealEntry.meal.note],
+    ["晚饭", "No.003", meal1.photoThumb, "点菜 小鱼 · 掌勺 小亮", "卤肉炖得很烂，下次少放点糖"]
+  );
+  assert.deepStrictEqual(mealEntry.meal.dishes.map((d) => `${d.dishName}${d.qtyText}|${d.stars}`).sort(), ["台式卤肉饭|★★★★★", "奥尔良鸡翅（空气炸锅版）×2|★★★★☆", "莴笋炒肉|★★★☆☆"].sort());
+  assert.ok(logsM.data.months[0].days[0].entries.some((e) => e.type === "meal" && e.mealId === meal1._id), "全部记录里也按顿合在一起");
+  // 详情页：开饭记的那条没自己的照片，用整桌照片
+  const detM = newPage("pages/dish-detail/index");
+  detM.onLoad({ id: LUROU });
+  await flush();
+  assert.strictEqual(detM.data.logs[0].photo, meal1.photoThumb);
+  // 分享这顿饭：小票盖「已开饭」，有分数和心得，最上面是整桌照片
+  await logsM.onShareMeal(ev({ id: meal1._id }));
+  const mealImg = files[lastCall("shareImage")[1]];
+  ["已开饭", "No.003", "★★★★★", "奥尔良鸡翅（空气炸锅版） ×2", "卤肉炖得很烂，下次少放点糖"].forEach((t) => assert.ok(mealImg.includes(t), `图片上没有「${t}」：${mealImg}`));
+  // 再来一单：按当时的份数放回菜篮
+  logsM.onReorder(ev({ id: meal1._id }));
+  await flush();
+  assert.deepStrictEqual(planItems(), { [POTATO]: 1, [LUROU]: 1, [WINGS]: 2, [LETTUCE]: 1 });
+  assert.deepStrictEqual([lastCall("switchTab"), lastCall("toast")], [["switchTab", "/pages/today/index"], ["toast", "放进菜篮了"]]);
+  ok("开饭啦：一次记下这顿的菜（打分、掌勺、整桌照片）、没做的留在菜篮、集合没建时重试不多记；记录页按顿显示、分享这顿饭、再来一单");
+
+  // ======== 忘了开饭：第二天问一下；菜都做了，菜篮和买菜清单一起清掉；一顿的记录删光了，这一顿也删掉 ========
+  const basketL = newPage("pages/today/index");
+  basketL.onShow();
+  await flush();
+  await basketL.onPlaceOrder();
+  await flush();
+  const yesterday = dateValue(Date.now() - 24 * 3600 * 1000);
+  partnerWrites(() => {
+    planDoc().order.date = yesterday; // 点菜单是昨天的
+  });
+  await svc("plan").sync();
+  basketL.onShow();
+  await flush();
+  const [, ym, yd] = yesterday.split("-").map(Number);
+  assert.strictEqual(basketL.data.overdue, `${ym}月${yd}日的${planDoc().order.meal}做了吗？`);
+  basketL.onOverdueDone();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", `/pages/meal/index?date=${yesterday}`]);
+  const lateMeal = newPage("pages/meal/index");
+  await lateMeal.onLoad({ date: yesterday });
+  assert.strictEqual(lateMeal.data.date, yesterday, "按点菜单那天记");
+  await lateMeal.onSave();
+  await flush();
+  const meal2 = cloudDB.meals.find((m) => m.no === 4);
+  assert.ok(meal2 && meal2.date === yesterday && !meal2.photo, "没拍照也能记");
+  assert.ok(cloudDB.cook_logs.filter((l) => l.mealId === meal2._id).every((l) => dateValue(l.cookedAt) === yesterday));
+  assert.deepStrictEqual([planItems(), planDoc().checked, Object.values(planDoc().extras).map((x) => x.name)], [{}, {}, ["牛奶"]], "菜都做了：菜篮、勾选清空，没买的牛奶留着");
+  // 删掉这一顿的记录：删光了，这一顿和整桌照片也删掉
+  launchApp("me");
+  for (const l of cloudDB.cook_logs.filter((x) => x.mealId === meal1._id)) await svc("log").removeLog(l._id);
+  assert.ok(!cloudDB.meals.some((m) => m._id === meal1._id), "这一顿也删掉了");
+  assert.ok(!cloudFiles[meal1.photo] && !cloudFiles[meal1.photoThumb], "整桌照片也删掉了");
+  ok("忘了开饭：第二天问一下、按那天记；菜都做了清空菜篮（没买的留着）；一顿的记录删光，这一顿和照片也删掉");
+
+  // ======== 备份：每一顿和整桌照片也导出；导入时记录跟着换成新的那一顿 ========
+  const backupData = JSON.parse(files[(await svc("export").buildFile({ withPhotos: true })).filePath]);
+  assert.ok(backupData.meals.some((m) => m._id === meal2._id), "导出里有每一顿");
+  const fileMeal = { _id: "file-meal-1", no: 9, date: "2025-05-01", meal: "午饭", items: [{ dishId: "f-lurou", dishName: "台式卤肉饭", qty: 2 }], note: "五一做的", photo: "cloud://old/logs/table.jpg", createdAt: new Date(2025, 4, 1, 12).getTime() };
+  const fileData = {
+    app: "nashoucai-xiaobenben",
+    format: 1,
+    categories: [],
+    dishes: [{ _id: "f-lurou", name: "台式卤肉饭" }],
+    logs: [{ _id: "file-log-1", dishId: "f-lurou", dishName: "台式卤肉饭", cookedAt: fileMeal.createdAt, rating: 4, mealId: "file-meal-1" }],
+    meals: [fileMeal],
+    photos: { "cloud://old/logs/table.jpg": Buffer.from("整桌").toString("base64") },
+  };
+  await svc("import").importData(fileData);
+  await svc("import").importData(fileData); // 再导一次不会多出来
+  const importedMeals = cloudDB.meals.filter((m) => m.date === "2025-05-01");
+  assert.strictEqual(importedMeals.length, 1);
+  assert.deepStrictEqual([importedMeals[0].items[0].dishId, importedMeals[0].items[0].qty, importedMeals[0].note], [LUROU, 2, "五一做的"]);
+  assert.ok(/\/logs\//.test(importedMeals[0].photo) && importedMeals[0].photo !== fileMeal.photo, "整桌照片重新传了");
+  const importedLog = cloudDB.cook_logs.find((l) => l.dishId === LUROU && l.cookedAt === fileMeal.createdAt);
+  assert.strictEqual(importedLog.mealId, importedMeals[0]._id, "记录跟着换成新的那一顿");
+  ok("备份：每一顿和整桌照片也导出；导入时对上菜、换成新的那一顿，重复导入不重复");
 }
 
 staticChecks();

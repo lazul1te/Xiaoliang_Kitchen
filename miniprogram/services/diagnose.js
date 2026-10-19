@@ -1,4 +1,4 @@
-// 「检查云开发」：四个集合挨个读一下、试几张照片，把结果和该怎么改写成一段话弹出来。
+// 「检查云开发」：每个集合挨个读一下、试几张照片，把结果和该怎么改写成一段话弹出来。
 // 「我的」页底部和菜单页读不到数据时都用这个
 const cloud = require("./cloud");
 const photo = require("./photo");
@@ -16,7 +16,7 @@ async function run() {
   const lines = results.map((r) => `${r.ok ? "✅" : "❌"} ${r.name}：${r.text}`);
   const tips = [];
   if (results.some((r) => !r.ok && r.name !== "照片")) {
-    tips.push(`数据库：没建的集合在云开发控制台「数据库」里新建，四个集合的权限都设成自定义安全规则 ${cloud.SHARED_RULE}`);
+    tips.push(`数据库：没建的集合在云开发控制台「数据库」里新建，每个集合的权限都设成自定义安全规则 ${cloud.SHARED_RULE}`);
   }
   if (results.some((r) => r.needsFunction)) {
     tips.push("照片：在开发者工具左边的 cloudfunctions 里右键 photo 文件夹，选「上传并部署：云端安装依赖」，部署好以后重新打开小程序");

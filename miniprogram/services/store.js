@@ -1,15 +1,16 @@
-// 数据仓库：两个人共用的分类、菜品、做菜记录在内存里放一份，页面读的时候直接用，不用每次都去云上查。
-// 改动由 services/dish.js、category.js、log.js 先写进云数据库，成功以后再调这里更新。
+// 数据仓库：两个人共用的分类、菜品、做菜记录、开饭记下的每一顿在内存里放一份，页面读的时候直接用，不用每次都去云上查。
+// 改动由 services/dish.js、category.js、log.js、meal.js 先写进云数据库，成功以后再调这里更新。
 // 手机本地也缓存一份：下次打开先显示缓存，同时去云上取最新的；没网的时候也能看菜谱。
 // 对方在自己手机上改的内容，要等这边重新去云上取（打开小程序、隔一会儿回到页面、下拉刷新）才看得到。
 const cloud = require("./cloud");
 const storage = require("../utils/storage");
 const { normalizeDish } = require("../utils/dish");
 const { normalizeLog, sortLogs } = require("../utils/log");
+const { normalizeMeal } = require("../utils/meal");
 
 const CACHE_KEY = "cloud_cache";
 
-let state = null; // { categories: [], dishes: [], logs: [] }
+let state = null; // { categories: [], dishes: [], logs: [], meals: [] }
 let fresh = false; // 这次打开以后，有没有从云上取到过最新数据
 let syncing = null; // 正在进行的同步（Promise）
 let writes = 0; // 改动计数：同步期间有新改动的话，取回来的就是旧数据，要再取一次
@@ -38,26 +39,29 @@ function changed() {
   } catch (e) {} // 缓存写不进去不影响使用
 }
 
-// 做菜记录的集合是后来加的，还没建的话先当作没有记录，不影响看菜谱（打卡时会提示去建）
-function fetchLogs() {
-  return cloud.fetchAll("cook_logs").catch((err) => {
+// 做菜记录、每一顿的集合是后来加的，还没建的话先当作没有，不影响看菜谱（打卡、开饭时会提示去建）
+function fetchOptional(name) {
+  return cloud.fetchAll(name).catch((err) => {
     if (cloud.isCollectionMissing(err)) return [];
     throw err;
   });
 }
 
+const sortMeals = (list) => list.slice().sort((a, b) => b.createdAt - a.createdAt);
+
 // 从云上取最新的分类、菜品和做菜记录，返回数据有没有变。同一时间只取一次
 function sync() {
   if (syncing) return syncing;
   const startWrites = writes;
-  syncing = Promise.all([cloud.fetchAll("categories"), cloud.fetchAll("dishes"), fetchLogs()]).then(
-    ([categories, dishes, logs]) => {
+  syncing = Promise.all([cloud.fetchAll("categories"), cloud.fetchAll("dishes"), fetchOptional("cook_logs"), fetchOptional("meals")]).then(
+    ([categories, dishes, logs, meals]) => {
       syncing = null;
       if (writes !== startWrites) return sync();
       const next = {
         categories: sortCategories(categories.map(normalizeCategory)),
         dishes: dishes.map(normalizeDish).sort((a, b) => a.createdAt - b.createdAt),
         logs: sortLogs(logs.map(normalizeLog)),
+        meals: sortMeals(meals.map(normalizeMeal)),
       };
       lastSyncAt = Date.now();
       fresh = true;
@@ -83,6 +87,7 @@ function ensureLoaded() {
       categories: sortCategories(cache.categories.map(normalizeCategory)),
       dishes: cache.dishes.map(normalizeDish),
       logs: sortLogs((cache.logs || []).map(normalizeLog)),
+      meals: sortMeals((cache.meals || []).map(normalizeMeal)),
     };
     sync().catch(() => {}); // 后台刷新，失败了（比如没网）就先用缓存
     return Promise.resolve();
@@ -180,6 +185,27 @@ function removeLog(id) {
   touch();
 }
 
+// 开饭记下的每一顿，新的在前
+function listMeals() {
+  return clone(state.meals);
+}
+
+function getMeal(id) {
+  const meal = state.meals.find((m) => m._id === id);
+  return meal ? clone(meal) : null;
+}
+
+function putMeal(meal) {
+  const m = normalizeMeal(meal);
+  state.meals = sortMeals(state.meals.filter((x) => x._id !== m._id).concat(m));
+  touch();
+}
+
+function removeMeal(id) {
+  state.meals = state.meals.filter((m) => m._id !== id);
+  touch();
+}
+
 module.exports = {
   ensureLoaded,
   whenFresh,
@@ -197,4 +223,8 @@ module.exports = {
   getLog,
   putLog,
   removeLog,
+  listMeals,
+  getMeal,
+  putMeal,
+  removeMeal,
 };

@@ -14,6 +14,29 @@
   </view>
 </template>
 
+<!-- 一顿饭（开饭时一起记的）：整桌照片、哪一顿、每道菜的分数 -->
+<template name="mealCard">
+  <view class="meal-card">
+    <cloud-image wx:if="{{photo}}" class="meal-photo" src="{{photo}}" mode="aspectFill" />
+    <view class="meal-body">
+      <view class="meal-head">
+        <text class="meal-title">{{title}}</text>
+        <text wx:if="{{noText}}" class="meal-no">{{noText}}</text>
+        <text wx:if="{{peopleText}}" class="meal-people">{{peopleText}}</text>
+      </view>
+      <view wx:for="{{dishes}}" wx:key="_id" class="meal-dish" data-id="{{item._id}}" bindtap="onOpenLog">
+        <text class="meal-dish-name">{{item.dishName}}<text wx:if="{{item.qtyText}}" class="meal-qty"> {{item.qtyText}}</text></text>
+        <text wx:if="{{item.stars}}" class="meal-stars">{{item.stars}}</text>
+      </view>
+      <view wx:if="{{note}}" class="meal-note">{{note}}</view>
+      <view class="meal-acts">
+        <text class="meal-act pri" data-id="{{_id}}" bindtap="onReorder">再来一单</text>
+        <text class="meal-act" data-id="{{_id}}" bindtap="onShareMeal">分享这顿饭</text>
+      </view>
+    </view>
+  </view>
+</template>
+
 <view wx:if="{{loaded}}" class="logs">
   <!-- 做饭日历 -->
   <view class="card calendar">
@@ -44,8 +67,9 @@
       <text class="day-bar-all" bindtap="onShowAll">看全部</text>
     </view>
     <view class="add-log" data-date="{{selected}}" bindtap="onAddLog">＋ 这天再记一道</view>
-    <block wx:for="{{dayLogs}}" wx:key="_id">
-      <template is="logCard" data="{{...item}}" />
+    <block wx:for="{{dayEntries}}" wx:key="key" wx:for-item="entry">
+      <template wx:if="{{entry.type === 'meal'}}" is="mealCard" data="{{...entry.meal}}" />
+      <template wx:else is="logCard" data="{{...entry.log}}" />
     </block>
   </block>
 
@@ -61,11 +85,15 @@
       <view class="month-title">{{month.title}}<text class="month-count"> · 下厨 {{month.count}} 次</text></view>
       <view wx:for="{{month.days}}" wx:key="key" wx:for-item="day" class="day">
         <view class="day-title">{{day.title}}</view>
-        <block wx:for="{{day.logs}}" wx:key="_id">
-          <template is="logCard" data="{{...item}}" />
+        <block wx:for="{{day.entries}}" wx:key="key" wx:for-item="entry">
+          <template wx:if="{{entry.type === 'meal'}}" is="mealCard" data="{{...entry.meal}}" />
+          <template wx:else is="logCard" data="{{...entry.log}}" />
         </block>
       </view>
     </view>
     <view wx:if="{{months.length}}" class="list-end">— 下拉可以刷新 —</view>
   </block>
 </view>
+
+<!-- 画「分享这顿饭」图片用的画布，不显示出来 -->
+<canvas type="2d" id="ticket-canvas" class="ticket-canvas"></canvas>

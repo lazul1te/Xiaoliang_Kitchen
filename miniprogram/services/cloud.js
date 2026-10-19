@@ -2,11 +2,12 @@
 const { ENV_ID } = require("../config");
 
 const PAGE_SIZE = 20; // 小程序端一次最多只能读 20 条
-// 两个人共用：categories、dishes、plans、cook_logs 四个集合的权限都要设成这条自定义安全规则。
+// 两个人共用：categories、dishes、plans、cook_logs、meals 五个集合的权限都要设成这条自定义安全规则。
 // 意思是用微信打开这个小程序的人都能读写；体验版只有体验成员能打开。
 // （控制台不接受 { "read": true, "write": true } 这种写法，会报 rule invalid）
 const SHARED_RULE = '{ "read": "auth.openid != null", "write": "auth.openid != null" }';
-const COLLECTIONS = "categories、dishes、plans、cook_logs";
+const NAMES = ["categories", "dishes", "plans", "cook_logs", "meals"];
+const COLLECTIONS = NAMES.join("、");
 let ready = false;
 
 function init() {
@@ -101,7 +102,7 @@ function explain(err, name) {
     return friendly(
       name
         ? `云数据库里还没有 ${name} 集合：请在云开发控制台新建这个集合，权限设成自定义安全规则 ${SHARED_RULE}`
-        : `云数据库里还没建好集合：请在云开发控制台新建 ${COLLECTIONS} 四个集合，权限设成自定义安全规则 ${SHARED_RULE}`,
+        : `云数据库里还没建好集合：请在云开发控制台新建 ${COLLECTIONS} 这 ${NAMES.length} 个集合，权限设成自定义安全规则 ${SHARED_RULE}`,
       msg,
       "COLLECTION_MISSING",
       name
@@ -121,11 +122,10 @@ function explain(err, name) {
   return friendly(msg, msg, "", name);
 }
 
-// 「我的 → 检查一下云开发」：四个集合挨个读一下，看是不是都建好了、读得到
+// 「我的 → 检查一下云开发」：每个集合挨个读一下，看是不是都建好了、读得到
 async function checkCollections() {
-  const names = ["categories", "dishes", "plans", "cook_logs"];
   return Promise.all(
-    names.map((name) =>
+    NAMES.map((name) =>
       collection(name)
         .limit(1)
         .get()

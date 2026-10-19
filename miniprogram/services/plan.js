@@ -84,6 +84,27 @@ function remove(id) {
   return getBasket();
 }
 
+// 一次加好几道：{ 菜品id: 份数 }（「再来一单」）
+function addMany(counts) {
+  const ids = Object.keys(counts).filter((id) => counts[id] > 0);
+  if (!ids.length) return getBasket();
+  doc.write(
+    (p) => {
+      ids.forEach((id) => {
+        p.items[id] = (p.items[id] || 0) + counts[id];
+      });
+    },
+    (_) => {
+      const data = {};
+      ids.forEach((id) => {
+        data[`items.${id}`] = _.inc(counts[id]);
+      });
+      return data;
+    }
+  );
+  return getBasket();
+}
+
 // 菜被删掉了，或者做完打卡了，从菜篮里整个拿掉
 function drop(id) {
   return dropMany([id]);
@@ -147,6 +168,36 @@ async function placeOrder(info) {
     (_) => ({ order: _.set(order), orderSeq: no })
   );
   return clone(order);
+}
+
+// 开饭了：做了的菜从菜篮拿掉，点菜单收起来；没做的留在菜篮里下次做。
+// 菜篮空了，买菜清单的勾选也清掉，自己加的东西只留下还没买的
+function finishMeal(madeIds) {
+  const p = doc.current();
+  const made = madeIds.filter((id) => id in p.items);
+  const empty = Object.keys(p.items).every((id) => made.indexOf(id) >= 0);
+  const extras = {};
+  Object.keys(p.extras).forEach((key) => {
+    if (!p.checked[key]) extras[key] = p.extras[key];
+  });
+  doc.write(
+    (v) => {
+      made.forEach((id) => delete v.items[id]);
+      v.order = null;
+      if (empty) {
+        v.checked = {};
+        v.extras = extras;
+      }
+    },
+    (_) => {
+      const data = { order: _.remove() };
+      made.forEach((id) => {
+        data[`items.${id}`] = _.remove();
+      });
+      if (empty) Object.assign(data, { checked: _.set({}), extras: _.set(extras) });
+      return data;
+    }
+  );
 }
 
 // 撤单：回到下单前的样子，点的菜还在菜篮里
@@ -222,9 +273,11 @@ module.exports = {
   getBasket,
   getCount,
   add,
+  addMany,
   remove,
   drop,
   dropMany,
+  finishMeal,
   clear,
   getOrder,
   placeOrder,

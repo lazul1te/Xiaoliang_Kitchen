@@ -1,0 +1,76 @@
+// 一顿饭：开饭时记下的一条 meals 记录。每道做了的菜另外各有一条做菜记录（cook_logs，带 mealId）
+const { MEALS, orderNoText, peopleText } = require("./order");
+const { dateValue } = require("./log");
+
+const text = (v) => (v === undefined || v === null ? "" : String(v)).trim();
+
+// 整理成统一的格式：存进去、读出来都过一遍
+function normalizeMeal(m) {
+  const now = Date.now();
+  return {
+    _id: text(m._id),
+    no: Number(m.no) > 0 ? Number(m.no) : 0, // 点菜单编号；没下单直接做的是 0
+    date: /^\d{4}-\d{2}-\d{2}$/.test(m.date || "") ? m.date : dateValue(Number(m.createdAt) || now),
+    meal: MEALS.indexOf(m.meal) >= 0 ? m.meal : "晚饭",
+    items: (Array.isArray(m.items) ? m.items : [])
+      .map((i) => ({ dishId: text(i && i.dishId), dishName: text(i && i.dishName), qty: Math.max(1, parseInt(i && i.qty, 10) || 1) }))
+      .filter((i) => i.dishId),
+    flavors: (Array.isArray(m.flavors) ? m.flavors : []).map(text).filter(Boolean),
+    note: text(m.note), // 这顿的心得
+    orderedBy: text(m.orderedBy),
+    cook: text(m.cook),
+    photo: text(m.photo), // 整桌照片（大图）
+    photoThumb: text(m.photoThumb), // 整桌照片（小图），记录页用
+    createdAt: Number(m.createdAt) || now,
+    updatedAt: Number(m.updatedAt) || now,
+  };
+}
+
+// 记录页上的一顿饭：logs 是这顿饭的做菜记录（卡片，utils/log.js 的 toLogCard），按点菜的顺序排
+function mealCard(meal, logs) {
+  const qty = {};
+  const order = {};
+  meal.items.forEach((i, index) => {
+    qty[i.dishId] = i.qty;
+    order[i.dishId] = index;
+  });
+  const rank = (l) => (l.dishId in order ? order[l.dishId] : 999);
+  return {
+    _id: meal._id,
+    title: meal.meal,
+    noText: meal.no ? orderNoText(meal.no) : "",
+    peopleText: peopleText(meal),
+    photo: meal.photoThumb || meal.photo,
+    note: meal.note,
+    dishes: logs
+      .slice()
+      .sort((a, b) => rank(a) - rank(b))
+      .map((l) => Object.assign({}, l, { qtyText: qty[l.dishId] > 1 ? `×${qty[l.dishId]}` : "" })),
+  };
+}
+
+// 记录页的一天：同一顿饭的记录合成一张卡片，别的还是一条一条。
+// cards：这天的做菜记录（卡片，带 mealId）；meals：{ mealId: 一顿饭 }。
+// 返回 [{ key, type: "meal", meal: mealCard } 或 { key, type: "log", log: 卡片 }]
+function entriesOf(cards, meals) {
+  const entries = [];
+  const byMeal = {};
+  cards.forEach((c) => {
+    const meal = c.mealId && meals[c.mealId];
+    if (!meal) {
+      entries.push({ key: c._id, type: "log", log: c });
+      return;
+    }
+    if (!byMeal[c.mealId]) {
+      byMeal[c.mealId] = [];
+      entries.push({ key: `m-${c.mealId}`, type: "meal", mealId: c.mealId });
+    }
+    byMeal[c.mealId].push(c);
+  });
+  entries.forEach((e) => {
+    if (e.type === "meal") e.meal = mealCard(meals[e.mealId], byMeal[e.mealId]);
+  });
+  return entries;
+}
+
+module.exports = { normalizeMeal, mealCard, entriesOf };
