@@ -328,7 +328,62 @@ Object.assign(global.wx, {
     calls.push(["shareFile", o.fileName, o.filePath]);
     if (o.success) o.success();
   },
+  pageScrollTo: (o) => calls.push(["scrollTo", o.scrollTop]),
+  // 画布导出成图片：把画上去的字存进假的图片文件，测试里能检查图片上写了什么
+  canvasToTempFilePath: (o) => {
+    const tempFilePath = `http://tmp/canvas${++canvasSeq}.png`;
+    files[tempFilePath] = o.canvas.texts.join("\n");
+    calls.push(["canvasImage", tempFilePath, o.canvas.width, o.canvas.height]);
+    o.success({ tempFilePath });
+  },
+  showShareImageMenu: (o) => {
+    calls.push(["shareImage", o.path]);
+    if (o.success) o.success();
+  },
+  previewImage: (o) => calls.push(["previewImage", o.urls]),
 });
+
+// 假的 <canvas type="2d">：记下 fillText 写了哪些字；改宽高会清空（跟真的画布一样）
+let canvasSeq = 0;
+function fakeCanvas() {
+  const texts = [];
+  let width = 300;
+  let height = 150;
+  const ctx = {
+    font: "10px sans-serif",
+    measureText(t) {
+      const size = Number((/(\d+(?:\.\d+)?)px/.exec(this.font) || [0, 10])[1]);
+      // 汉字一个字一个字号宽，字母数字大约一半
+      return { width: [...String(t)].reduce((w, ch) => w + (ch.charCodeAt(0) > 0x2e80 ? 1 : 0.55) * size, 0) };
+    },
+    fillText(t) {
+      texts.push(String(t));
+    },
+  };
+  ["fillRect", "beginPath", "moveTo", "lineTo", "arc", "closePath", "fill", "stroke", "save", "restore", "translate", "rotate", "scale", "setTransform", "setLineDash", "clip", "drawImage"].forEach((m) => {
+    ctx[m] = () => {};
+  });
+  const canvas = {
+    texts,
+    getContext: () => ctx,
+    // 照片：能显示的地址就加载成功
+    createImage: () => {
+      const img = { width: 800, height: 600, onload: null, onerror: null };
+      let src = "";
+      Object.defineProperty(img, "src", {
+        get: () => src,
+        set: (v) => {
+          src = v;
+          setTimeout(() => (imageLoads(v) ? img.onload && img.onload() : img.onerror && img.onerror()), 0);
+        },
+      });
+      return img;
+    },
+  };
+  Object.defineProperty(canvas, "width", { get: () => width, set: (v) => { width = v; texts.length = 0; } });
+  Object.defineProperty(canvas, "height", { get: () => height, set: (v) => { height = v; texts.length = 0; } });
+  return canvas;
+}
 // 免费环境的云存储权限是「仅创建者可读写」，而且改不了：小程序里只读得到自己传的照片
 let storagePermission = "creatorOnly";
 const clientCanRead = (fileID) =>
@@ -465,11 +520,20 @@ function newPage(pagePath) {
     if (cb) cb();
   };
   page.createSelectorQuery = () => {
+    let wantsNode = false;
     const q = {
       select: () => q,
       selectAll: () => q,
       boundingClientRect: () => q,
-      exec: (cb) => cb([{ top: 100 }, page.data.sections.map((s, i) => ({ top: 100 + i * 400 }))]),
+      fields: (o) => {
+        wantsNode = !!(o && o.node);
+        return q;
+      },
+      exec: (cb) => {
+        // 画布节点（点菜单图片用）；不然就是菜单页量各分类段的位置
+        if (wantsNode) cb([{ node: page.canvasNode || (page.canvasNode = fakeCanvas()), width: 360, height: 360 }]);
+        else cb([{ top: 100 }, page.data.sections.map((s, i) => ({ top: 100 + i * 400 }))]);
+      },
     };
     return q;
   };
@@ -2005,6 +2069,105 @@ async function smoke() {
   gridPage.renderCalendar();
   assert.deepStrictEqual(selectedCells().map((d) => d.date), ["2026-10-02"], "选了哪天，就只有那天显示成选中");
   ok("日历：月初月末的空格子不会显示成选中");
+
+  // ======== 点菜单：确认（哪一顿、口味、谁点的）、下单、加菜、存成图片、发给对方、撤单 ========
+  launchApp("me");
+  svc("plan").clear();
+  await flush();
+  const { mealByTime } = require(path.join(root, "utils/order"));
+  const LUROU = idOf("台式卤肉饭");
+  const WINGS = idOf("奥尔良鸡翅（空气炸锅版）");
+  const LETTUCE = idOf("莴笋炒肉");
+  const menuO = newPage("pages/menu/index");
+  await menuO.onLoad();
+  menuO.onShow();
+  [LUROU, WINGS, WINGS, LETTUCE].forEach((id) => menuO.onPlus(ev({ id })));
+  await flush();
+  assert.deepStrictEqual([menuO.data.basketCount, menuO.data.orderNo], [4, ""]);
+  const basketO = newPage("pages/today/index");
+  basketO.onLoad();
+  basketO.onShow();
+  await flush();
+  assert.strictEqual(basketO.data.stage, "picking");
+  assert.deepStrictEqual(basketO.data.items.map((i) => `${i.name}×${i.qty}`).sort(), ["台式卤肉饭×1", "奥尔良鸡翅（空气炸锅版）×2", "莴笋炒肉×1"].sort());
+  assert.strictEqual(basketO.data.slowText, "最慢的台式卤肉饭要 90 分钟");
+  assert.deepStrictEqual([basketO.data.form.date, basketO.data.form.meal], [dateValue(Date.now()), mealByTime(Date.now())], "默认今天，按现在几点猜哪一顿");
+  assert.strictEqual(basketO.data.showShopping, false, "下单前买菜清单先收起来");
+  assert.strictEqual(basketO.data.form.cook, "小亮", "掌勺默认是这台手机上次写的");
+  assert.ok(basketO.data.names.includes("小亮"), "以前写过的名字点一下就行：" + basketO.data.names.join("、"));
+  basketO.onPickMeal(ev({ meal: "晚饭" }));
+  basketO.onPickDate(ev({ date: basketO.data.tomorrow }));
+  assert.ok(/^\d+月\d+日 周/.test(basketO.data.dateLabel), basketO.data.dateLabel);
+  basketO.onPickDate(ev({ date: basketO.data.today }));
+  basketO.onToggleFlavor(ev({ name: "少辣" }));
+  basketO.onToggleFlavor(ev({ name: "不要香菜" }));
+  basketO.onToggleFlavor(ev({ name: "少辣" })); // 再点一下取消
+  modalAnswers.push({ confirm: true, content: "多放醋" });
+  await basketO.onAddFlavor();
+  assert.deepStrictEqual(basketO.data.form.flavors, ["不要香菜", "多放醋"]);
+  assert.ok(basketO.data.flavorChips.some((c) => c.name === "多放醋" && c.on), "自己加的口味也变成选项");
+  basketO.onNoteInput({ detail: { value: "鸡翅烤焦一点" } });
+  modalAnswers.push({ confirm: true, content: "小鱼" });
+  await basketO.onAddName(ev({ field: "orderedBy" }));
+  basketO.onPickName(ev({ field: "cook", name: "小亮" }));
+  assert.strictEqual(basketO.data.form.cook, "", "再点一下同一个名字就是不填");
+  basketO.onPickName(ev({ field: "cook", name: "小亮" }));
+  await basketO.onPlaceOrder();
+  await flush();
+  const order1 = planDoc().order;
+  assert.deepStrictEqual(
+    [order1.no, order1.meal, order1.date, order1.flavors, order1.note, order1.orderedBy, order1.cook],
+    [1, "晚饭", dateValue(Date.now()), ["不要香菜", "多放醋"], "鸡翅烤焦一点", "小鱼", "小亮"]
+  );
+  assert.deepStrictEqual([order1.items, planDoc().orderSeq], [planItems(), 1], "记下下单时点了哪些菜");
+  assert.strictEqual(basketO.data.stage, "ordered");
+  assert.deepStrictEqual([basketO.data.ticket.noText, basketO.data.ticket.peopleText], ["No.001", "点菜 小鱼 · 掌勺 小亮"]);
+  assert.deepStrictEqual([basketO.data.form.flavors, basketO.data.form.note], [[], ""], "下一单重新填口味和备注");
+  assert.strictEqual(dev().dev_order_name, "小鱼", "记住这台手机的点菜人");
+  assert.deepStrictEqual(lastCall("toast"), ["toast", "下单啦"]);
+  menuO.onShow();
+  await flush();
+  assert.strictEqual(menuO.data.orderNo, "No.001", "菜单页底部：已下单，再点 + 就是加菜");
+  // 对方打开菜篮就是这张点菜单；对方又点了一道，点菜单上标「加」
+  launchApp("partner");
+  const herBasket = newPage("pages/today/index");
+  herBasket.onShow();
+  await flush();
+  assert.deepStrictEqual([herBasket.data.stage, herBasket.data.ticket.noText], ["ordered", "No.001"]);
+  svc("plan").add(idOf("土豆肉丝炒饭"));
+  await flush();
+  launchApp("me");
+  const basketO2 = newPage("pages/today/index");
+  basketO2.onShow();
+  await settle();
+  assert.deepStrictEqual(basketO2.data.ticket.items.filter((i) => i.added).map((i) => i.name), ["土豆肉丝炒饭"], "下单以后点的标「加」");
+  // 存成图片：小票上写着编号、菜、口味、备注，盖着「已下单」
+  await basketO2.onSaveImage();
+  const drawn = files[lastCall("shareImage")[1]];
+  ["点菜单", "No.001", "台式卤肉饭", "×2", "加", "口味：不要香菜、多放醋", "备注：鸡翅烤焦一点", "已下单"].forEach((t) => assert.ok(drawn.includes(t), `图片上没有「${t}」：${drawn}`));
+  assert.deepStrictEqual(lastCall("canvasImage").slice(2, 3), [720], "图片放大 2 倍，看着清楚");
+  // 发给对方：小程序卡片，标题写着吃什么，封面是点菜单
+  const share = basketO2.onShareAppMessage({ from: "button" });
+  assert.strictEqual(share.path, "/pages/today/index");
+  assert.ok(/^今晚吃这些：.+等 4 道菜$/.test(share.title), share.title);
+  assert.ok(share.imageUrl && files[share.imageUrl].includes("点菜单 No.001 · 晚饭"), "卡片封面先画好了");
+  // 撤单：点的菜还在；再下单，编号接着往下数
+  modalAnswers.push({ confirm: true });
+  await basketO2.onCancelOrder();
+  await flush();
+  assert.ok(!planDoc().order, "撤单以后云上没有点菜单了");
+  assert.deepStrictEqual([basketO2.data.stage, basketO2.data.items.length], ["picking", 4]);
+  await basketO2.onPlaceOrder();
+  await flush();
+  assert.strictEqual(planDoc().order.no, 2, "撤掉的编号不再用");
+  // 一道一道打卡、拿出菜篮：菜篮空了，点菜单也就没了
+  Object.keys(planItems()).forEach((id) => svc("plan").drop(id));
+  await flush();
+  assert.ok(!planDoc().order, "菜篮空了，点菜单也没了");
+  basketO2.onShow();
+  await flush();
+  assert.strictEqual(basketO2.data.stage, "empty");
+  ok("点菜单：确认（哪一顿、口味、谁点的）、下单、对方看得到、加菜标「加」、存成图片、发给对方、撤单、编号往下数");
 }
 
 staticChecks();

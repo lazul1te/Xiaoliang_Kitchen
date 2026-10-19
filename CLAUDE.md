@@ -44,13 +44,16 @@
 - 「我的」页只放常用的：想吃清单、库存是两个大方块；不常用的收进二级页（`pages/backup` 备份与导入）；「检查云开发」（`services/diagnose.js`）放在底部小字链接，菜单页读不到数据时也有入口。
 - 共用的菜品卡片是 WXML 模板 `templates/dish-card.wxml`，样式放在 `app.wxss`；用到它的页面要提供 `onOpenDish` / `onPlus` / `onMinus`。
 - `plans` 集合里放几条两个人共用的记录，读写都走 `services/shared-doc.js`（先改本地再按顺序写云上，每次只改对应字段 `_.inc` / `_.set` / `_.remove`，不会互相覆盖；读用 `cloud.findOne`，不用 `doc(id).get()`，后者找不到时报错文字不固定）：
-  - `current` 菜篮（Tab 叫「菜篮」，页面路径还是 `pages/today`）和买菜清单的勾选 → `services/plan.js`。每个 Tab 页的 `onShow` 都调用 `planService.updateBadge()` 刷新角标
+  - `current` 菜篮（Tab 叫「菜篮」，页面路径还是 `pages/today`）、点菜单（`order`、`orderSeq`）和买菜清单的勾选 → `services/plan.js`。每个 Tab 页的 `onShow` 都调用 `planService.updateBadge()` 刷新角标
   - `pantry` 家里的库存 → `services/pantry.js`
   - `wishes` 想吃清单 → `services/wish.js`；「开始学」进 `dish-edit?wish=key`，存好后从清单里拿掉，照片沿用
 - 云开发报错统一用 `cloud.explain(err, 集合名)` 翻成人话，写明是哪个集合；「检查一下云开发」会挨个读四个集合。
 - 做菜记录在 `services/log.js`（集合 `cook_logs`，`store.js` 一起同步；集合没建时当作没有记录）。菜的 `cookCount` / `lastCookedAt` 由 `store.js` 按记录现算（用户反馈过次数和记录对不上），云上菜品记录里的这两个字段不再用。打卡照片要当菜的封面时另外传一份，删记录不会删掉封面。
 - 烹饪模式 `pages/cook`：计时器按结束时间算（切到后台再回来也准），到点震动 + `utils/sound.js` 的提示音 + 弹窗。提示音以 base64 写在代码里，因为单独的音频文件可能被「过滤无依赖文件」漏掉。
 - 数据导入 `services/import.js` 读的是导出的同一种格式（`app: "nashoucai-xiaobenben"`、`format: 1`，`photos` 里是 base64），按菜名跳过已有的菜，分类按名字对上；做菜记录按「同一道菜 + 同一分钟」去重（次数按记录现算，不用改菜）。也认手写的导入模板 `docs/菜谱导入模板.json`（顶层有 `菜谱` 数组，中文字段，`fromTemplate` 转成同一种格式）；改模板的字段要同步改 `fromTemplate` 和测试。要批量加菜，就生成这种文件放到 `imports/`（不进 git），在「我的 → 备份与导入 → 从文件导入」里选；照片原图处理好放 `design/dishes/`。
+- 点菜单：菜篮页下单前是「确认点菜单」（哪天、哪一顿、口味、谁点的、谁掌勺），下单以后最上面是点菜单。
+  - 点菜单存在 `current` 的 `order` 里（格式见 `utils/order.js` 的 `normalizeOrder`），`items` 是下单时点的菜，之后再点的显示「加」。编号 `orderSeq` 每次下单 +1，撤单的编号不再用；菜篮空了点菜单也一起去掉。
+  - 「存成图片」「发给 TA」的卡片封面用 `utils/ticket.js` 画在页面里看不见的 `<canvas type="2d" id="ticket-canvas">` 上；存成图片用 `wx.showShareImageMenu`，卡片封面在 `onShareAppMessage` 前先画好（5:4）。
 - 买菜清单的合并规则在 `utils/shopping.js`：同名原料合在一起，数字用量 × 份数相加，单位不同或「适量」原样列出；再对比库存（名字去掉括号说明后对）：库存里有的放「家里有」，用完了的放「要买的」，库存里没记录的调料单独一组。
 - 弹窗、提示用 `utils/ui.js`（Promise 形式，可以 await）。
 - Tab 图标和头像的源文件在 `design/`（SVG），PNG 放在 `miniprogram/images/`，都用 `npm run icons` 导出。

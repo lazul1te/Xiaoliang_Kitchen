@@ -1,5 +1,14 @@
 .today {
-  padding: 24rpx;
+  padding: 20rpx 24rpx 40rpx;
+}
+
+/* 下单前底部有下单栏，留出位置 */
+.today.has-bar {
+  padding-bottom: 160rpx;
+}
+
+.today .card {
+  margin: 0 0 20rpx;
 }
 
 .empty-img {
@@ -7,22 +16,296 @@
   height: 200rpx;
 }
 
-.today-head {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-  font-size: 26rpx;
-  color: var(--text-2);
+.clear-row {
+  padding: 8rpx 0 12rpx;
+  text-align: center;
 }
 
 .clear {
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+/* ---------- 确认点菜单 ---------- */
+
+.o-label {
+  font-size: var(--fs-sub);
+  font-weight: 600;
+}
+
+.o-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4rpx;
+}
+
+.o-title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.o-link {
+  font-size: var(--fs-small);
+  font-weight: 600;
   color: var(--wood);
+}
+
+.o-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.o-row:last-child {
+  border-bottom: none;
+}
+
+.o-thumb {
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 14rpx;
+}
+
+.o-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--apricot);
+  color: var(--wood);
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.o-info {
+  flex: 1;
+  min-width: 0;
+  margin: 0 16rpx 0 20rpx;
+}
+
+.o-name {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.o-meta {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.o-input {
+  height: 72rpx;
+  margin-top: 12rpx;
+  padding: 0 20rpx;
+  border-radius: 14rpx;
+  background: var(--cream);
+  font-size: var(--fs-sub);
+}
+
+.o-placeholder {
+  color: var(--text-3);
+}
+
+.o-person + .o-person {
+  margin-top: 12rpx;
+}
+
+.o-nodish {
+  font-size: var(--fs-sub);
+  color: var(--text-2);
+}
+
+/* 底部下单栏（Tab 页里 fixed 的底边就在 Tab 栏上面） */
+.order-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(59, 59, 66, 0.06);
+}
+
+.order-bar-text {
+  flex: 1;
+  min-width: 0;
+  margin-right: 20rpx;
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
+.order-btn {
+  flex-shrink: 0;
+  padding: 0 64rpx;
+}
+
+/* ---------- 下单以后：点菜单（小票） ---------- */
+
+.ticket {
+  position: relative;
+  padding: 28rpx 32rpx 32rpx;
+  border-radius: 20rpx;
+  background: #fff;
+}
+
+.t-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.t-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.t-name {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.t-no {
+  font-family: Menlo, Consolas, monospace;
+  font-size: var(--fs-sub);
+  color: var(--wood);
+}
+
+.t-sub {
+  margin-top: 4rpx;
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
+.t-items {
+  margin: 20rpx 0 16rpx;
+  padding: 12rpx 0;
+  border-top: 2rpx dashed #d9cfc1;
+  border-bottom: 2rpx dashed #d9cfc1;
+}
+
+.t-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10rpx 0;
+}
+
+.t-dish {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+}
+
+.t-added {
+  margin-left: 10rpx;
+  padding: 0 8rpx;
+  border-radius: 6rpx;
+  background: var(--apricot);
+  color: var(--wood);
+  font-size: var(--fs-tiny);
+}
+
+.t-qty {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-family: Menlo, Consolas, monospace;
+  font-size: var(--fs-sub);
+  color: var(--text-2);
+}
+
+.t-note {
+  margin-top: 4rpx;
+  padding-right: 150rpx;
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* 斜着盖的红色印章 */
+.t-stamp {
+  position: absolute;
+  right: 32rpx;
+  bottom: 36rpx;
+  padding: 2rpx 16rpx;
+  border: 4rpx solid var(--danger);
+  border-radius: 12rpx;
+  color: var(--danger);
+  font-size: var(--fs-sub);
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  opacity: 0.85;
+  transform: rotate(-12deg);
+}
+
+.t-actions {
+  display: flex;
+  margin: 16rpx 0 20rpx;
+}
+
+/* 「发给 TA」是 <button open-type="share">，去掉按钮自带的样式，跟旁边几个长得一样
+   （按钮自带的样式选择器比较具体，这里多写一层 .t-actions 才压得住） */
+.t-actions .t-act {
+  flex: 1;
+  width: auto;
+  height: 64rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 32rpx;
+  background: #fff;
+  color: var(--pan);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  line-height: 64rpx;
+  text-align: center;
+}
+
+.t-actions .t-act + .t-act {
+  margin-left: 12rpx;
+}
+
+.t-actions .t-act.pri {
+  background: var(--yolk);
+}
+
+/* 画图片用的画布：放在屏幕外面，看不到 */
+.ticket-canvas {
+  position: fixed;
+  top: 0;
+  left: -2000rpx;
+  width: 360px;
+  height: 360px;
 }
 
 /* ---------- 买菜清单 ---------- */
 
 .shopping {
-  margin: 8rpx 0 40rpx;
+  margin: 0 0 20rpx;
+}
+
+.shop-fold {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.shop-fold-up {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: var(--fs-small);
+  color: var(--text-3);
 }
 
 .shopping-head {

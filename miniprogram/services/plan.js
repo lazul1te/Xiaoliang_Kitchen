@@ -1,17 +1,20 @@
-// 菜篮（点了哪些菜、各几份）和买菜清单的勾选：两个人共用，存在 plans 集合里 _id 为 current 的记录。
-//   items    { 菜品id: 份数 }
-//   checked  { 清单项key: true }            买菜清单里已经买到的
-//   extras   { key: { name, createdAt } }   自己加的要买的东西（比如：牛奶）
+// 菜篮（点了哪些菜、各几份）、点菜单和买菜清单的勾选：两个人共用，存在 plans 集合里 _id 为 current 的记录。
+//   items     { 菜品id: 份数 }
+//   checked   { 清单项key: true }            买菜清单里已经买到的
+//   extras    { key: { name, createdAt } }   自己加的要买的东西（比如：牛奶）
+//   order     下了单的点菜单（没下单时没有这个字段），格式见 utils/order.js 的 normalizeOrder
+//   orderSeq  点菜单编号数到几了
 // 加一份用 inc、去掉用 remove，两个人同时点不同的菜不会互相覆盖。
 const { createSharedDoc } = require("./shared-doc");
 const { newId } = require("../utils/id");
+const { normalizeOrder } = require("../utils/order");
 
 const BASKET_TAB_INDEX = 1; // 「菜篮」是第 2 个 Tab，角标显示在它上面
 
 const clone = (data) => JSON.parse(JSON.stringify(data));
 
 function normalize(doc) {
-  const p = { items: {}, checked: {}, extras: {} };
+  const p = { items: {}, checked: {}, extras: {}, order: null, orderSeq: 0 };
   const items = (doc && doc.items) || {};
   Object.keys(items).forEach((id) => {
     const n = parseInt(items[id], 10);
@@ -26,6 +29,8 @@ function normalize(doc) {
     const e = extras[key];
     if (e && e.name) p.extras[key] = { name: String(e.name), createdAt: Number(e.createdAt) || 0 };
   });
+  p.order = normalizeOrder(doc && doc.order);
+  p.orderSeq = Math.max(Number(doc && doc.orderSeq) || 0, p.order ? p.order.no : 0);
   return p;
 }
 
@@ -58,42 +63,101 @@ function add(id) {
   return getBasket();
 }
 
+// 菜篮里的菜都拿掉了，点菜单也就没了
+function emptiesBasket(ids) {
+  const p = doc.current();
+  return !!p.order && Object.keys(p.items).every((id) => ids.indexOf(id) >= 0);
+}
+
 // 减一份，减到 0 就去掉
 function remove(id) {
   const left = (doc.current().items[id] || 0) - 1;
+  const dropOrder = left <= 0 && emptiesBasket([id]);
   doc.write(
     (p) => {
       if (left > 0) p.items[id] = left;
       else delete p.items[id];
+      if (dropOrder) p.order = null;
     },
-    (_) => ({ [`items.${id}`]: left > 0 ? _.inc(-1) : _.remove() })
+    (_) => Object.assign({ [`items.${id}`]: left > 0 ? _.inc(-1) : _.remove() }, dropOrder ? { order: _.remove() } : {})
   );
   return getBasket();
 }
 
 // 菜被删掉了，或者做完打卡了，从菜篮里整个拿掉
 function drop(id) {
-  if (!(id in doc.current().items)) return getBasket();
+  return dropMany([id]);
+}
+
+// 一次拿掉好几道（开饭以后做了的菜）
+function dropMany(ids) {
+  const list = ids.filter((id) => id in doc.current().items);
+  if (!list.length) return getBasket();
+  const dropOrder = emptiesBasket(list);
   doc.write(
     (p) => {
-      delete p.items[id];
+      list.forEach((id) => delete p.items[id]);
+      if (dropOrder) p.order = null;
     },
-    (_) => ({ [`items.${id}`]: _.remove() })
+    (_) => {
+      const data = {};
+      list.forEach((id) => {
+        data[`items.${id}`] = _.remove();
+      });
+      if (dropOrder) data.order = _.remove();
+      return data;
+    }
   );
   return getBasket();
 }
 
-// 清空菜篮和买菜清单（两个人的都清空）
+// 清空菜篮、点菜单和买菜清单（两个人的都清空）
 function clear() {
   doc.write(
     (p) => {
       p.items = {};
       p.checked = {};
       p.extras = {};
+      p.order = null;
     },
-    (_) => ({ items: _.set({}), checked: _.set({}), extras: _.set({}) })
+    (_) => ({ items: _.set({}), checked: _.set({}), extras: _.set({}), order: _.remove() })
   );
   return getBasket();
+}
+
+// ---------- 点菜单 ----------
+
+// 下了单的点菜单，没下单返回 null
+function getOrder() {
+  return clone(doc.current().order);
+}
+
+// 下单：info 是 { date, meal, flavors, note, orderedBy, cook }。编号接着云上的往下数，先同步一下
+async function placeOrder(info) {
+  await doc.sync().catch(() => {}); // 没网就按手机上的数
+  const p = doc.current();
+  if (!getCount(p.items)) throw new Error("菜篮是空的，先去点几道菜");
+  const no = p.orderSeq + 1;
+  const order = normalizeOrder(Object.assign({}, info, { no, items: p.items, orderedAt: Date.now() }));
+  doc.write(
+    (v) => {
+      v.order = order;
+      v.orderSeq = no;
+    },
+    (_) => ({ order: _.set(order), orderSeq: no })
+  );
+  return clone(order);
+}
+
+// 撤单：回到下单前的样子，点的菜还在菜篮里
+function cancelOrder() {
+  if (!doc.current().order) return;
+  doc.write(
+    (p) => {
+      p.order = null;
+    },
+    (_) => ({ order: _.remove() })
+  );
 }
 
 // ---------- 买菜清单 ----------
@@ -160,7 +224,11 @@ module.exports = {
   add,
   remove,
   drop,
+  dropMany,
   clear,
+  getOrder,
+  placeOrder,
+  cancelOrder,
   getPlan,
   toggleChecked,
   addExtra,
