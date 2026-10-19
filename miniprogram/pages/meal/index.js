@@ -1,10 +1,12 @@
 // 开饭啦：这顿做了哪些菜（没做的取消勾选，留在菜篮下次做）、整桌照片、每道菜打个分、掌勺、心得，一次记下来。
-// 从菜篮「做好了，开饭」、忘了开饭的提醒（?date=那天）进来。每道做了的菜各记一条做菜记录，日期默认是点菜单上那天
+// 从菜篮「做好了，开饭」、一起做（?from=cook，点过「做好了」的默认勾上）、忘了开饭的提醒（?date=那天）进来。
+// 每道做了的菜各记一条做菜记录，日期默认是点菜单上那天；记好以后一起做的进度清掉
 const dishService = require("../../services/dish");
 const planService = require("../../services/plan");
 const mealService = require("../../services/meal");
 const logService = require("../../services/log");
 const imageService = require("../../services/image");
+const cookSession = require("../../services/cook-session");
 const storage = require("../../utils/storage");
 const ui = require("../../utils/ui");
 const { dateValue } = require("../../utils/log");
@@ -56,11 +58,15 @@ Page({
     const want = options.date || (order ? order.date : "");
     const date = /^\d{4}-\d{2}-\d{2}$/.test(want) && want <= today ? want : today;
     const cook = (order && order.cook) || storage.get(COOK_NAME_KEY) || "";
+    // 从一起做过来：点过「做好了」的勾上，没点的先不勾（一道都没点就全勾上）
+    const session = options.from === "cook" ? cookSession.load() : null;
+    const doneIds = session ? planned.filter((d) => session.done[d._id]).map((d) => d._id) : [];
+    const checked = (id) => !doneIds.length || doneIds.indexOf(id) >= 0;
     this.mealId = mealService.newMealId(); // 重试时用同一个，不会记两遍
     this.order = order;
     this.setData({
       ready: true,
-      dishes: planned.map((d) => ({ dishId: d._id, name: d.name, qty: plan.items[d._id], checked: true, rating: 0 })),
+      dishes: planned.map((d) => ({ dishId: d._id, name: d.name, qty: plan.items[d._id], checked: checked(d._id), rating: 0 })),
       date,
       today,
       yesterday: dateValue(now - 24 * 3600 * 1000),
@@ -163,6 +169,7 @@ Page({
       return;
     }
     wx.hideLoading();
+    cookSession.clear(); // 这顿记好了，一起做的进度不用了
     if (cook) {
       try {
         storage.set(COOK_NAME_KEY, cook);

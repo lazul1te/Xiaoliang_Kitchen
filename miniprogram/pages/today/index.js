@@ -5,6 +5,7 @@ const dishService = require("../../services/dish");
 const planService = require("../../services/plan");
 const pantryService = require("../../services/pantry");
 const logService = require("../../services/log");
+const cookSession = require("../../services/cook-session");
 const storage = require("../../utils/storage");
 const ui = require("../../utils/ui");
 const fileUtil = require("../../utils/file");
@@ -50,6 +51,7 @@ Page({
     names: [], // 以前写过的名字，点一下就行
     ticket: null, // 已下单：点菜单（utils/order.js 的 ticketOf）
     overdue: "", // 点菜单上的日子已经过了：「10月19日的晚饭做了吗？」
+    cooking: null, // 一起做到一半：{ done, total }
     shopping: null, // 买菜清单 { buy, unknown, stocked, extras, total, done }
     hasPlan: false,
     showShopping: false, // 下单前买菜清单先收起来
@@ -131,6 +133,7 @@ Page({
       slowText: slowestText(planned),
       ticket,
       overdue,
+      cooking: cookSession.progress(plan.items),
       shopping,
       hasPlan: stage !== "empty",
       flavorChips: this.flavorChips(form.flavors),
@@ -268,6 +271,22 @@ Page({
     });
     if (!ok) return;
     planService.cancelOrder();
+    return this.refresh();
+  },
+
+  // 一起做：菜篮里的菜一起做（做到一半退出过的接着做）
+  onStartCook() {
+    wx.navigateTo({ url: "/pages/cook/index?from=basket" });
+  },
+
+  async onDropCooking() {
+    const ok = await ui.confirm({
+      title: "不接着做了？",
+      content: "做到哪一步、计时这些进度会清掉，菜还在菜篮里。",
+      confirmText: "不做了",
+    });
+    if (!ok) return;
+    cookSession.clear();
     return this.refresh();
   },
 

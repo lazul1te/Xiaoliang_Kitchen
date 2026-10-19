@@ -1,13 +1,62 @@
-/* 上面一条 + 中间滑动区 + 下面按钮，正好铺满一屏 */
+/* 上面（一起做的标签、第几步）+ 中间（滑动区 / 备菜）+ 下面按钮，正好铺满一屏 */
 .cook {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   background: #fff;
+}
+
+/* ---------- 一起做：按菜切换的标签 ---------- */
+
+.ctabs {
+  flex-shrink: 0;
+  display: flex;
+  height: 88rpx;
+  padding: 0 16rpx;
+  background: #fff;
+  white-space: nowrap;
+  box-shadow: 0 2rpx 0 var(--line);
+}
+
+.ct {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 60rpx;
+  margin: 14rpx 8rpx;
+  padding: 0 24rpx;
+  border-radius: 30rpx;
+  background: var(--cream);
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
+.ct-sub {
+  margin-left: 8rpx;
+  font-size: var(--fs-tiny);
+}
+
+.ct.on {
+  background: var(--yolk);
+  color: var(--pan);
+  font-weight: 600;
+}
+
+/* 做好了的：绿色 */
+.ct.done {
+  background: #e3f2e1;
+  color: #3e8a3b;
+}
+
+.ct.done.on {
+  background: var(--scallion);
+  color: #fff;
 }
 
 /* ---------- 上面 ---------- */
 
 .top {
+  flex-shrink: 0;
   height: 120rpx;
   padding: 20rpx 32rpx 0;
   background: var(--cream);
@@ -22,6 +71,20 @@
 .step-label {
   font-size: 30rpx;
   font-weight: 700;
+}
+
+.top-btns {
+  display: flex;
+  align-items: center;
+}
+
+.serve-btn {
+  margin-left: 16rpx;
+  padding: 8rpx 28rpx;
+  border-radius: 30rpx;
+  background: var(--pan);
+  font-size: 24rpx;
+  color: #fff;
 }
 
 .ing-btn {
@@ -49,10 +112,17 @@
   transition: width 0.25s;
 }
 
+/* 中间：滑动区或者备菜，占满剩下的高度 */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
 /* 正在走的计时，浮在滑动区上面 */
 .running {
   position: absolute;
-  top: 132rpx;
+  top: 12rpx;
   right: 24rpx;
   left: 24rpx;
   z-index: 2;
@@ -74,7 +144,7 @@
 /* ---------- 中间：每一步 ---------- */
 
 .swiper {
-  height: calc(100vh - 120rpx - 136rpx - env(safe-area-inset-bottom));
+  height: 100%;
 }
 
 .page {
@@ -185,9 +255,180 @@
   color: var(--text-3);
 }
 
+/* ---------- 备菜 ---------- */
+
+.prep-page {
+  height: 100%;
+  background: var(--cream);
+}
+
+.prep-card {
+  margin: 20rpx 24rpx 0;
+  padding: 24rpx 28rpx;
+  border-radius: 20rpx;
+  background: #fff;
+}
+
+.prep-card:last-child {
+  margin-bottom: 32rpx;
+}
+
+/* 有计时在走：第一张卡片往下让一让，不被计时盖住 */
+.running + .prep-page .prep-card:first-child {
+  margin-top: 96rpx;
+}
+
+.prep-card.warn {
+  background: #fff6e2;
+  box-shadow: inset 0 0 0 2rpx #ffe2a8;
+}
+
+.prep-title {
+  margin-bottom: 8rpx;
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.prep-sub {
+  margin-left: 12rpx;
+  font-size: var(--fs-tiny);
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.wait-row {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 0;
+}
+
+.wait-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.wait-dish {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.wait-text {
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
+.wait-time {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
+.seq-row {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 0;
+}
+
+.seq-no {
+  flex-shrink: 0;
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+  border-radius: 50%;
+  background: var(--cream);
+  text-align: center;
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  line-height: 40rpx;
+  color: var(--wood);
+}
+
+.seq-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+}
+
+.seq-time {
+  flex-shrink: 0;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.prep-tip {
+  margin-top: 8rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.prep-group + .prep-group {
+  margin-top: 16rpx;
+}
+
+.prep-group-title {
+  padding: 8rpx 0;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--wood);
+}
+
+.prep-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.check {
+  flex-shrink: 0;
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 20rpx;
+  border: 3rpx solid #d9cfc1;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 36rpx;
+  color: #fff;
+}
+
+.prep-row.done .check {
+  border-color: var(--scallion);
+  background: var(--scallion);
+}
+
+.prep-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+}
+
+.prep-amount {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: var(--fs-sub);
+  color: var(--text-2);
+}
+
+/* 备好了：变淡、划掉 */
+.prep-row.done .prep-name,
+.prep-row.done .prep-amount {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+
+.prep-season {
+  margin-top: 10rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
 /* ---------- 下面 ---------- */
 
 .bottom {
+  flex-shrink: 0;
   display: flex;
   height: calc(136rpx + env(safe-area-inset-bottom));
   padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));

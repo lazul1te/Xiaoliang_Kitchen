@@ -146,6 +146,22 @@
   padding: 0 64rpx;
 }
 
+.order-bar-link {
+  flex: 1;
+  min-width: 0;
+  margin-right: 20rpx;
+  font-size: var(--fs-sub);
+  color: var(--text-2);
+  text-decoration: underline;
+}
+
+.o-direct {
+  padding-top: 16rpx;
+  text-align: right;
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
 /* ---------- 下单以后：点菜单（小票） ---------- */
 
 /* 点菜单的日子过了还没开饭 */

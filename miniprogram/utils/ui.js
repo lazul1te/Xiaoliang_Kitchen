@@ -20,12 +20,13 @@ function alert(title, content) {
 }
 
 // 点「确定」返回 true，取消返回 false。danger: 确定按钮用红色（删除之类的操作）
-function confirm({ title, content, confirmText, danger }) {
+function confirm({ title, content, confirmText, cancelText, danger }) {
   return new Promise((resolve) => {
     wx.showModal({
       title,
       content: content || "",
       confirmText: confirmText || "确定",
+      cancelText: cancelText || "取消",
       confirmColor: danger ? DANGER : PAN,
       success: (res) => resolve(!!res.confirm),
       fail: () => resolve(false),

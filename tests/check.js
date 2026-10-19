@@ -2348,6 +2348,99 @@ async function smoke() {
   const importedLog = cloudDB.cook_logs.find((l) => l.dishId === LUROU && l.cookedAt === fileMeal.createdAt);
   assert.strictEqual(importedLog.mealId, importedMeals[0]._id, "记录跟着换成新的那一顿");
   ok("备份：每一顿和整桌照片也导出；导入时对上菜、换成新的那一顿，重复导入不重复");
+
+  // ======== 一起做：备菜（先腌上、建议顺序、按份数算好）、按菜切换、计时器各走各的、退出了接着做、做好了去开饭 ========
+  launchApp("me");
+  svc("plan").clear();
+  await flush();
+  svc("plan").addMany({ [LUROU]: 1, [WINGS]: 2, [LETTUCE]: 1 });
+  await flush();
+  const basketC = newPage("pages/today/index");
+  basketC.onShow();
+  await flush();
+  basketC.onStartCook();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/cook/index?from=basket"]);
+  const together = newPage("pages/cook/index");
+  await together.onLoad({ from: "basket" });
+  together.onShow();
+  assert.deepStrictEqual([together.data.multi, together.data.tab], [true, "prep"], "第一页是备菜");
+  assert.deepStrictEqual(together.data.sequence.map((x) => `${x.name} ${x.durationText}`), ["台式卤肉饭 90 分钟", "奥尔良鸡翅（空气炸锅版） 50 分钟", "莴笋炒肉 20 分钟"], "用时长的先做");
+  assert.strictEqual(together.data.sequenceTip, "快手菜等台式卤肉饭快好了再下锅，差不多能一起出锅");
+  assert.deepStrictEqual(together.data.waits.map((w) => `${w.dishName} 第${w.index + 1}步 ${w.timerText}`), ["奥尔良鸡翅 第2步 30 分钟", "莴笋炒肉 第1步 10 分钟"], "要腌的提前提醒");
+  const wingPrep = together.data.prep.find((g) => g.dishId === WINGS);
+  assert.deepStrictEqual([wingPrep.title, wingPrep.items.map((i) => `${i.name} ${i.amountText}`), wingPrep.seasonings], ["奥尔良鸡翅（空气炸锅版） · 2 份", ["鸡翅中/翅根 16个"], "奥尔良腌料、清水、蜂蜜"], "用量乘好份数，调料写一行");
+  assert.deepStrictEqual(together.data.tabs.map((t) => `${t.label}${t.sub}`), ["备菜", "台式卤肉饭0/8", "奥尔良鸡翅0/5", "莴笋炒肉0/5"]);
+  together.onTogglePrep(ev({ key: wingPrep.items[0].key }));
+  assert.ok(together.data.prep.find((g) => g.dishId === WINGS).items[0].checked, "备好一样勾一样");
+  // 先腌上鸡翅：点一下跳到鸡翅第 2 步，开始计时
+  together.onJumpWait(ev({ id: WINGS, i: 1 }));
+  assert.deepStrictEqual([together.data.tab, together.data.stepLabel], [WINGS, "第 2 / 5 步"]);
+  together.onTimerMain(ev({ i: 1 }));
+  together.stopTicking();
+  // 回备菜页，按顺序开始做卤肉饭，开第 1 步的计时
+  together.onTab(ev({ key: "prep" }));
+  assert.strictEqual(together.data.startText, "开始做：台式卤肉饭");
+  together.onStartCooking();
+  assert.deepStrictEqual([together.data.tab, together.data.current], [LUROU, 0]);
+  together.onTimerMain(ev({ i: 0 }));
+  together.stopTicking();
+  together.onNext();
+  assert.deepStrictEqual(together.data.running.map((r) => r.label), ["奥尔良鸡翅 · 第 2 步 30:00", "台式卤肉饭 · 第 1 步 08:00"], "计时写着是哪道菜");
+  // 切到别的菜，计时不停；卤肉饭到点了，弹窗写明是哪道菜，点「去看看」跳过去
+  together.onTab(ev({ key: LETTUCE }));
+  assert.deepStrictEqual([together.data.tab, together.data.current], [LETTUCE, 0]);
+  timeOffset += 8 * 60 * 1000 + 1000;
+  together.tick();
+  together.stopTicking();
+  await flush();
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["⏰ 时间到了", "台式卤肉饭 · 第 1 步：鸡蛋冷水下锅，水开后再煮 8 分钟，捞出泡凉水，剥壳备用。"]);
+  assert.deepStrictEqual([together.data.tab, together.data.current], [LUROU, 0], "点「去看看」切到卤肉饭那一步");
+  assert.deepStrictEqual(together.data.running.map((r) => r.label), ["奥尔良鸡翅 · 第 2 步 21:59"], "鸡翅的计时一直在走");
+  // 微信被关掉了：菜篮页显示「继续做菜」；回来接着做，离开时到点的马上提醒
+  together.onHide();
+  together.onUnload();
+  basketC.onShow();
+  await flush();
+  assert.deepStrictEqual(basketC.data.cooking, { done: 0, total: 3 });
+  timeOffset += 22 * 60 * 1000;
+  launchApp("me");
+  const resumed = newPage("pages/cook/index");
+  modalAnswers.push({ confirm: false }); // 「知道了」
+  await resumed.onLoad({ from: "basket" });
+  resumed.stopTicking();
+  await flush();
+  assert.ok(/奥尔良鸡翅 · 第 2 步/.test(lastCall("modal")[2]), "离开的时候鸡翅腌好了，回来马上提醒");
+  assert.deepStrictEqual([resumed.data.tab, resumed.data.current, resumed.data.running.length], [LUROU, 0, 0], "接着上次那一步");
+  assert.ok(resumed.prepChecked[wingPrep.items[0].key], "备菜也接着上次的");
+  // 做好一道：自动切到下一道；点错了能改回来
+  resumed.go(8);
+  assert.strictEqual(resumed.data.stepLabel, "最后一步做完了");
+  resumed.onDishDone();
+  assert.deepStrictEqual([resumed.data.tab, lastCall("toast")], [WINGS, ["toast", "下一道：奥尔良鸡翅"]]);
+  assert.deepStrictEqual(resumed.data.tabs.slice(1).map((t) => `${t.label}${t.sub}`), ["台式卤肉饭✓", "奥尔良鸡翅1/5", "莴笋炒肉0/5"]);
+  resumed.onTab(ev({ key: LUROU }));
+  resumed.onDishUndo();
+  assert.strictEqual(resumed.data.dishDone, false);
+  resumed.go(8);
+  resumed.onDishDone();
+  resumed.go(5);
+  resumed.onDishDone();
+  assert.strictEqual(resumed.data.tab, LETTUCE);
+  // 莴笋还没做就开饭：做好了的两道勾上，莴笋先不勾，留在菜篮
+  resumed.onServe();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/meal/index?from=cook"]);
+  const mealC = newPage("pages/meal/index");
+  await mealC.onLoad({ from: "cook" });
+  assert.deepStrictEqual(mealC.data.dishes.filter((d) => d.checked).map((d) => d.dishId).sort(), [LUROU, WINGS].sort());
+  assert.strictEqual(mealC.data.madeCount, 2);
+  await mealC.onSave();
+  await flush();
+  assert.deepStrictEqual(planItems(), { [LETTUCE]: 1 });
+  assert.strictEqual(dev().dev_cook_session, undefined, "记好以后进度清掉");
+  basketC.onShow();
+  await flush();
+  assert.strictEqual(basketC.data.cooking, null);
+  ok("一起做：备菜（先腌上、建议顺序、按份数算好）、按菜切换、计时器各走各的、到点跳过去、退出了接着做、做好一道切下一道、开饭只勾做好的");
 }
 
 staticChecks();

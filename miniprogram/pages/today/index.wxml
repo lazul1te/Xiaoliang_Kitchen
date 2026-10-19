@@ -42,6 +42,15 @@
 </view>
 
 <view wx:else class="today {{(stage === 'picking' && items.length) || stage === 'ordered' ? 'has-bar' : ''}}">
+  <!-- 一起做到一半退出了：接着做 -->
+  <view wx:if="{{cooking}}" class="banner">
+    <text class="banner-text">正在一起做：{{cooking.done}}/{{cooking.total}} 道做好了</text>
+    <view class="banner-acts">
+      <text class="banner-btn pri" bindtap="onStartCook">继续做菜</text>
+      <text class="banner-btn" bindtap="onDropCooking">不做了</text>
+    </view>
+  </view>
+
   <!-- ========== 下单以后：点菜单 ========== -->
   <block wx:if="{{stage === 'ordered'}}">
     <!-- 点菜单上的日子过了还没开饭：问一下做了没有 -->
@@ -99,6 +108,7 @@
       <block wx:for="{{items}}" wx:key="_id">
         <template is="orderRow" data="{{...item, broken: broken[item.cover]}}" />
       </block>
+      <view wx:if="{{!cooking}}" class="o-direct" bindtap="onStartCook">不下单，直接开始做 ›</view>
     </view>
 
     <view class="card">
@@ -203,10 +213,10 @@
   <view class="btn-primary order-btn" bindtap="onPlaceOrder">下单</view>
 </view>
 
-<!-- 下单以后：做好了就开饭 -->
+<!-- 下单以后：买齐了就开始做（几道菜一起做），做好了开饭 -->
 <view wx:if="{{stage === 'ordered'}}" class="order-bar">
-  <text class="order-bar-text">买齐了、做好了，就开饭吧</text>
-  <view class="btn-primary order-btn" bindtap="onFinishMeal">做好了，开饭</view>
+  <text class="order-bar-link" bindtap="onFinishMeal">做好了，开饭</text>
+  <view class="btn-primary order-btn" bindtap="onStartCook">{{cooking ? '继续做菜' : '开始做菜（' + items.length + ' 道）'}}</view>
 </view>
 
 <!-- 画点菜单图片用的画布，不显示出来 -->
