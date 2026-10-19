@@ -45,9 +45,8 @@
     "disableSWC": true
   },
   "appid": "wx3e26a5ffe79756fd",
-  "projectname": "quickstart-wx-cloud",
-  "libVersion": "2.20.1",
-  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
+  "projectname": "%E6%8B%BF%E6%89%8B%E8%8F%9C%E5%B0%8F%E6%9C%AC%E6%9C%AC",
+  "libVersion": "3.17.4",
   "condition": {
     "search": {
       "list": []
@@ -62,13 +61,7 @@
       "list": []
     },
     "miniprogram": {
-      "list": [
-        {
-          "id": -1,
-          "name": "db guide",
-          "pathName": "pages/databaseGuide/databaseGuide"
-        }
-      ]
+      "list": []
     }
   },
   "compileType": "miniprogram",

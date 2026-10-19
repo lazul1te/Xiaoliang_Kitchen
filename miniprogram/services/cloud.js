@@ -121,7 +121,7 @@ function explain(err, name) {
   return friendly(msg, msg, "", name);
 }
 
-// 「我的 → 检查云数据库」：四个集合挨个读一下，看是不是都建好了、读得到
+// 「我的 → 检查一下云开发」：四个集合挨个读一下，看是不是都建好了、读得到
 async function checkCollections() {
   const names = ["categories", "dishes", "plans", "cook_logs"];
   return Promise.all(

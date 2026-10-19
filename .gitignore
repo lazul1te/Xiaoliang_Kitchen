@@ -12,6 +12,10 @@ $RECYCLE.BIN/
 
 # Node.js
 node_modules/
+npm-debug.log*
 
-# 生成的导入文件（照片已经单独放在 design/dishes）
+# 微信开发者工具里每个人自己的设置
+project.private.config.json
+
+# 自己生成的导入文件：里面是整本菜谱和照片（照片原图放在 design/dishes）
 imports/

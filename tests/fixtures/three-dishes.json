@@ -1,0 +1,384 @@
+{
+  "app": "nashoucai-xiaobenben",
+  "format": 1,
+  "exportedAt": 1792254290134,
+  "categories": [
+    {
+      "_id": "c-home",
+      "name": "家常菜",
+      "sort": 1
+    },
+    {
+      "_id": "c-hard",
+      "name": "硬菜",
+      "sort": 2
+    },
+    {
+      "_id": "c-soup",
+      "name": "汤羹",
+      "sort": 3
+    }
+  ],
+  "dishes": [
+    {
+      "_id": "x-stuffed-mushrooms",
+      "name": "口蘑酿虾滑",
+      "categoryId": "c-hard",
+      "cover": "photo:stuffed-mushrooms",
+      "tags": [
+        "宴客",
+        "海鲜"
+      ],
+      "difficulty": 3,
+      "duration": 40,
+      "servings": 2,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "口蘑",
+          "amount": "12",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "鲜虾",
+          "amount": "300",
+          "unit": "克",
+          "type": "main"
+        },
+        {
+          "name": "蛋清",
+          "amount": "1",
+          "unit": "个",
+          "type": "side"
+        },
+        {
+          "name": "姜",
+          "amount": "1",
+          "unit": "小块",
+          "type": "side"
+        },
+        {
+          "name": "葱",
+          "amount": "2",
+          "unit": "根",
+          "type": "side"
+        },
+        {
+          "name": "盐",
+          "amount": "1/2",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "白胡椒粉",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "料酒",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "淀粉",
+          "amount": "2",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "生抽",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "蚝油",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "老抽",
+          "amount": "1/2",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "白糖",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "食用油",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "口蘑洗净，把中间的蒂掰下来，菌盖朝上摆好，用厨房纸吸干水。掰下来的蒂切碎，可以拌进虾滑里。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "虾去头去壳、挑掉虾线，用刀背拍扁再剁成虾泥，留一点小颗粒吃起来更有口感。姜切末，葱白切末、葱绿切葱花。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "虾泥里加 1/2 小勺盐、少许白胡椒粉、1 小勺料酒、蛋清、姜末、葱白末和 1 小勺淀粉，顺着一个方向搅到发黏上劲，再抓起来往碗里摔打十几下，虾滑会更 Q 弹。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "口蘑里面薄薄撒一层干淀粉（帮虾滑粘住），把虾滑填进去，用沾了水的勺子抹成圆圆的小山包。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "平底锅放 1 汤匙油，虾滑那面朝下摆进去，中小火煎到虾滑定型、底面金黄。",
+          "image": "",
+          "timer": 120
+        },
+        {
+          "text": "1 汤匙生抽、1 汤匙蚝油、1/2 小勺老抽、1 小勺糖和 100 毫升清水调成酱汁。把口蘑翻过来让虾滑朝上，倒进酱汁，盖上锅盖小火焖。口蘑会出水，汤汁会变多。",
+          "image": "",
+          "timer": 300
+        },
+        {
+          "text": "剩下的 1 小勺淀粉加 2 汤匙水调成水淀粉，淋进锅里，轻轻晃锅让汤汁变浓、挂在虾滑上，尝一下咸淡，撒葱花出锅。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "口蘑挑大小差不多、菌盖厚一点的，酿好不容易塌。虾滑一定要搅到上劲，煎的时候才不会散。焖的时候口蘑会出不少水，酱汁不用多加。虾不够的话，可以加一点猪肉末一起剁。",
+      "createdAt": 1792254290134,
+      "updatedAt": 1792254290134,
+      "coverThumb": ""
+    },
+    {
+      "_id": "x-salted-yolk-tofu-soup",
+      "name": "咸蛋黄豆腐汤",
+      "categoryId": "c-soup",
+      "cover": "photo:salted-yolk-tofu-soup",
+      "tags": [
+        "快手",
+        "鲜香"
+      ],
+      "difficulty": 1,
+      "duration": 25,
+      "servings": 2,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "嫩豆腐",
+          "amount": "1",
+          "unit": "盒",
+          "type": "main"
+        },
+        {
+          "name": "咸鸭蛋",
+          "amount": "3",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "海鲜菇",
+          "amount": "150",
+          "unit": "克",
+          "type": "main"
+        },
+        {
+          "name": "葱",
+          "amount": "2",
+          "unit": "根",
+          "type": "side"
+        },
+        {
+          "name": "姜",
+          "amount": "2",
+          "unit": "片",
+          "type": "side"
+        },
+        {
+          "name": "食用油",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "盐",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "白胡椒粉",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "淀粉",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "咸鸭蛋只取蛋黄，用勺子压成碎末（蛋白很咸，可以留着炒菜）。豆腐切成 1.5 厘米左右的小块，泡在淡盐水里；海鲜菇切掉根，粗的从中间撕开；葱白切圈、葱绿切葱花，姜切片。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "锅里放 1 汤匙油，小火下葱白和姜片炒香，倒入咸蛋黄碎，用铲子不停地推炒，炒到冒出细密的小泡、起沙出香味。全程小火，别炒糊。",
+          "image": "",
+          "timer": 60
+        },
+        {
+          "text": "倒入 2 大碗开水（约 800 毫升），大火烧开，汤会变成奶黄色。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "下海鲜菇煮一会儿。",
+          "image": "",
+          "timer": 120
+        },
+        {
+          "text": "豆腐沥干水，轻轻放进锅里，用勺背推一推（别用铲子翻，豆腐容易碎），中小火煮入味。",
+          "image": "",
+          "timer": 180
+        },
+        {
+          "text": "先尝一下再决定加不加盐（咸蛋黄本身就咸），撒少许白胡椒粉；喜欢浓稠一点，就把 1 小勺淀粉加水调开淋进去。关火撒葱花出锅。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "咸蛋黄一定要小火炒到起沙冒泡，汤才又香又黄；加开水比加冷水汤色更浓。咸蛋黄已经很咸，盐最后尝了再放，多数时候不用放。豆腐用淡盐水泡过，煮的时候不容易碎。海鲜菇换成白玉菇、金针菇也可以。",
+      "createdAt": 1792254290135,
+      "updatedAt": 1792254290135,
+      "coverThumb": ""
+    },
+    {
+      "_id": "x-green-pepper-potato",
+      "name": "青椒土豆丝",
+      "categoryId": "c-home",
+      "cover": "photo:green-pepper-potato",
+      "tags": [
+        "快手",
+        "下饭"
+      ],
+      "difficulty": 1,
+      "duration": 20,
+      "servings": 2,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "土豆",
+          "amount": "2",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "青椒",
+          "amount": "1",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "葱",
+          "amount": "1",
+          "unit": "根",
+          "type": "side"
+        },
+        {
+          "name": "蒜",
+          "amount": "3",
+          "unit": "瓣",
+          "type": "side"
+        },
+        {
+          "name": "干辣椒",
+          "amount": "2",
+          "unit": "个",
+          "type": "side"
+        },
+        {
+          "name": "食用油",
+          "amount": "2",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "醋",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "生抽",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "盐",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "土豆去皮，先切成薄片再切成细丝。切好马上泡进清水里，抓洗几遍把淀粉洗掉，换清水再泡一会儿，炒之前捞出沥干。",
+          "image": "",
+          "timer": 600
+        },
+        {
+          "text": "青椒去籽切丝；蒜切末，葱切葱花，干辣椒剪成段（不吃辣可以不放）。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "锅烧热放 2 汤匙油，小火下蒜末和干辣椒炒出香味。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "转大火，下土豆丝快速翻炒，沿着锅边淋 1 汤匙醋（醋碰到热锅更香，土豆丝也更脆）。",
+          "image": "",
+          "timer": 60
+        },
+        {
+          "text": "下青椒丝，加 1 小勺生抽、1 小勺盐，继续大火翻炒，炒到土豆丝变得半透明、吃起来还是脆的就好了。",
+          "image": "",
+          "timer": 60
+        },
+        {
+          "text": "撒葱花翻匀，马上出锅。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "土豆丝一定要把淀粉洗掉，炒的时候才不粘锅、口感脆；全程大火快炒，炒久了会软。喜欢软一点的，可以多炒一会儿，中途沿锅边淋一点点水。",
+      "createdAt": 1792254290136,
+      "updatedAt": 1792254290136,
+      "coverThumb": ""
+    }
+  ],
+  "logs": [],
+  "plan": null,
+  "photos": {
+    "photo:stuffed-mushrooms": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:salted-yolk-tofu-soup": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:green-pepper-potato": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k="
+  }
+}

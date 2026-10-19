@@ -1,6 +1,6 @@
 // 照片的显示地址。数据库里存的是云文件 ID（cloud://…），免费环境的云存储只有上传的人能读、权限也改不了，
 // 所以显示前先请云函数 photo（管理员身份）换成两个人都能看的临时链接，缓存一会儿，过期了再换。
-// 云函数还没部署时退回直接用文件 ID：自己传的照片照样能看，对方传的看不到（「我的 → 检查云数据库」会提示）。
+// 云函数还没部署时退回直接用文件 ID：自己传的照片照样能看，对方传的看不到（「我的 → 检查一下云开发」会提示）。
 const cloud = require("./cloud");
 
 const FUNCTION = "photo";
@@ -84,7 +84,7 @@ async function read(id) {
   }
 }
 
-// 「我的 → 检查云数据库」：试着给几张照片换链接，看云函数部署了没有、照片还在不在
+// 「我的 → 检查一下云开发」：试着给几张照片换链接，看云函数部署了没有、照片还在不在
 async function check(fileIDs) {
   const list = [...new Set(fileIDs.filter(isCloudFile))].slice(0, BATCH);
   if (!list.length) return { name: "照片", ok: true, text: "还没有照片" };

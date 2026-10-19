@@ -1,0 +1,844 @@
+{
+  "app": "nashoucai-xiaobenben",
+  "format": 1,
+  "exportedAt": 1792249306545,
+  "categories": [
+    {
+      "_id": "c-home",
+      "name": "家常菜",
+      "sort": 1
+    },
+    {
+      "_id": "c-hard",
+      "name": "硬菜",
+      "sort": 2
+    },
+    {
+      "_id": "c-soup",
+      "name": "汤羹",
+      "sort": 3
+    },
+    {
+      "_id": "c-staple",
+      "name": "主食",
+      "sort": 5
+    }
+  ],
+  "dishes": [
+    {
+      "_id": "x-lettuce-pork",
+      "name": "莴笋炒肉",
+      "categoryId": "c-home",
+      "cover": "photo:lettuce-pork",
+      "tags": [
+        "快手",
+        "下饭"
+      ],
+      "difficulty": 2,
+      "duration": 20,
+      "servings": 2,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "莴笋",
+          "amount": "1",
+          "unit": "根",
+          "type": "main"
+        },
+        {
+          "name": "猪里脊",
+          "amount": "150",
+          "unit": "克",
+          "type": "main"
+        },
+        {
+          "name": "蒜",
+          "amount": "3",
+          "unit": "瓣",
+          "type": "side"
+        },
+        {
+          "name": "葱",
+          "amount": "1",
+          "unit": "根",
+          "type": "side"
+        },
+        {
+          "name": "生抽",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "料酒",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "淀粉",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "蚝油",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "白胡椒粉",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "盐",
+          "amount": "适量",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "食用油",
+          "amount": "2",
+          "unit": "汤匙",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "里脊肉顺着纹路切成细丝，加 1 小勺料酒、半汤匙生抽、少许白胡椒粉和淀粉抓匀，最后淋一点油封住水分，腌 10 分钟。",
+          "image": "",
+          "timer": 600
+        },
+        {
+          "text": "莴笋去皮，斜切成 2 毫米左右的薄片；蒜切片，葱切段，葱白和葱绿分开放。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "锅烧热后多放点油，油温五成热时下肉丝，快速划散，肉丝一变白就盛出来。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "锅里留底油，下蒜片和葱白炒出香味，倒入莴笋片大火翻炒，炒到莴笋颜色变得翠绿、边上微微透明。",
+          "image": "",
+          "timer": 60
+        },
+        {
+          "text": "倒回肉丝，加剩下的生抽和 1 小勺蚝油（没有可以不放），尝一下咸淡再补点盐，大火翻匀，撒葱绿出锅。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "莴笋片切薄一点、大火快炒才脆；肉丝用淀粉抓过、先滑一下油，炒出来是嫩的。莴笋叶别扔，可以清炒或者下面条。",
+      "cookCount": 1,
+      "lastCookedAt": 1790942520000,
+      "createdAt": 1792249306545,
+      "updatedAt": 1792249306545,
+      "coverThumb": ""
+    },
+    {
+      "_id": "x-orleans-wings",
+      "name": "奥尔良鸡翅（空气炸锅版）",
+      "categoryId": "c-hard",
+      "cover": "photo:orleans-wings",
+      "tags": [
+        "空气炸锅",
+        "宴客"
+      ],
+      "difficulty": 1,
+      "duration": 50,
+      "servings": 2,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "鸡翅中/翅根",
+          "amount": "8",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "奥尔良腌料",
+          "amount": "35",
+          "unit": "克",
+          "type": "seasoning"
+        },
+        {
+          "name": "清水",
+          "amount": "30",
+          "unit": "毫升",
+          "type": "seasoning"
+        },
+        {
+          "name": "蜂蜜",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "鸡翅洗净，用厨房纸把水吸干，正反两面各划两刀，方便入味。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "奥尔良腌料加 30 毫升清水调开，倒进鸡翅里抓匀，盖上保鲜膜放冰箱冷藏腌制。至少腌 30 分钟，前一晚腌好第二天烤最入味。",
+          "image": "",
+          "timer": 1800
+        },
+        {
+          "text": "空气炸锅里铺一张油纸，鸡翅皮朝上摆开，不要叠在一起。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "200 度烤 10 分钟。",
+          "image": "",
+          "timer": 600
+        },
+        {
+          "text": "拿出来翻个面，把碗里剩下的腌料刷在鸡翅上（喜欢甜一点的再刷一层蜂蜜），200 度再烤 8 分钟，表皮焦红起泡就好了。",
+          "image": "",
+          "timer": 480
+        }
+      ],
+      "tips": "鸡翅一定要擦干再腌，烤出来皮才脆。翅根比翅中厚，可以多烤 3～5 分钟；不确定熟没熟，就用筷子扎一下最厚的地方，不冒血水就熟了。每台空气炸锅火力不一样，第一次做最后几分钟看着点颜色。",
+      "cookCount": 1,
+      "lastCookedAt": 1790942520000,
+      "createdAt": 1792249306546,
+      "updatedAt": 1792249306546,
+      "coverThumb": ""
+    },
+    {
+      "_id": "x-tomato-egg-soup",
+      "name": "番茄鸡蛋汤",
+      "categoryId": "c-soup",
+      "cover": "photo:tomato-egg-soup",
+      "tags": [
+        "快手",
+        "清淡"
+      ],
+      "difficulty": 1,
+      "duration": 15,
+      "servings": 2,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "番茄",
+          "amount": "2",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "鸡蛋",
+          "amount": "2",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "口蘑（可选）",
+          "amount": "6",
+          "unit": "个",
+          "type": "side"
+        },
+        {
+          "name": "葱",
+          "amount": "1",
+          "unit": "根",
+          "type": "side"
+        },
+        {
+          "name": "番茄酱",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "盐",
+          "amount": "适量",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "白糖",
+          "amount": "1",
+          "unit": "小撮",
+          "type": "seasoning"
+        },
+        {
+          "name": "生抽",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "白胡椒粉",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "香油",
+          "amount": "几滴",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "食用油",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "番茄顶上划个十字，用开水烫 30 秒，撕掉皮切成小块；口蘑洗净切块；鸡蛋打散；葱切葱花。",
+          "image": "",
+          "timer": 30
+        },
+        {
+          "text": "锅里放油，下番茄中火翻炒，边炒边用铲子压，炒到番茄出沙、汤汁变红（想颜色更红可以加 1 勺番茄酱）。",
+          "image": "",
+          "timer": 120
+        },
+        {
+          "text": "加约 600 毫升开水，放入口蘑，大火煮开后转中火煮 3 分钟。",
+          "image": "",
+          "timer": 180
+        },
+        {
+          "text": "加盐、一小撮糖、1 小勺生抽和少许白胡椒粉调味，尝一下咸淡。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "转小火，蛋液沿着锅边画圈慢慢淋进去，先别动，等 10 秒蛋花凝固了再轻轻推开。",
+          "image": "",
+          "timer": 10
+        },
+        {
+          "text": "关火，撒葱花，滴几滴香油就可以出锅了。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "番茄一定要先炒出汁，汤才浓、颜色才红；淋蛋液时火要小、倒得要慢，蛋花才又大又嫩。想喝稠一点的，可以在淋蛋液前勾一点薄芡。口蘑不放也行。",
+      "cookCount": 1,
+      "lastCookedAt": 1790942520000,
+      "createdAt": 1792249306547,
+      "updatedAt": 1792249306547,
+      "coverThumb": ""
+    },
+    {
+      "_id": "x-noodle-soup",
+      "name": "经典小梁汤面",
+      "categoryId": "c-staple",
+      "cover": "photo:noodle-soup-0926",
+      "tags": [
+        "招牌",
+        "暖胃"
+      ],
+      "difficulty": 2,
+      "duration": 30,
+      "servings": 1,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "面条",
+          "amount": "150",
+          "unit": "克",
+          "type": "main"
+        },
+        {
+          "name": "猪肉末",
+          "amount": "80",
+          "unit": "克",
+          "type": "main"
+        },
+        {
+          "name": "上海青",
+          "amount": "3",
+          "unit": "棵",
+          "type": "main"
+        },
+        {
+          "name": "鸡蛋",
+          "amount": "1",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "香菇",
+          "amount": "4",
+          "unit": "朵",
+          "type": "main"
+        },
+        {
+          "name": "葱",
+          "amount": "1",
+          "unit": "根",
+          "type": "side"
+        },
+        {
+          "name": "姜",
+          "amount": "2",
+          "unit": "片",
+          "type": "side"
+        },
+        {
+          "name": "蒜",
+          "amount": "2",
+          "unit": "瓣",
+          "type": "side"
+        },
+        {
+          "name": "生抽",
+          "amount": "2",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "老抽",
+          "amount": "1/2",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "蚝油",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "料酒",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "盐",
+          "amount": "适量",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "白胡椒粉",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "香油",
+          "amount": "几滴",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "食用油",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "干香菇用温水泡软（泡香菇的水别倒，留着煮汤），挤干切片；用鲜香菇的话直接切片。",
+          "image": "",
+          "timer": 1200
+        },
+        {
+          "text": "上海青洗净，大棵的对半切开；葱切葱花，姜、蒜切末。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "鸡蛋打散，平底锅放一点油，倒入蛋液摊成蛋饼，两面煎黄后盛出，切成小块。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "锅里放油，下肉末炒散，炒到发白出油；加姜蒜末和葱白炒香，淋料酒，加 1 汤匙生抽、半小勺老抽炒上色。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "放香菇片翻炒 1 分钟，倒入泡香菇的水，再加开水到 600 毫升左右，加剩下的生抽和蚝油，大火煮开后转中火煮 3 分钟，用盐和白胡椒粉调味。",
+          "image": "",
+          "timer": 180
+        },
+        {
+          "text": "另起一锅水烧开，下面条煮熟（细面约 3 分钟，宽面、手擀面约 5 分钟），出锅前 30 秒把上海青放进去烫一下。",
+          "image": "",
+          "timer": 180
+        },
+        {
+          "text": "面条和上海青捞进大碗，浇上香菇肉末汤，铺上煎蛋块，撒葱花，滴几滴香油。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "面条单独煮好再捞进汤里，汤才清爽不糊；泡香菇的水很香，一定要倒进汤里。宽面、细面、手擀面都可以。手边有螃蟹、大虾的话，放进汤里一起煮，鲜味翻倍。",
+      "cookCount": 2,
+      "lastCookedAt": 1790679300000,
+      "createdAt": 1792249306548,
+      "updatedAt": 1792249306548,
+      "coverThumb": ""
+    },
+    {
+      "_id": "x-potato-pork-rice",
+      "name": "土豆肉丝炒饭",
+      "categoryId": "c-staple",
+      "cover": "photo:potato-pork-rice",
+      "tags": [
+        "快手",
+        "剩饭救星"
+      ],
+      "difficulty": 2,
+      "duration": 25,
+      "servings": 2,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "隔夜米饭",
+          "amount": "2",
+          "unit": "碗",
+          "type": "main"
+        },
+        {
+          "name": "土豆",
+          "amount": "1",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "猪里脊",
+          "amount": "100",
+          "unit": "克",
+          "type": "main"
+        },
+        {
+          "name": "葱",
+          "amount": "1",
+          "unit": "根",
+          "type": "side"
+        },
+        {
+          "name": "生抽",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "料酒",
+          "amount": "1",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "淀粉",
+          "amount": "1/2",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "盐",
+          "amount": "适量",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "白胡椒粉",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "食用油",
+          "amount": "2",
+          "unit": "汤匙",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "土豆去皮切细丝，泡在清水里抓洗两遍，洗掉表面的淀粉，捞出沥干。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "里脊肉切丝，加料酒、1 小勺生抽和淀粉抓匀，腌 10 分钟；葱切葱花；隔夜米饭用手抓散，结块的压开。",
+          "image": "",
+          "timer": 600
+        },
+        {
+          "text": "热锅放油，下肉丝滑炒到变白，盛出备用。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "锅里补一点油，下土豆丝中大火翻炒，炒到土豆丝变软、边上微微焦黄，加一小撮盐。",
+          "image": "",
+          "timer": 210
+        },
+        {
+          "text": "倒入米饭，用铲子压散，和土豆丝一起翻炒，炒到米粒干爽、在锅里一粒粒跳起来。",
+          "image": "",
+          "timer": 180
+        },
+        {
+          "text": "倒回肉丝，沿锅边淋入剩下的生抽，撒白胡椒粉翻匀，尝一下咸淡，撒葱花出锅。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "土豆丝一定要泡水洗掉淀粉，不然会粘锅、炒成一坨；用隔夜饭最好，新煮的米饭水分多，摊开晾凉了再炒也行。土豆丝炒到边上有点焦黄最香。",
+      "cookCount": 1,
+      "lastCookedAt": 1790487660000,
+      "createdAt": 1792249306549,
+      "updatedAt": 1792249306549,
+      "coverThumb": ""
+    },
+    {
+      "_id": "x-braised-pork-rice",
+      "name": "台式卤肉饭",
+      "categoryId": "c-staple",
+      "cover": "photo:braised-pork-rice",
+      "tags": [
+        "下饭",
+        "宴客"
+      ],
+      "difficulty": 3,
+      "duration": 90,
+      "servings": 3,
+      "status": "mastered",
+      "ingredients": [
+        {
+          "name": "带皮五花肉",
+          "amount": "500",
+          "unit": "克",
+          "type": "main"
+        },
+        {
+          "name": "鸡蛋",
+          "amount": "4",
+          "unit": "个",
+          "type": "main"
+        },
+        {
+          "name": "米饭",
+          "amount": "3",
+          "unit": "碗",
+          "type": "main"
+        },
+        {
+          "name": "紫洋葱",
+          "amount": "1/2",
+          "unit": "个",
+          "type": "side"
+        },
+        {
+          "name": "蒜",
+          "amount": "5",
+          "unit": "瓣",
+          "type": "side"
+        },
+        {
+          "name": "姜",
+          "amount": "3",
+          "unit": "片",
+          "type": "side"
+        },
+        {
+          "name": "包菜",
+          "amount": "1/2",
+          "unit": "个",
+          "type": "side"
+        },
+        {
+          "name": "生抽",
+          "amount": "3",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "老抽",
+          "amount": "1",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "冰糖",
+          "amount": "20",
+          "unit": "克",
+          "type": "seasoning"
+        },
+        {
+          "name": "料酒",
+          "amount": "2",
+          "unit": "汤匙",
+          "type": "seasoning"
+        },
+        {
+          "name": "五香粉",
+          "amount": "1/2",
+          "unit": "小勺",
+          "type": "seasoning"
+        },
+        {
+          "name": "八角",
+          "amount": "1",
+          "unit": "个",
+          "type": "seasoning"
+        },
+        {
+          "name": "白胡椒粉",
+          "amount": "少许",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "盐",
+          "amount": "适量",
+          "unit": "",
+          "type": "seasoning"
+        },
+        {
+          "name": "食用油",
+          "amount": "2",
+          "unit": "汤匙",
+          "type": "seasoning"
+        }
+      ],
+      "steps": [
+        {
+          "text": "鸡蛋冷水下锅，水开后再煮 8 分钟，捞出泡凉水，剥壳备用。",
+          "image": "",
+          "timer": 480
+        },
+        {
+          "text": "五花肉切成 1 厘米左右的小丁（稍微冻硬一点更好切）；紫洋葱切小块（有红葱头更香），蒜切末，姜切片。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "锅里放一点点油，下五花肉丁中小火慢慢煸，煸到肉丁微黄、逼出很多油。",
+          "image": "",
+          "timer": 480
+        },
+        {
+          "text": "下紫洋葱和蒜末，炒到洋葱变软、出香味。",
+          "image": "",
+          "timer": 120
+        },
+        {
+          "text": "放冰糖炒到融化，倒料酒、生抽、老抽翻炒上色，再加五香粉、白胡椒粉、八角和姜片。",
+          "image": "",
+          "timer": 0
+        },
+        {
+          "text": "倒入开水没过肉丁，放进剥好的鸡蛋，大火烧开后转小火，盖上锅盖炖 45 分钟，中间翻动一两次，别粘锅。",
+          "image": "",
+          "timer": 2700
+        },
+        {
+          "text": "开盖转大火收汁，收到汤汁变浓、能裹住肉丁就关火（留一点汤汁拌饭）。",
+          "image": "",
+          "timer": 300
+        },
+        {
+          "text": "炒个手撕包菜配着吃：包菜手撕成块，热油下蒜片，大火把包菜炒软，加盐和一点生抽。米饭盛碗，浇上卤肉和汤汁，卤蛋对半切开摆上，配上包菜。",
+          "image": "",
+          "timer": 0
+        }
+      ],
+      "tips": "五花肉一定要先煸出油，吃起来才不腻；冰糖炒化再放酱油，颜色才亮。卤肉可以一次多做一些，分装冷冻，想吃的时候热一下浇在饭上就行。卤汁是拌饭的灵魂，别收得太干。",
+      "cookCount": 1,
+      "lastCookedAt": null,
+      "createdAt": 1792249306550,
+      "updatedAt": 1792249306550,
+      "coverThumb": ""
+    }
+  ],
+  "logs": [
+    {
+      "_id": "x-log-1",
+      "rating": 0,
+      "note": "",
+      "cook": "",
+      "createdAt": 1792249306545,
+      "dishId": "x-lettuce-pork",
+      "cookedAt": 1790942520000,
+      "photo": "photo:lettuce-pork",
+      "dishName": "莴笋炒肉"
+    },
+    {
+      "_id": "x-log-2",
+      "rating": 0,
+      "note": "",
+      "cook": "",
+      "createdAt": 1792249306546,
+      "dishId": "x-orleans-wings",
+      "cookedAt": 1790942520000,
+      "photo": "photo:orleans-wings",
+      "dishName": "奥尔良鸡翅（空气炸锅版）"
+    },
+    {
+      "_id": "x-log-3",
+      "rating": 0,
+      "note": "",
+      "cook": "",
+      "createdAt": 1792249306547,
+      "dishId": "x-tomato-egg-soup",
+      "cookedAt": 1790942520000,
+      "photo": "photo:tomato-egg-soup",
+      "dishName": "番茄鸡蛋汤"
+    },
+    {
+      "_id": "x-log-4",
+      "rating": 0,
+      "note": "",
+      "cook": "",
+      "createdAt": 1792249306548,
+      "dishId": "x-noodle-soup",
+      "cookedAt": 1790679300000,
+      "photo": "photo:noodle-soup-0929",
+      "dishName": "经典小梁汤面"
+    },
+    {
+      "_id": "x-log-5",
+      "rating": 0,
+      "note": "",
+      "cook": "",
+      "createdAt": 1792249306549,
+      "dishId": "x-potato-pork-rice",
+      "cookedAt": 1790487660000,
+      "photo": "photo:potato-pork-rice",
+      "dishName": "土豆肉丝炒饭"
+    },
+    {
+      "_id": "x-log-6",
+      "rating": 0,
+      "note": "",
+      "cook": "",
+      "createdAt": 1792249306550,
+      "dishId": "x-noodle-soup",
+      "cookedAt": 1790398920000,
+      "photo": "photo:noodle-soup-0926",
+      "dishName": "经典小梁汤面"
+    }
+  ],
+  "plan": null,
+  "photos": {
+    "photo:lettuce-pork": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:orleans-wings": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:tomato-egg-soup": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:noodle-soup-0929": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:potato-pork-rice": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:noodle-soup-0926": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k=",
+    "photo:braised-pork-rice": "/9j/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCiARp1/9k="
+  }
+}

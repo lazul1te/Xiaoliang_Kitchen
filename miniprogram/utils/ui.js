@@ -79,7 +79,7 @@ let photoHinted = false;
 function photoHint() {
   if (photoHinted) return;
   photoHinted = true;
-  toast("有照片加载不出来，去「我的 → 检查云数据库」看看");
+  toast("有照片加载不出来，去「我的」底部点「检查一下云开发」");
 }
 
 module.exports = { toast, alert, confirm, prompt, apiFail, errorText, showError, photoHint };

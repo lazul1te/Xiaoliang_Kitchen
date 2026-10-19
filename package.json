@@ -1,0 +1,18 @@
+{
+  "name": "nashoucai-xiaobenben",
+  "version": "1.0.0",
+  "private": true,
+  "description": "拿手菜小本本：两个人一起记的菜谱微信小程序（原生小程序 + 微信云开发）",
+  "license": "MIT",
+  "repository": "github:lazul1te/Xiaoliang_Kitchen",
+  "scripts": {
+    "test": "node tests/check.js",
+    "icons": "node scripts/build-icons.mjs"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  },
+  "engines": {
+    "node": ">=20.9"
+  }
+}
