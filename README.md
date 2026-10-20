@@ -9,9 +9,9 @@
 
 每个人有一本只有自己能看的「我的小本本」，还可以建家庭本本、用家庭码申请加入，家庭本本里的人都能看、都能改。它是原生小程序（JavaScript）加微信云开发，不用自己的服务器。用免费环境和体验版就能一直用，不花钱。
 
-| 菜单 | 点菜单和买菜清单 | 做饭日历 | 我的 |
+| 菜单 | 点菜单和买菜清单 | 做菜记录 | 我的 |
 | :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/menu.png" width="180" alt="菜单"> | <img src="docs/screenshots/basket.png" width="180" alt="点菜单和买菜清单"> | <img src="docs/screenshots/logs.png" width="180" alt="做饭日历"> | <img src="docs/screenshots/mine.png" width="180" alt="我的"> |
+| <img src="docs/screenshots/menu.png" width="180" alt="菜单"> | <img src="docs/screenshots/basket.png" width="180" alt="点菜单和买菜清单"> | <img src="docs/screenshots/logs.png" width="180" alt="做菜记录"> | <img src="docs/screenshots/mine.png" width="180" alt="我的"> |
 
 ## 功能
 
