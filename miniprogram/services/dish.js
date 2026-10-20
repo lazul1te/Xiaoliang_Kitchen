@@ -1,6 +1,8 @@
-// 菜品的增删改查，页面只调这里。数据存在云数据库的 dishes 集合（两个人共用），照片存在云存储。
+// 菜品的增删改查，页面只调这里。数据存在云数据库的 dishes 集合（每条记着是哪本小本本的），照片存在云存储。
 const cloud = require("./cloud");
+const db = require("./db");
 const store = require("./store");
+const bookService = require("./book");
 const imageService = require("./image");
 const categoryService = require("./category");
 const planService = require("./plan");
@@ -10,12 +12,12 @@ const samples = require("../data/samples");
 const { normalizeDish } = require("../utils/dish");
 
 const COLLECTION = "dishes";
-const STALE_MS = 15 * 1000; // 回到页面时，离上次同步超过 15 秒就去云上看看对方有没有改过
+const STALE_MS = 15 * 1000; // 回到页面时，离上次同步超过 15 秒就去云上看看家人有没有改过
 
-// 两个人共用的几条记录：菜篮、库存、想吃清单（都在 plans 集合里）
-const SHARED = [planService, pantryService, wishService];
+// 跟菜谱一起刷新的：菜篮、库存、想吃清单（都在 plans 集合里），还有本本列表（有没有人申请加入、申请有没有通过）
+const SHARED = [planService, pantryService, wishService, bookService];
 
-// 数据版本号（菜谱 + 共用记录）：页面 onShow 时跟上次比一比，变了就重新读
+// 数据版本号（菜谱 + 共用记录 + 本本）：页面 onShow 时跟上次比一比，变了就重新读
 function getVersion() {
   return [store.getVersion()].concat(SHARED.map((s) => s.getVersion())).join("-");
 }
@@ -46,14 +48,14 @@ async function getDish(id) {
   await store.ensureLoaded();
   let dish = store.getDish(id);
   if (!dish && !store.isFresh()) {
-    // 缓存里没有，可能是对方刚加的，等云上的数据回来再找一次
+    // 缓存里没有，可能是家人刚加的，等云上的数据回来再找一次
     await store.whenFresh().catch(() => {});
     dish = store.getDish(id);
   }
   return dish;
 }
 
-// 存进数据库的字段：_id 由数据库生成，_openid 由云开发自动加上
+// 存进数据库的字段：_id 由数据库生成，是哪本由云函数加上
 function toDoc(dish) {
   const doc = Object.assign({}, dish);
   delete doc._id;
@@ -66,7 +68,7 @@ function filesOf(dish) {
   return [dish.cover, dish.coverThumb].concat(dish.steps.map((s) => s.image)).filter(imageService.isCloudFile);
 }
 
-// 保存时发现对方刚改过这道菜，页面会问要不要覆盖
+// 保存时发现别人刚改过这道菜，页面会问要不要覆盖
 function conflictError() {
   const e = new Error("这道菜刚被改过");
   e.code = "CONFLICT";
@@ -76,18 +78,18 @@ function conflictError() {
 
 // 保存（新增或修改）。表单里新选的照片还在手机上，这里先传到云存储，再写数据库；
 // 换掉或删掉的旧照片顺手从云存储删除，免得占空间。
-// options.baseUpdatedAt：打开编辑页时这道菜的修改时间，用来判断这期间对方有没有改过；
-// options.force：对方改过也直接覆盖
+// options.baseUpdatedAt：打开编辑页时这道菜的修改时间，用来判断这期间有没有别人改过；
+// options.force：别人改过也直接覆盖
 async function saveDish(input, options = {}) {
   await store.ensureLoaded();
-  const col = cloud.collection(COLLECTION);
+  const col = db.collection(COLLECTION);
   let old = null;
   if (input._id) {
-    // 两个人共用：保存前先看看云上这道菜还在不在、有没有被对方改过
-    const remote = await cloud.findOne(COLLECTION, input._id);
+    // 保存前先看看云上这道菜还在不在、有没有被别人（或者自己在另一台手机上）改过
+    const remote = await db.findOne(COLLECTION, input._id);
     if (!remote) {
       store.sync().catch(() => {});
-      throw new Error("这道菜已经被删掉了，可能是对方刚删的");
+      throw new Error(bookService.isShared() ? "这道菜已经被删掉了，可能是家人刚删的" : "这道菜已经被删掉了");
     }
     const base = options.baseUpdatedAt !== undefined ? options.baseUpdatedAt : (store.getDish(input._id) || {}).updatedAt;
     if (!options.force && Number(remote.updatedAt) !== Number(base)) {
@@ -119,7 +121,7 @@ async function saveDish(input, options = {}) {
     if (old) {
       const doc = toDoc(dish);
       // 数组字段明确地整个替换，保证删掉的原料、步骤不会留在旧记录里
-      const _ = cloud.command();
+      const _ = db.command();
       ["tags", "ingredients", "steps"].forEach((key) => {
         doc[key] = _.set(doc[key]);
       });
@@ -131,7 +133,7 @@ async function saveDish(input, options = {}) {
     }
   } catch (err) {
     imageService.remove(uploaded);
-    throw cloud.explain(err, COLLECTION);
+    throw cloud.explain(err);
   }
   if (old) {
     const keep = filesOf(dish);
@@ -146,12 +148,12 @@ async function removeDish(id) {
   const old = store.getDish(id);
   let res;
   try {
-    res = await cloud.collection(COLLECTION).doc(id).remove();
+    res = await db.collection(COLLECTION).doc(id).remove();
   } catch (err) {
     throw cloud.explain(err);
   }
   if (res.stats && res.stats.removed === 0) {
-    // 没删掉：要么对方已经删了（那就算删好了），要么集合权限不允许删对方加的菜
+    // 没删掉：家人已经删了，那就算删好了
     await store.sync().catch(() => {});
     if (store.getDish(id)) throw cloud.notWritten();
   } else {
@@ -184,7 +186,7 @@ async function importSamples() {
       })
     )
   );
-  const col = cloud.collection(COLLECTION);
+  const col = db.collection(COLLECTION);
   try {
     const results = await Promise.all(dishes.map((d) => col.add({ data: toDoc(d) })));
     results.forEach((res, i) => {
@@ -198,11 +200,11 @@ async function importSamples() {
   return dishes.length;
 }
 
-// 删除全部示例菜（「我的」页里用），两个人的菜单里都会删掉。自己加的菜、改过的示例菜不会删
+// 删除这本里的全部示例菜（「我的」页里用），这本里的人都看不到了。自己加的菜、改过的示例菜不会删
 async function removeSamples() {
   await store.ensureLoaded();
   const list = store.listDishes().filter((d) => d.sample);
-  const col = cloud.collection(COLLECTION);
+  const col = db.collection(COLLECTION);
   let results;
   try {
     results = await Promise.all(list.map((d) => col.doc(d._id).remove()));

@@ -1,7 +1,8 @@
-// 开饭：把这一顿记下来。存在云数据库的 meals 集合（两个人共用），一顿饭一条：哪天、哪一顿、点菜单编号、
+// 开饭：把这一顿记下来。存在云数据库的 meals 集合（每条记着是哪本小本本的），一顿饭一条：哪天、哪一顿、点菜单编号、
 // 做了哪些菜、整桌照片、心得；每道做了的菜另外在 cook_logs 里各记一条（带 mealId），「做过几次」、日历照常按记录算。
 // 做了的菜从菜篮拿掉，点菜单收起来（见 plan.js 的 finishMeal）。
 const cloud = require("./cloud");
+const db = require("./db");
 const store = require("./store");
 const imageService = require("./image");
 const planService = require("./plan");
@@ -28,14 +29,12 @@ const toDoc = (item) => {
   return doc;
 };
 
-const isDuplicate = (err) => /duplicate|dup key/i.test((err && (err.errMsg || err.message)) || String(err));
-
 // 加一条记录，_id 是自己定的。已经有了（上次其实存上了）就算成功
 async function addOnce(name, item) {
   try {
-    await cloud.collection(name).add({ data: toDoc(item) });
+    await db.collection(name).add({ data: toDoc(item) });
   } catch (err) {
-    if (isDuplicate(err) && (await cloud.findOne(name, item._id))) return;
+    if (err && err.code === "DUPLICATE" && (await db.findOne(name, item._id))) return;
     throw err;
   }
 }
@@ -80,7 +79,6 @@ async function finish(input) {
     })
   );
   const uploaded = [];
-  let writing = "cook_logs";
   try {
     if (input.photo && !imageService.isCloudFile(input.photo)) {
       const files = await imageService.uploadCover(input.photo, "logs");
@@ -89,12 +87,11 @@ async function finish(input) {
       meal.photoThumb = files.thumb;
     }
     await Promise.all(logs.map((l) => addOnce("cook_logs", l)));
-    writing = COLLECTION;
     await addOnce(COLLECTION, meal);
   } catch (err) {
     imageService.remove(uploaded);
     store.sync().catch(() => {}); // 可能存上了一部分，以云上的为准
-    throw cloud.explain(err, writing);
+    throw cloud.explain(err);
   }
   store.putMeal(meal);
   logs.forEach((l) => store.putLog(l));
@@ -109,7 +106,7 @@ async function removeIfEmpty(mealId) {
   const meal = store.getMeal(mealId);
   if (!meal) return;
   try {
-    await cloud.collection(COLLECTION).doc(mealId).remove();
+    await db.collection(COLLECTION).doc(mealId).remove();
   } catch (err) {
     return; // 删不掉也不影响使用，记录页不会显示没有菜的一顿
   }

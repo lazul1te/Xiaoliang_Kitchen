@@ -1,7 +1,9 @@
 // 照片：从相册选或者拍照 → 压缩 → 传到云存储；删菜、换照片时把云上的旧照片删掉。
-// 显示照片用 components/cloud-image（换成两个人都能看的链接），删照片交给云函数（见 services/photo.js）
+// 显示照片用 components/cloud-image（换成这本里的人都能看的链接），删照片交给云函数（见 services/photo.js）。
+// 照片按本本放：books/<本本id>/covers/……，云函数靠这个判断你能不能看
 const cloud = require("./cloud");
 const photo = require("./photo");
+const book = require("./book");
 const ui = require("../utils/ui");
 const { newId } = require("../utils/id");
 
@@ -41,8 +43,9 @@ function choose() {
 
 async function upload(filePath, folder) {
   cloud.init();
+  if (!book.currentId()) await book.ready();
   const ext = (/\.(jpe?g|png|webp|gif)$/i.exec(filePath) || [".jpg"])[0].toLowerCase();
-  const res = await wx.cloud.uploadFile({ cloudPath: `${folder}/${newId()}${ext}`, filePath });
+  const res = await wx.cloud.uploadFile({ cloudPath: `books/${book.currentId()}/${folder}/${newId()}${ext}`, filePath });
   return res.fileID;
 }
 
@@ -58,7 +61,7 @@ function uploadPhoto(tempPath) {
   return upload(tempPath, "steps");
 }
 
-// 删掉云存储里的照片（对方传的也能删）。删不掉也不影响使用，只是多占一点空间，所以不报错
+// 删掉云存储里的照片（家人传的也能删）。删不掉也不影响使用，只是多占一点空间，所以不报错
 function remove(fileIDs) {
   return photo.remove(fileIDs);
 }

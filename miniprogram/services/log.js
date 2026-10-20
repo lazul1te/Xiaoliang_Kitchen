@@ -1,6 +1,7 @@
 // 做菜记录（打卡）：做完一道菜记一笔，包括成品照、好吃程度、心得、谁掌勺。
-// 存在云数据库的 cook_logs 集合（两个人共用）。菜的「做过几次」「上次做」是按这些记录算出来的（见 store.js）。
+// 存在云数据库的 cook_logs 集合（每条记着是哪本小本本的）。菜的「做过几次」「上次做」是按这些记录算出来的（见 store.js）。
 const cloud = require("./cloud");
+const db = require("./db");
 const store = require("./store");
 const imageService = require("./image");
 const planService = require("./plan");
@@ -40,7 +41,7 @@ async function setCover(dishId, tempPath) {
   const files = await imageService.uploadCover(tempPath);
   const now = Date.now();
   try {
-    const res = await cloud.collection("dishes").doc(dishId).update({
+    const res = await db.collection("dishes").doc(dishId).update({
       data: { cover: files.cover, coverThumb: files.thumb, updatedAt: now },
     });
     if (res.stats && res.stats.updated === 0) throw cloud.notWritten();
@@ -63,7 +64,7 @@ async function saveLog(input, options = {}) {
   if (dish) log.dishName = dish.name;
   const tempPhoto = log.photo && !imageService.isCloudFile(log.photo) ? log.photo : "";
   const uploaded = [];
-  const col = cloud.collection(COLLECTION);
+  const col = db.collection(COLLECTION);
   try {
     if (tempPhoto) {
       const files = await imageService.uploadCover(tempPhoto, "logs");
@@ -82,7 +83,7 @@ async function saveLog(input, options = {}) {
     }
   } catch (err) {
     imageService.remove(uploaded);
-    throw cloud.explain(err, COLLECTION);
+    throw cloud.explain(err);
   }
   if (old) {
     const keep = [log.photo, log.photoThumb];
@@ -105,12 +106,12 @@ async function removeLog(id) {
   if (!old) return;
   let res;
   try {
-    res = await cloud.collection(COLLECTION).doc(id).remove();
+    res = await db.collection(COLLECTION).doc(id).remove();
   } catch (err) {
-    throw cloud.explain(err, COLLECTION);
+    throw cloud.explain(err);
   }
   if (res.stats && res.stats.removed === 0) {
-    // 没删掉：要么对方已经删了，要么权限不允许删
+    // 没删掉：家人已经删了
     await store.sync().catch(() => {});
     if (store.getLog(id)) throw cloud.notWritten();
     return;

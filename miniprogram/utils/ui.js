@@ -68,14 +68,14 @@ function errorText(err) {
   return (err && (err.message || err.errMsg)) || String(err);
 }
 
-// 下拉刷新这类操作出错：集合没建、权限、环境这种要去控制台改的，弹窗说清楚；网络之类的轻提示就行
+// 下拉刷新这类操作出错：云函数没部署、集合建不了、环境这种要去控制台改的，弹窗说清楚；网络之类的轻提示就行
 function showError(err) {
   const code = err && err.code;
-  if (code === "COLLECTION_MISSING" || code === "PERMISSION" || code === "ENV") alert("云数据库有点问题", errorText(err));
+  if (code === "COLLECTION_MISSING" || code === "NO_API" || code === "ENV") alert("云开发有点问题", errorText(err));
   else toast(errorText(err));
 }
 
-// 照片加载不出来时提示一次（每次打开小程序最多一次）：多半是云存储权限只给了上传照片的人
+// 照片加载不出来时提示一次（每次打开小程序最多一次）：多半是云函数没部署，或者照片已经删掉了
 let photoHinted = false;
 function photoHint() {
   if (photoHinted) return;

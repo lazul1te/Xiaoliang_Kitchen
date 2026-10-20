@@ -1,4 +1,5 @@
-// 数据导出：把菜谱、分类、做菜记录、开饭记下的每一顿、菜篮、库存、想吃清单打包成一个 .json 文件，可以选择把照片也一起打包。
+// 数据导出：把正在用的这本小本本里的菜谱、分类、做菜记录、开饭记下的每一顿、菜篮、库存、想吃清单打包成一个 .json 文件，
+// 可以选择把照片也一起打包。
 // 免费的云开发环境万一以后要收费或者停用了，有这个文件就能把数据完整搬走。
 const store = require("./store");
 const planService = require("./plan");
@@ -7,6 +8,7 @@ const wishService = require("./wish");
 const photo = require("./photo");
 const imageService = require("./image");
 const cloud = require("./cloud");
+const book = require("./book");
 
 const APP = "nashoucai-xiaobenben";
 const FORMAT = 1;
@@ -75,7 +77,7 @@ async function buildFile({ withPhotos, onProgress }) {
         const res = await wx.cloud.downloadFile({ fileID: ids[i] });
         data.photos[ids[i]] = fs.readFileSync(res.tempFilePath, "base64");
       } catch (e) {
-        // 对方传的照片自己读不到，请云函数读；还是读不到就跳过，不影响其他数据
+        // 家人传的照片自己读不到，请云函数读；还是读不到就跳过，不影响其他数据
         const base64 = await photo.read(ids[i]);
         if (base64) data.photos[ids[i]] = base64;
         else failedPhotos += 1;
@@ -85,11 +87,12 @@ async function buildFile({ withPhotos, onProgress }) {
   progress("正在生成文件…");
   const now = new Date();
   const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  const bookName = book.current().name.replace(/[\\/:*?"<>|\s]/g, "");
   const filePath = `${wx.env.USER_DATA_PATH}/nashoucai-backup.json`;
   fs.writeFileSync(filePath, JSON.stringify(data), "utf8");
   return {
     filePath,
-    fileName: `拿手菜小本本备份-${stamp}.json`,
+    fileName: `拿手菜小本本备份-${bookName ? `${bookName}-` : ""}${stamp}.json`,
     size: fs.statSync(filePath).size,
     photoCount: Object.keys(data.photos).length,
     failedPhotos,

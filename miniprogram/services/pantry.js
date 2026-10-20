@@ -1,4 +1,4 @@
-// 库存：家里常备的东西（调料、米面、干货……），两个人共用，存在 plans 集合里 _id 为 pantry 的记录。
+// 库存：家里常备的东西（调料、米面、干货……），这本小本本里的人共用，存在 plans 集合里这本的 pantry 那条。
 //   items  { key: { name, inStock, updatedAt } }    inStock：false 表示用完了，买菜清单里会提醒
 // 买菜清单会自动对比库存：家里有的不再提醒买。
 const { createSharedDoc } = require("./shared-doc");

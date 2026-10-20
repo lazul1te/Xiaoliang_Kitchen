@@ -34,7 +34,7 @@ Page({
     try {
       await dishService.refresh();
     } catch (err) {
-      if (this.data.status === "ready") ui.toast("网络不太好，先显示上次的菜谱");
+      if (this.data.status === "ready") ui.toast(err.code === "NO_API" ? "云函数 api 还没部署，先显示上次的菜谱" : "网络不太好，先显示上次的菜谱");
       return;
     }
     if (this.dataVersion !== dishService.getVersion()) this.loadData();

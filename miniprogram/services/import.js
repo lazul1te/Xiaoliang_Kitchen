@@ -1,5 +1,5 @@
 // 数据导入：读「数据导出」生成的备份文件、整理好的菜谱文件（格式一样），
-// 或者照着导入模板手写的文件（中文字段，见 docs/菜谱导入模板.json），把里面的菜谱和做菜记录加进来。
+// 或者照着导入模板手写的文件（中文字段，见 docs/菜谱导入模板.json），把里面的菜谱和做菜记录加进正在用的这本小本本。
 // - 已经有同名的菜就跳过，重复导入不会多出一份
 // - 分类按名字对上，没有就新建
 // - 文件里带的照片重新传到云存储；没带照片的，沿用原来的云文件 ID（同一个云环境里还能显示）
@@ -7,6 +7,7 @@
 // - 开饭记下的每一顿：同一时间记的已经有了就跳过；做菜记录跟着换成新的那一顿
 // - 库存、想吃清单按名字合并，已经有的不重复加
 const cloud = require("./cloud");
+const db = require("./db");
 const store = require("./store");
 const dishService = require("./dish");
 const categoryService = require("./category");
@@ -247,11 +248,11 @@ async function importData(data, onProgress) {
           meal.photo = photo;
           meal.photoThumb = "";
         }
-        await cloud.collection("meals").add({ data: meal });
+        await db.collection("meals").add({ data: meal });
         store.putMeal(meal);
         mealMap[m._id] = meal._id;
       } catch (err) {
-        mealsError = cloud.explain(err, "meals").message; // 比如 meals 集合还没建：记录照样导入，只是不按顿合在一起
+        mealsError = cloud.explain(err).message; // 比如 meals 集合建不了：记录照样导入，只是不按顿合在一起
         break;
       }
     }
@@ -282,12 +283,12 @@ async function importData(data, onProgress) {
         }
         const doc = Object.assign({}, log);
         delete doc._id;
-        const res = await cloud.collection("cook_logs").add({ data: doc });
+        const res = await db.collection("cook_logs").add({ data: doc });
         log._id = res._id;
         store.putLog(log);
         logsAdded += 1;
       } catch (err) {
-        logsError = cloud.explain(err, "cook_logs").message; // 比如 cook_logs 集合还没建：菜已经导进来了，记录以后可以再导
+        logsError = cloud.explain(err).message; // 比如 cook_logs 集合建不了：菜已经导进来了，记录以后可以再导
         break;
       }
     }

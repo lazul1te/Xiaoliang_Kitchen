@@ -1,10 +1,10 @@
-// 菜篮（点了哪些菜、各几份）、点菜单和买菜清单的勾选：两个人共用，存在 plans 集合里 _id 为 current 的记录。
+// 菜篮（点了哪些菜、各几份）、点菜单和买菜清单的勾选：这本小本本里的人共用，存在 plans 集合里这本的 current 那条。
 //   items     { 菜品id: 份数 }
 //   checked   { 清单项key: true }            买菜清单里已经买到的
 //   extras    { key: { name, createdAt } }   自己加的要买的东西（比如：牛奶）
 //   order     下了单的点菜单（没下单时没有这个字段），格式见 utils/order.js 的 normalizeOrder
 //   orderSeq  点菜单编号数到几了
-// 加一份用 inc、去掉用 remove，两个人同时点不同的菜不会互相覆盖。
+// 加一份用 inc、去掉用 remove，几个人同时点不同的菜不会互相覆盖。
 const { createSharedDoc } = require("./shared-doc");
 const { newId } = require("../utils/id");
 const { normalizeOrder } = require("../utils/order");
@@ -132,7 +132,7 @@ function dropMany(ids) {
   return getBasket();
 }
 
-// 清空菜篮、点菜单和买菜清单（两个人的都清空）
+// 清空菜篮、点菜单和买菜清单（这本里大家的都清空）
 function clear() {
   doc.write(
     (p) => {

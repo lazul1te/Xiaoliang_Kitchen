@@ -1,0 +1,9 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "拿手菜小本本的数据接口：先查是不是这本小本本的成员，再读写数据库和照片（管理员身份）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.4"
+  }
+}

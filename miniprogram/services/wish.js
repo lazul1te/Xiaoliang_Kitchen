@@ -1,5 +1,5 @@
 // 想吃清单：先记个菜名和一张图（再加一句备注），以后慢慢学。
-// 两个人共用，存在 plans 集合里 _id 为 wishes 的记录：items { key: { name, photo, photoThumb, note, createdAt } }
+// 这本小本本里的人共用，存在 plans 集合里这本的 wishes 那条：items { key: { name, photo, photoThumb, note, createdAt } }
 // 「开始学」会把它写成正式菜谱（照片直接沿用），然后从清单里拿掉。
 const { createSharedDoc } = require("./shared-doc");
 const imageService = require("./image");

@@ -1,5 +1,6 @@
-// 分类：新建、改名、删除、调整顺序（顺序就是菜单左边的顺序）。存在云数据库的 categories 集合（两个人共用）
+// 分类：新建、改名、删除、调整顺序（顺序就是菜单左边的顺序）。存在云数据库的 categories 集合（每本小本本各有一套）
 const cloud = require("./cloud");
+const db = require("./db");
 const store = require("./store");
 const samples = require("../data/samples");
 
@@ -34,7 +35,7 @@ function nextSort(list) {
 }
 
 // 写云数据库；失败的话把报错翻成人话，并在后台重新同步一次，免得手机上和云上对不上。
-// 改名、删除、调顺序如果返回「改了 0 条」，也算失败（对方刚删了，或者权限不允许改对方加的分类）
+// 改名、删除、调顺序如果返回「改了 0 条」，也算失败（家人刚删掉了）
 async function write(task) {
   let res;
   try {
@@ -55,7 +56,7 @@ async function addCategory(name) {
   await store.ensureLoaded();
   const list = store.listCategories();
   const category = { name: checkName(name, list), sort: nextSort(list), createdAt: Date.now() };
-  const res = await write(() => cloud.collection(COLLECTION).add({ data: category }));
+  const res = await write(() => db.collection(COLLECTION).add({ data: category }));
   category._id = res._id;
   store.setCategories(list.concat(category));
   return category;
@@ -70,7 +71,7 @@ async function ensureCategories(names) {
     const start = nextSort(list);
     const now = Date.now();
     const added = missing.map((name, i) => ({ name, sort: start + i, createdAt: now + i }));
-    const col = cloud.collection(COLLECTION);
+    const col = db.collection(COLLECTION);
     const results = await write(() => Promise.all(added.map((c) => col.add({ data: c }))));
     results.forEach((res, i) => {
       added[i]._id = res._id;
@@ -86,7 +87,7 @@ async function renameCategory(id, name) {
   const target = list.find((c) => c._id === id);
   if (!target) throw new Error("这个分类已经不在了");
   target.name = checkName(name, list, id);
-  await write(() => cloud.collection(COLLECTION).doc(id).update({ data: { name: target.name } }));
+  await write(() => db.collection(COLLECTION).doc(id).update({ data: { name: target.name } }));
   store.setCategories(list);
 }
 
@@ -94,7 +95,7 @@ async function removeCategory(id) {
   await store.ensureLoaded();
   const count = store.listDishes().filter((d) => d.categoryId === id).length;
   if (count) throw new Error(`这个分类里还有 ${count} 道菜，先把它们改到别的分类再删`);
-  await write(() => cloud.collection(COLLECTION).doc(id).remove());
+  await write(() => db.collection(COLLECTION).doc(id).remove());
   store.setCategories(store.listCategories().filter((c) => c._id !== id));
 }
 
@@ -113,7 +114,7 @@ async function moveCategory(id, delta) {
       changed.push(c);
     }
   });
-  const col = cloud.collection(COLLECTION);
+  const col = db.collection(COLLECTION);
   await write(() => Promise.all(changed.map((c) => col.doc(c._id).update({ data: { sort: c.sort } }))));
   store.setCategories(list);
 }

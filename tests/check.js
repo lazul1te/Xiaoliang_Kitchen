@@ -31,17 +31,16 @@ const realNow = Date.now;
 Date.now = () => realNow() + timeOffset;
 
 // ---------------- 假的云开发 ----------------
-// permission 模拟集合权限：
-//   shared        自定义安全规则 { read: true, write: true }（正确设置）
-//   readAll       基础权限「所有用户可读，仅创建者可写」：能看到对方的，改对方的会「改了 0 条」
-//   creatorOnly   基础权限「仅创建者可读写」：只看得到自己的
-//   rulesCreator  自定义安全规则只允许创建者：查询不带 _openid 条件直接拒绝
+// 小程序现在都通过云函数 api 读写数据库（云函数是管理员身份，不受集合权限限制）。
+// 小程序自己直接读数据库，只剩「检查一下云开发」用来看权限收紧了没有。permission 模拟集合权限：
+//   shared  自定义安全规则「能打开小程序的人都能读写」（旧版本用的，大家都换成新版本以前不能改）
+//   locked  所有用户不可读写（大家都换成新版本以后改成这个）
 let permission = "shared";
 let currentUser = "me"; // 当前是哪台手机
-const devices = { me: {}, partner: {} }; // 每台手机自己的本地缓存
+const devices = { me: {}, partner: {}, third: {} }; // 每台手机自己的本地缓存
 const dev = () => devices[currentUser];
 const cloudDB = {}; // 集合名 → 记录数组；没有这个 key = 集合不存在
-const cloudFiles = {}; // fileID → { owner, path }
+const cloudFiles = {}; // fileID → { owner, path, content }
 let idSeq = 0;
 let offline = false;
 let cloudInits = 0;
@@ -53,53 +52,33 @@ function cloudError(msg, errCode) {
   return e;
 }
 const permissionDenied = () => cloudError("collection.get:fail -502003 database permission denied", -502003);
+const collectionMissing = (name) =>
+  cloudError(`collection.count:fail -502005 database collection not exists. [ResourceNotFound] Db or Table not exist: ${name}`, -502005);
 
-function rowsOf(name) {
-  if (!cloudInits) throw new Error("请先调用 wx.cloud.init() 完成初始化后再调用其他云 API");
-  if (offline) throw cloudError("request:fail timeout");
-  if (!cloudDB[name]) {
-    throw cloudError(
-      `collection.count:fail -502005 database collection not exists. [ResourceNotFound] Db or Table not exist: ${name}`,
-      -502005
-    );
-  }
-  return cloudDB[name];
+// 记录里的一个字段，支持 "members.xxx" 这种点路径
+const getPath = (row, pathStr) => pathStr.split(".").reduce((o, k) => (o === undefined || o === null ? undefined : o[k]), row);
+
+// 查询条件：字段等于某个值（数组字段是包含这个值）、_.exists(true/false)、_.or([条件, ...])
+function matches(row, cond) {
+  if (!cond) return true;
+  if (cond.__op === "or") return cond.value.some((c) => matches(row, c));
+  return Object.keys(cond).every((k) => {
+    const want = cond[k];
+    const v = getPath(row, k);
+    if (want && want.__op === "exists") return want.value ? v !== undefined : v === undefined;
+    if (want && typeof want === "object") throw new Error(`假数据库不认识的查询条件：${JSON.stringify(want)}`);
+    return Array.isArray(v) ? v.includes(want) : v === want;
+  });
 }
 
-const canSee = (row) => (permission === "creatorOnly" || permission === "rulesCreator" ? row._openid === currentUser : true);
-const canWrite = (row) => permission === "shared" || row._openid === currentUser;
-
-function makeQuery(name, opts) {
-  const next = (patch) => makeQuery(name, Object.assign({}, opts, patch));
-  const visible = () => {
-    const rows = rowsOf(name);
-    if (permission === "rulesCreator" && !(opts.where && opts.where._openid === "{openid}")) throw permissionDenied();
-    let list = rows.filter(canSee);
-    if (opts.where) {
-      list = list.filter((r) =>
-        Object.keys(opts.where).every((k) => r[k] === (opts.where[k] === "{openid}" ? currentUser : opts.where[k]))
-      );
+function sortRows(list, orders) {
+  return list.slice().sort((a, b) => {
+    for (const [f, d] of orders) {
+      if (a[f] < b[f]) return d === "asc" ? -1 : 1;
+      if (a[f] > b[f]) return d === "asc" ? 1 : -1;
     }
-    return list;
-  };
-  return {
-    where: (cond) => next({ where: cond }),
-    orderBy: (field, dir) => next({ orders: opts.orders.concat([[field, dir]]) }),
-    skip: (n) => next({ skip: n }),
-    limit: (n) => next({ limit: Math.min(n, 20) }),
-    get: async () => {
-      const list = visible().slice();
-      list.sort((a, b) => {
-        for (const [f, d] of opts.orders) {
-          if (a[f] < b[f]) return d === "asc" ? -1 : 1;
-          if (a[f] > b[f]) return d === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-      return { data: clone(list.slice(opts.skip, opts.skip + Math.min(opts.limit, 20))) };
-    },
-    count: async () => ({ total: visible().length }),
-  };
+    return 0;
+  });
 }
 
 // update 的一个字段：支持 "items.abc" 这种点路径，以及 _.set / _.inc / _.remove
@@ -118,52 +97,100 @@ function applyUpdate(row, pathStr, v) {
   else cur[last] = clone(v);
 }
 
-function makeCollection(name) {
-  const findRow = (id) => rowsOf(name).find((r) => r._id === id);
-  // 改 / 删一条记录前的权限判断：返回 false 表示「改了 0 条」
-  const writable = (row) => {
-    if (!row || !canSee(row)) {
-      if (row && permission === "rulesCreator") throw permissionDenied();
-      return false;
-    }
-    if (canWrite(row)) return true;
-    if (permission === "rulesCreator") throw permissionDenied();
-    return false;
+function applyData(row, data) {
+  Object.keys(data).forEach((k) => {
+    const v = data[k];
+    if (k === "_id" || k === "_openid") throw new Error("update() 不能改 _id / _openid");
+    if (Array.isArray(v)) throw new Error(`update() 的数组字段 ${k} 要用 _.set() 包起来`);
+    applyUpdate(row, k, v);
+  });
+}
+
+// ---- 小程序端直接读数据库：只有「检查一下云开发」用，看权限收紧了没有 ----
+function clientCollection(name) {
+  const q = {
+    limit: () => q,
+    get: async () => {
+      if (!cloudInits) throw new Error("请先调用 wx.cloud.init() 完成初始化后再调用其他云 API");
+      if (offline) throw cloudError("request:fail timeout");
+      if (!cloudDB[name]) throw collectionMissing(name);
+      if (permission === "locked") throw permissionDenied();
+      return { data: clone(cloudDB[name].slice(0, 20)) };
+    },
   };
-  return Object.assign(makeQuery(name, { skip: 0, limit: 20, orders: [] }), {
+  return q;
+}
+
+// ---- 云函数端（管理员身份）：读写不受集合权限限制，add 不会自动加 _openid，一次最多读 1000 条 ----
+let serverCanCreate = true; // 云函数能不能自己建集合（db.createCollection）
+function serverRows(name) {
+  if (!cloudDB[name]) throw collectionMissing(name);
+  return cloudDB[name];
+}
+
+function serverQuery(name, opts) {
+  const next = (patch) => serverQuery(name, Object.assign({}, opts, patch));
+  const found = () => sortRows(serverRows(name).filter((r) => matches(r, opts.where)), opts.orders);
+  return {
+    where: (cond) => next({ where: cond }),
+    field: (f) => next({ field: f }),
+    orderBy: (f, d) => next({ orders: opts.orders.concat([[f, d]]) }),
+    skip: (n) => next({ skip: n }),
+    limit: (n) => next({ limit: Math.min(n, 1000) }),
+    get: async () => {
+      let list = found().slice(opts.skip, opts.skip + opts.limit);
+      if (opts.field) {
+        list = list.map((r) => {
+          const o = { _id: r._id };
+          Object.keys(opts.field).forEach((k) => {
+            if (opts.field[k] && k in r) o[k] = r[k];
+          });
+          return o;
+        });
+      }
+      return { data: clone(list) };
+    },
+    count: async () => ({ total: found().length }),
+    update: async ({ data }) => {
+      const list = found();
+      list.forEach((r) => applyData(r, data));
+      return { stats: { updated: list.length } };
+    },
+    remove: async () => {
+      const rows = serverRows(name);
+      const list = found();
+      list.forEach((r) => rows.splice(rows.indexOf(r), 1));
+      return { stats: { removed: list.length } };
+    },
+  };
+}
+
+function serverCollection(name) {
+  const findRow = (id) => serverRows(name).find((r) => r._id === id);
+  return Object.assign(serverQuery(name, { skip: 0, limit: 100, orders: [] }), {
     add: async ({ data }) => {
-      if ("_openid" in data) throw new Error("add() 的 data 里不该有 _openid");
+      if ("_openid" in data) throw new Error("云函数 add() 的 data 里不该有 _openid");
       if ("_id" in data && !data._id) throw new Error("add() 的 _id 不能是空的");
-      const rows = rowsOf(name);
+      const rows = serverRows(name);
       if (data._id && rows.some((r) => r._id === data._id)) {
-        throw cloudError("collection.add:fail -502001 database request fail. duplicate key error, dup key: { _id }");
+        throw cloudError("collection.add:fail -502001 database request fail. E11000 duplicate key error, dup key: { _id }");
       }
       const _id = data._id || `id${++idSeq}`;
-      rows.push(Object.assign(clone(data), { _id, _openid: currentUser }));
+      rows.push(Object.assign(clone(data), { _id }));
       return { _id };
     },
     doc: (id) => ({
-      get: async () => {
-        const row = findRow(id);
-        if (!row || !canSee(row)) throw cloudError(`document.get:fail document with _id ${id} does not exist`);
-        return { data: clone(row) };
-      },
       update: async ({ data }) => {
         const row = findRow(id);
-        if (!writable(row)) return { stats: { updated: 0 } };
-        Object.keys(data).forEach((k) => {
-          const v = data[k];
-          if (k === "_id" || k === "_openid") throw new Error("update() 不能改 _id / _openid");
-          if (Array.isArray(v)) throw new Error(`update() 的数组字段 ${k} 要用 _.set() 包起来`);
-          applyUpdate(row, k, v);
-        });
+        if (!row) return { stats: { updated: 0 } };
+        applyData(row, data);
         return { stats: { updated: 1 } };
       },
       remove: async () => {
+        const rows = serverRows(name);
         const row = findRow(id);
-        if (!writable(row)) return { stats: { removed: 0 } };
-        const list = rowsOf(name);
-        list.splice(list.indexOf(row), 1);
+        if (!row) return { stats: { removed: 0 } };
+        rows.splice(rows.indexOf(row), 1);
         return { stats: { removed: 1 } };
       },
     }),
@@ -185,14 +212,7 @@ global.wx = {
     },
     database: () => {
       if (!cloudInits) throw new Error("请先调用 wx.cloud.init()");
-      return {
-        collection: makeCollection,
-        command: {
-          set: (value) => ({ __op: "set", value }),
-          inc: (value) => ({ __op: "inc", value }),
-          remove: () => ({ __op: "remove" }),
-        },
-      };
+      return { collection: clientCollection };
     },
     uploadFile: async ({ cloudPath, filePath }) => {
       if (!cloudInits) throw new Error("请先调用 wx.cloud.init()");
@@ -222,6 +242,8 @@ global.wx = {
   },
   setTabBarBadge: (o) => calls.push(["badge", o.text]),
   removeTabBarBadge: () => calls.push(["badge", null]),
+  showTabBarRedDot: (o) => calls.push(["redDot", o.index, true]),
+  hideTabBarRedDot: (o) => calls.push(["redDot", o.index, false]),
   showToast: (o) => calls.push(["toast", o.title]),
   showLoading: (o) => calls.push(["loading", o.title]),
   hideLoading: () => calls.push(["hideLoading"]),
@@ -399,11 +421,30 @@ global.wx.cloud.downloadFile = async ({ fileID }) => {
   return { tempFilePath };
 };
 
-// 云函数端的 wx-server-sdk：管理员身份，不受存储权限限制
+// 云函数端的 wx-server-sdk：管理员身份，不受数据库、存储权限限制
 let tempUrlSeq = 0;
+let serverUser = ""; // 正在调云函数的是谁（微信自动带上的 OPENID）
+const serverCommand = {
+  set: (value) => ({ __op: "set", value }),
+  inc: (value) => ({ __op: "inc", value }),
+  remove: () => ({ __op: "remove" }),
+  exists: (value) => ({ __op: "exists", value }),
+  or: (value) => ({ __op: "or", value }),
+};
 const fakeServerSdk = {
   DYNAMIC_CURRENT_ENV: "current-env",
   init: () => {},
+  getWXContext: () => ({ OPENID: serverUser, APPID: "wx-test", ENV: "test-env" }),
+  database: () => ({
+    command: serverCommand,
+    collection: serverCollection,
+    createCollection: async (name) => {
+      if (!serverCanCreate) throw cloudError("createCollection:fail -501001 permission denied");
+      if (cloudDB[name]) throw cloudError(`createCollection:fail collection ${name} already exists`);
+      cloudDB[name] = [];
+      return { errMsg: "createCollection:ok" };
+    },
+  }),
   getTempFileURL: async ({ fileList }) => ({
     fileList: fileList.map((fileID) =>
       cloudFiles[fileID]
@@ -420,7 +461,12 @@ const fakeServerSdk = {
   }),
   downloadFile: async ({ fileID }) => {
     if (!cloudFiles[fileID]) throw new Error(`STORAGE_FILE_NONEXIST ${fileID}`);
-    return { fileContent: Buffer.from(`照片内容:${fileID}`), statusCode: 200 };
+    return { fileContent: Buffer.from(cloudFiles[fileID].content || `照片内容:${fileID}`), statusCode: 200 };
+  },
+  uploadFile: async ({ cloudPath, fileContent }) => {
+    const fileID = `cloud://test-env.1234/${cloudPath}`;
+    cloudFiles[fileID] = { owner: "admin", path: `server:${cloudPath}`, content: String(fileContent) };
+    return { fileID };
   },
 };
 const Module = require("module");
@@ -429,16 +475,27 @@ Module._load = function (request, parent, isMain) {
   if (request === "wx-server-sdk") return fakeServerSdk;
   return realLoad.call(this, request, parent, isMain);
 };
-const photoFunctionFile = path.join(root, "../cloudfunctions/photo/index.js");
-let photoFunctionDeployed = true; // 云函数 photo 上传部署了没有
+const apiFunctionFile = path.join(root, "../cloudfunctions/api/index.js");
+let apiDeployed = true; // 云函数 api 上传部署了没有
 global.wx.cloud.callFunction = async ({ name, data }) => {
   if (!cloudInits) throw new Error("请先调用 wx.cloud.init()");
-  calls.push(["callFunction", name, data.action, (data.fileIDs || []).length]);
-  if (name !== "photo" || !photoFunctionDeployed) {
+  const actions = data.action === "batch" ? data.calls.map((c) => c.action) : [data.action];
+  calls.push(["callFunction", name, actions.join(",")]);
+  if (offline) throw cloudError("cloud.callFunction:fail request:fail timeout");
+  if (name !== "api" || !apiDeployed) {
     throw cloudError("cloud.callFunction:fail -501000 [ResourceNotFound.Function] 未找到指定的Function，请创建后再试。", -501000);
   }
-  return { result: clone(await require(photoFunctionFile).main(clone(data), {})) };
+  const caller = currentUser; // 发请求的那台手机（等结果的时候测试可能已经换了一台）
+  await Promise.resolve();
+  serverUser = caller;
+  return { result: clone(await require(apiFunctionFile).main(clone(data), {})) };
 };
+// 直接调云函数（不经过手机上的代码）：模拟几台手机同时调用
+async function callAs(user, data) {
+  await Promise.resolve();
+  serverUser = user;
+  return clone(await require(apiFunctionFile).main(clone(data), {}));
+}
 // 这个地址在当前这台手机上能不能显示出来
 const imageLoads = (url) => {
   if (!url) return false;
@@ -555,14 +612,19 @@ function classOf(pagePath, marker, scope) {
   const value = (expr) => new Function(...names, `return (${expr});`)(...names.map((k) => scope[k]));
   return m[1].replace(/\{\{(.+?)\}\}/g, (_, expr) => String(value(expr) || "")).split(/\s+/).filter(Boolean);
 }
-const rowOf = (name) => cloudDB.dishes.find((d) => d.name === name);
-const planDoc = () => (cloudDB.plans || []).find((p) => p._id === "current") || {};
-const sharedDoc = (id) => (cloudDB.plans || []).find((p) => p._id === id) || {};
+// 测试里两台手机一起用的那本（家庭本本）。云上的记录按 bookId 分本，plans 里每本各一条菜篮、库存、想吃清单
+let testBookId = "";
+const planIdOf = (bookId, kind) => (bookId === "legacy" ? kind : `${bookId}-${kind}`);
+const inBook = (row) => !testBookId || row.bookId === testBookId || (testBookId === "legacy" && row.bookId === undefined);
+const rowOf = (name) => (cloudDB.dishes || []).find((d) => d.name === name && inBook(d));
+const sharedDoc = (kind) => (cloudDB.plans || []).find((p) => p._id === planIdOf(testBookId, kind)) || {};
+const planDoc = () => sharedDoc("current");
+const cacheOf = (base) => dev()[`dev_${base}@${testBookId}`]; // 手机上这本的缓存（开发版 key 带 dev_）
 const svc = (name) => require(path.join(root, "services", name)); // 这次打开的模块（页面用的是同一份）
 const dishNow = async (name) => (await svc("dish").listDishes()).find((d) => d.name === name);
 const planItems = () => planDoc().items || {};
 const idOf = (name) => rowOf(name)._id;
-const catOf = (name) => cloudDB.categories.find((c) => c.name === name)._id;
+const catOf = (name) => cloudDB.categories.find((c) => c.name === name && inBook(c))._id;
 
 // 在「对方的手机」上直接改云上的数据（模拟对方在自己手机上保存了）
 function partnerWrites(fn) {
@@ -790,6 +852,17 @@ async function smoke() {
   cloudDB.cook_logs = [];
   launchApp("me");
   assert.deepStrictEqual(lastCall("cloud.init"), ["cloud.init", { traceUser: true }]);
+  // 第一次打开新版本：自动有一本只有自己能看的「我的小本本」。先建一本家庭本本，后面两台手机都用这本
+  const books0 = svc("book");
+  await books0.ready();
+  assert.deepStrictEqual([books0.current().name, books0.current().type, books0.list().length], ["我的小本本", "personal", 1]);
+  assert.ok(cloudDB.users && cloudDB.books, "云函数自己建好了 users、books 集合");
+  testBookId = await books0.create("我们家的小本本", "小亮");
+  books0.switchTo(testBookId);
+  await flush();
+  assert.deepStrictEqual([books0.current().name, books0.current().family], ["我们家的小本本", true]);
+  assert.ok(/^[2-9A-HJKMNP-Z]{6}$/.test(books0.current().code), "家庭码 6 位，没有容易看错的 0、O、1、I、L：" + books0.current().code);
+  assert.strictEqual(cloudDB.users.find((u) => u._id === "me").lastBook, testBookId, "记住上次用的是哪本");
   const menu = newPage("pages/menu/index");
   await menu.onLoad();
   menu.onShow();
@@ -804,7 +877,8 @@ async function smoke() {
   assert.deepStrictEqual(menu.data.sections[0].dishes.map((d) => d.name), ["番茄炒蛋", "青椒土豆丝", "麻婆豆腐"]);
   assert.strictEqual(menu.data.activeId, catOf("家常菜"));
   assert.deepStrictEqual(menu.sectionTops, [0, 400, 800, 1200, 1600]);
-  assert.ok(dev().dev_cloud_cache && dev().dev_cloud_cache.dishes.length === 11, "云上数据要缓存到本地（开发版 key 带 dev_）");
+  assert.ok(cacheOf("cloud_cache") && cacheOf("cloud_cache").dishes.length === 11, "这本的数据缓存到本地（每本各存一份）");
+  assert.ok(cloudDB.dishes.every((d) => d.bookId === testBookId && !("_openid" in d)), "云函数存的记录都记着是哪本");
   ok("welcome → 放示例菜 → 5 个分类、11 道菜");
 
   // ---- 点菜、搜索、左右联动 ----
@@ -961,6 +1035,7 @@ async function smoke() {
   modalAnswers.push({ confirm: true });
   await edit2.onRemoveStep(ev({ i: 2 }));
   await edit2.onSave();
+  await flush(); // 换掉的照片在后台删
   assert.deepStrictEqual(lastCall("navigateBack"), ["navigateBack", 1]);
   const updated = cloudDB.dishes.find((d) => d._id === saved._id);
   assert.deepStrictEqual([updated.name, updated.cover, updated.coverThumb, updated.steps.length], ["蒸鸡蛋羹", "", "", 2]);
@@ -1007,8 +1082,8 @@ async function smoke() {
   await edit4.onDelete();
   assert.deepStrictEqual(lastCall("navigateBack"), ["navigateBack", 2]);
   assert.strictEqual(cloudDB.dishes.length, 11);
-  assert.deepStrictEqual(Object.keys(cloudFiles), [], "删菜时照片一起删");
   await flush();
+  assert.deepStrictEqual(Object.keys(cloudFiles), [], "删菜时照片一起删");
   assert.ok(!(saved._id in planItems()), "删掉的菜从今日菜单拿掉");
   ok("dish-edit 删除：云数据库、云存储、点菜篮都清干净");
 
@@ -1180,6 +1255,7 @@ async function smoke() {
   assert.strictEqual((await dishNow("番茄炒蛋")).cookCount, 1, "做过几次 = 记录条数");
   assert.ok(Math.abs((await dishNow("番茄炒蛋")).lastCookedAt - Date.now()) < 1000, "上次做是今天");
   assert.ok(/\/covers\//.test(rowOf("番茄炒蛋").cover) && rowOf("番茄炒蛋").cover !== logA.photo, "另外传一份当菜的成品照");
+  await flush();
   assert.ok(!(tomatoId in planItems()), "从今日菜单里划掉了");
   assert.deepStrictEqual(lastCall("toast"), ["toast", "打卡成功！做过 1 次了"]);
   assert.deepStrictEqual(lastCall("navigateBack"), ["navigateBack", 1]);
@@ -1251,7 +1327,7 @@ async function smoke() {
   assert.deepStrictEqual(Object.keys(withPhotos.photos).sort(), [rowOf("番茄炒蛋").cover, logA.photo].sort());
   assert.strictEqual(Buffer.from(withPhotos.photos[logA.photo], "base64").toString(), `照片内容:${logA.photo}`);
   exp.onSend();
-  assert.ok(/^拿手菜小本本备份-\d{8}\.json$/.test(lastCall("shareFile")[1]), lastCall("shareFile")[1]);
+  assert.ok(/^拿手菜小本本备份-我们家的小本本-\d{8}\.json$/.test(lastCall("shareFile")[1]), lastCall("shareFile")[1]);
   ok(`导出：不带照片 / 带 2 张照片，发到聊天（${exp.data.file.sizeText}）`);
 
   // ======== 两个人共用 ========
@@ -1260,8 +1336,31 @@ async function smoke() {
   menu.onPlus(ev({ id: idOf("番茄炒蛋") }));
   await flush();
 
-  // 对方的手机：第一次打开就看到同一本菜谱、同一份今日菜单，能加菜，也能改我加的菜
+  // 对方的手机：第一次打开新版本，先是只有自己的「我的小本本」；用家庭码申请加入，我同意了才看得到
   launchApp("partner");
+  const pBook = svc("book");
+  await pBook.ready();
+  assert.deepStrictEqual([pBook.current().name, pBook.list().length], ["我的小本本", 1], "对方先是自己的个人本本");
+  await assert.rejects(svc("api").call("load", { bookId: testBookId }), (e) => e.code === "NOT_MEMBER", "还没加入，读不到");
+  const familyCode = cloudDB.books.find((b) => b._id === testBookId).code;
+  assert.strictEqual(await pBook.requestJoin(familyCode.toLowerCase(), "小鱼"), "pending", "申请了，等本主同意（家庭码大小写都行）");
+  assert.deepStrictEqual(pBook.pending().map((b) => b.name), ["我们家的小本本"]);
+  await assert.rejects(svc("api").call("load", { bookId: testBookId }), (e) => e.code === "NOT_MEMBER", "申请了也还读不到");
+  launchApp("me");
+  const meBook = svc("book");
+  await meBook.refresh();
+  const joinReq = meBook.get(testBookId).requests;
+  assert.deepStrictEqual(joinReq.map((r) => r.name), ["小鱼"], "本主看得到申请");
+  assert.deepStrictEqual(lastCall("redDot"), ["redDot", 3, true], "「我的」上有小红点");
+  await meBook.approve(testBookId, joinReq[0].id);
+  assert.deepStrictEqual(meBook.get(testBookId).members.map((m) => `${m.name}${m.owner ? "（本主）" : ""}`), ["小亮（本主）", "小鱼"]);
+  assert.deepStrictEqual(lastCall("redDot"), ["redDot", 3, false]);
+  launchApp("partner");
+  await svc("book").ready();
+  assert.ok(svc("book").has(testBookId), "我同意了，对方就在这本里了");
+  svc("book").switchTo(testBookId);
+
+  // 对方切过来：看到同一本菜谱、同一份菜篮，能加菜，也能改我加的菜
   const pMenu = newPage("pages/menu/index");
   await pMenu.onLoad();
   await flush();
@@ -1292,7 +1391,7 @@ async function smoke() {
   pEdit2.onInput(ev({ field: "tips" }, { value: "对方说：最后撒点葱花更香。" }));
   await pEdit2.onSave();
   assert.strictEqual(rowOf("番茄炒蛋").tips, "对方说：最后撒点葱花更香。");
-  assert.strictEqual(rowOf("红糖糍粑")._openid, "partner");
+  assert.strictEqual(rowOf("红糖糍粑").bookId, testBookId);
   ok("对方：打开就是同一本菜谱，能加菜，也能改我加的菜");
 
   // 回到我的手机：重新打开，先显示缓存，再换成云上最新的（看得到对方的改动）
@@ -1326,7 +1425,7 @@ async function smoke() {
 
   // 小程序开着的时候对方又加了一道：马上回到菜单不去云上查，隔 15 秒以上回来就会刷出来
   partnerWrites(() =>
-    cloudDB.dishes.push({ _id: "p1", _openid: "partner", name: "酸辣土豆丝", categoryId: catOf("家常菜"), createdAt: Date.now() })
+    cloudDB.dishes.push({ _id: "p1", bookId: testBookId, name: "酸辣土豆丝", categoryId: catOf("家常菜"), createdAt: Date.now() })
   );
   menu2.onShow();
   await flush();
@@ -1370,7 +1469,7 @@ async function smoke() {
   partnerWrites(() => cloudDB.dishes.splice(cloudDB.dishes.indexOf(rowOf("红糖糍粑")), 1));
   edit7.onInput(ev({ field: "tips" }, { value: "蘸黄豆粉" }));
   await edit7.onSave();
-  assert.deepStrictEqual(lastCall("modal").slice(1), ["保存失败", "这道菜已经被删掉了，可能是对方刚删的"]);
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["保存失败", "这道菜已经被删掉了，可能是家人刚删的"]);
   ok("同时改：对方先保存了会问要不要覆盖；对方删掉了会提示");
 
   // 没网：有缓存就先显示缓存
@@ -1385,74 +1484,83 @@ async function smoke() {
   offline = false;
   ok("没网时显示上次的缓存");
 
-  // ======== 集合权限设错的几种情况 ========
-
-  // 「所有用户可读，仅创建者可写」：看得到对方的菜，但改不了，要提示原因而不是假装保存成功
-  permission = "readAll";
+  // ======== 每本分开：别的本里的东西读不到、改不了（改了小程序代码直接调云函数也不行） ========
+  launchApp("me");
+  const myPersonalId = cloudDB.users.find((u) => u._id === "me").personalBookId;
+  const secret = await svc("api").call("add", { bookId: myPersonalId, collection: "dishes", data: { name: "私房红烧肉", createdAt: Date.now() } });
+  assert.strictEqual(cloudDB.dishes.find((d) => d._id === secret._id).bookId, myPersonalId);
   launchApp("partner");
-  const pEdit3 = newPage("pages/dish-edit/index");
-  await pEdit3.onLoad({ id: idOf("番茄炒蛋") });
-  pEdit3.onInput(ev({ field: "tips" }, { value: "改不了的" }));
-  await pEdit3.onSave();
-  assert.strictEqual(lastCall("modal")[1], "保存失败");
-  assert.ok(/^没改成/.test(lastCall("modal")[2]), lastCall("modal")[2]);
-  assert.strictEqual(rowOf("番茄炒蛋").tips, "我改的");
-  modalAnswers.push({ confirm: true });
-  await pEdit3.onDelete();
-  assert.strictEqual(lastCall("modal")[1], "删除失败");
-  assert.ok(rowOf("番茄炒蛋"), "删不掉对方的菜时，菜还在");
+  const herApi = svc("api");
+  await assert.rejects(herApi.call("load", { bookId: myPersonalId }), (e) => e.code === "NOT_MEMBER" && e.message === "你已经不在这本小本本里了");
+  await assert.rejects(herApi.call("add", { bookId: myPersonalId, collection: "dishes", data: { name: "偷偷加的" } }), (e) => e.code === "NOT_MEMBER");
+  // 拿着我个人本本里那道菜的 id，从我们共用的那本去读、改、删：都当作没有
+  assert.strictEqual(await herApi.call("get", { bookId: testBookId, collection: "dishes", id: secret._id }), null);
+  assert.deepStrictEqual(await herApi.call("update", { bookId: testBookId, collection: "dishes", id: secret._id, data: { name: "改了" } }), { updated: 0 });
+  assert.deepStrictEqual(await herApi.call("remove", { bookId: testBookId, collection: "dishes", id: secret._id }), { removed: 0 });
+  await assert.rejects(herApi.call("update", { bookId: testBookId, collection: "dishes", id: idOf("番茄炒蛋"), data: { bookId: myPersonalId } }), (e) => e.code === "BAD_INPUT", "不能把菜挪到别的本");
+  await assert.rejects(herApi.call("get", { bookId: testBookId, collection: "users", id: "me" }), (e) => e.code === "BAD_INPUT", "users、books 小程序碰不到");
+  assert.strictEqual(cloudDB.dishes.find((d) => d._id === secret._id).name, "私房红烧肉");
+  // 照片也一样：我个人本本里的照片，对方换不到链接、删不掉
+  const secretPhoto = `cloud://test-env.1234/books/${myPersonalId}/covers/secret.jpg`;
+  cloudFiles[secretPhoto] = { owner: "me", path: "http://tmp/secret.jpg" };
+  const denied = await herApi.call("urls", { fileIDs: [secretPhoto] });
+  assert.deepStrictEqual([denied.urls, denied.denied], [{}, [secretPhoto]]);
+  await herApi.call("removeFiles", { fileIDs: [secretPhoto] });
+  assert.ok(cloudFiles[secretPhoto], "删不掉别的本里的照片");
+  await assert.rejects(herApi.call("readFile", { fileID: secretPhoto }), (e) => e.code === "NOT_MEMBER");
+  // 不认识的操作
+  await assert.rejects(herApi.call("dropDatabase", {}), (e) => e.code === "BAD_ACTION");
+  launchApp("me");
+  await svc("api").call("remove", { bookId: myPersonalId, collection: "dishes", id: secret._id });
+  delete cloudFiles[secretPhoto];
+  ok("每本分开：读不到、改不了、删不掉别的本里的菜和照片，也不能把菜挪到别的本");
 
-  // 「仅创建者可读写」：对方只看得到自己加的菜，看不到我的（菜单是空的时候，欢迎页上有提示）
-  permission = "creatorOnly";
-  devices.partner = {};
-  launchApp("partner");
-  const pMenu2 = newPage("pages/menu/index");
-  await pMenu2.onLoad();
-  assert.deepStrictEqual(pMenu2.allDishes.map((d) => d.name), ["醋溜土豆丝"]);
+  // ======== 云函数 api 还没部署、集合还没建 ========
 
-  // 自定义安全规则只允许创建者：直接报权限错误，提示怎么改
-  permission = "rulesCreator";
-  devices.partner = {};
-  launchApp("partner");
-  const pMenu3 = newPage("pages/menu/index");
-  await pMenu3.onLoad();
-  assert.strictEqual(pMenu3.data.status, "error");
-  assert.ok(/自定义安全规则/.test(pMenu3.data.errorText), pMenu3.data.errorText);
-  permission = "shared";
-  ok("权限设错时：改不了会提示原因、读不到会提示怎么改");
-
-  // 没缓存、集合没建：给出能照着做的提示；建好后点重试
+  // 没缓存、云函数还没部署：说清楚怎么部署；部署好以后点重试
   devices.me = {};
-  delete cloudDB.dishes;
+  apiDeployed = false;
   launchApp("me");
   const menu4 = newPage("pages/menu/index");
   await menu4.onLoad();
   assert.strictEqual(menu4.data.status, "error");
-  assert.ok(/还没有 dishes 集合/.test(menu4.data.errorText), "报错里写明是哪个集合：" + menu4.data.errorText);
-  const missingText = menu4.data.errorText;
-  cloudDB.dishes = [];
+  assert.ok(/^云函数 api 还没部署：.*右键 api 文件夹.*上传并部署：云端安装依赖/.test(menu4.data.errorText), menu4.data.errorText);
+  apiDeployed = true;
   menu4.onRetry();
   await flush();
   assert.strictEqual(menu4.data.status, "ready");
-  ok(`集合没建：提示「${missingText.slice(0, 20)}…」，建好后重试正常`);
+  assert.strictEqual(svc("book").currentId(), testBookId, "部署好以后接着进上次用的那本");
+  ok("云函数没部署：提示怎么部署，部署好以后重试正常");
 
-  // 「我的 → 检查一下云开发」：一眼看出哪个集合没建
+  // 「我的 → 检查一下云开发」：集合没建的，云函数自己建上；建不了的写明是哪个；还看得出数据库权限收紧了没有
   delete cloudDB.plans;
+  serverCanCreate = false;
   const mineCheck = newPage("pages/mine/index");
   await mineCheck.onCheckDatabase();
+  let checkReport = lastCall("modal")[2];
   assert.strictEqual(lastCall("modal")[1], "云开发检查");
-  assert.ok(/✅ dishes：正常/.test(lastCall("modal")[2]) && /❌ plans：还没建/.test(lastCall("modal")[2]), lastCall("modal")[2]);
-  // 下拉刷新时 plans 没建：弹窗写明是 plans
-  const menuPull = newPage("pages/menu/index");
-  await menuPull.onLoad();
-  await menuPull.onPullRefresh();
-  assert.strictEqual(lastCall("modal")[1], "云数据库有点问题");
-  assert.ok(/还没有 plans 集合/.test(lastCall("modal")[2]), lastCall("modal")[2]);
-  cloudDB.plans = [];
-  ok("检查一下云开发：列出每个集合的状态；下拉刷新出错时写明是哪个集合");
+  assert.ok(/✅ 云函数 api：正常/.test(checkReport) && /✅ dishes：正常/.test(checkReport) && /❌ plans：还没建/.test(checkReport), checkReport);
+  assert.ok(/⚠️ 数据库权限：还是谁都能直接读写/.test(checkReport) && /所有用户不可读写/.test(checkReport), checkReport);
+  serverCanCreate = true;
+  permission = "locked";
+  await mineCheck.onCheckDatabase();
+  checkReport = lastCall("modal")[2];
+  assert.ok(/✅ plans：刚刚自动建好了/.test(checkReport) && /🔒 数据库权限：只有云函数能读写/.test(checkReport) && /都正常$/.test(checkReport), checkReport);
+  assert.ok(Array.isArray(cloudDB.plans));
+  permission = "shared";
+  ok("检查一下云开发：云函数、每个集合（没建的自动建上）、照片、数据库权限");
 
-  // 只有 plans 集合没建：菜单照样能看；点菜时弹窗说明怎么建，同样的问题只弹一次，之后是轻提示
+  // plans 集合没建：点菜时云函数自己建上；建不了的话，弹窗说明怎么建，同样的问题只弹一次，之后是轻提示
   delete cloudDB.plans;
+  devices.me = {};
+  launchApp("me");
+  const menuAuto = newPage("pages/menu/index");
+  await menuAuto.onLoad();
+  menuAuto.onPlus(ev({ id: "x1" }));
+  await flush();
+  assert.deepStrictEqual(planItems(), { x1: 1 }, "集合自动建上，点的菜存上了");
+  delete cloudDB.plans;
+  serverCanCreate = false;
   devices.me = {};
   launchApp("me");
   const menu5 = newPage("pages/menu/index");
@@ -1462,18 +1570,18 @@ async function smoke() {
   menu5.onPlus(ev({ id: "x1" }));
   await flush();
   assert.strictEqual(lastCall("modal")[1], "菜篮没存上");
-  assert.ok(/plans/.test(lastCall("modal")[2]), lastCall("modal")[2]);
+  assert.ok(/还没有 plans 集合.*所有用户不可读写/.test(lastCall("modal")[2]), lastCall("modal")[2]);
   const modalCount = countCalls("modal");
   menu5.onPlus(ev({ id: "x1" }));
   await flush();
   assert.strictEqual(countCalls("modal"), modalCount, "同样的问题只弹一次窗");
   assert.deepStrictEqual(lastCall("toast"), ["toast", "菜篮没同步上，稍后再试"]);
-  ok("plans 集合没建：菜单照样能用，点菜时提示怎么建");
+  ok("plans 集合没建：云函数自己建上；建不了时菜单照样能用，点菜时提示怎么建");
 
-  // 只有 cook_logs 集合没建：菜单、记录页照样能打开；打卡时提示怎么建
+  // 只有 cook_logs 集合没建（云函数也建不了）：菜单、记录页照样能打开；打卡时提示怎么建
   cloudDB.plans = [];
   delete cloudDB.cook_logs;
-  cloudDB.dishes.push({ _id: "d-x", _openid: "me", name: "清炒时蔬", categoryId: catOf("家常菜"), createdAt: Date.now() });
+  cloudDB.dishes.push({ _id: "d-x", bookId: testBookId, name: "清炒时蔬", categoryId: catOf("家常菜"), createdAt: Date.now() });
   devices.me = {};
   launchApp("me");
   const menu6 = newPage("pages/menu/index");
@@ -1489,6 +1597,7 @@ async function smoke() {
   assert.strictEqual(lastCall("modal")[1], "保存失败");
   assert.ok(/cook_logs/.test(lastCall("modal")[2]), lastCall("modal")[2]);
   ok("cook_logs 集合没建：照样能看菜谱和记录页，打卡时提示怎么建");
+  serverCanCreate = true;
 
   // ======== 导入 6 道菜（tests/fixtures 里的文件，照片换成了很小的图） ========
   const importFile = path.join(__dirname, "fixtures", "six-dishes.json");
@@ -1546,10 +1655,11 @@ async function smoke() {
   assert.deepStrictEqual(again, { added: 0, skipped: 6, logsAdded: 0, logsError: "" });
   assert.deepStrictEqual([cloudDB.dishes.length, cloudDB.cook_logs.length], [17, 6]);
 
-  // cook_logs 集合没建：菜照样导进来，提示记录没导进去；建好集合再导一次，记录补上、次数不会多算
+  // cook_logs 集合没建（云函数也建不了）：菜照样导进来，提示记录没导进去；建好集合再导一次，记录补上、次数不会多算
   cloudDB.categories = [];
   cloudDB.dishes = [];
   delete cloudDB.cook_logs;
+  serverCanCreate = false;
   devices.me = {};
   launchApp("me");
   const imp3 = newPage("pages/import/index");
@@ -1559,6 +1669,7 @@ async function smoke() {
   assert.deepStrictEqual([imp3.data.result.added, imp3.data.result.logsAdded], [6, 0]);
   assert.strictEqual(lastCall("modal")[1], "菜谱导进来了，做菜记录没导进去");
   cloudDB.cook_logs = [];
+  serverCanCreate = true;
   const imp4 = newPage("pages/import/index");
   imp4.onChoose();
   await flush();
@@ -1704,7 +1815,7 @@ async function smoke() {
   assert.strictEqual(leFuture.data.form.date, dateValue(Date.now()), "以后的日期不能补记");
   ok("做饭日历：标出做饭的日子、点一天只看那天、翻月、点空的日子补记");
 
-  // ======== 对方看不到我传的照片：免费环境的云存储只有上传的人能读，照片交给云函数 photo 换链接 ========
+  // ======== 对方看不到我传的照片：免费环境的云存储只有上传的人能读，照片交给云函数 api 换链接 ========
   launchApp("partner");
   const myThumb = rowOf("莴笋炒肉").coverThumb;
   assert.ok(myThumb && cloudFiles[myThumb].owner === "me", "照片是我导入时传的");
@@ -1740,7 +1851,7 @@ async function smoke() {
   const local = newComponent(IMG, { src: "http://tmp/photo99.jpg" });
   await settle();
   assert.deepStrictEqual([local.data.url, fnCalls() - before], ["http://tmp/photo99.jpg", 0]);
-  const goneId = "cloud://test-env.1234/covers/gone.jpg";
+  const goneId = `cloud://test-env.1234/books/${testBookId}/covers/gone.jpg`;
   const gone = newComponent(IMG, { src: goneId });
   await settle();
   assert.deepStrictEqual([gone.data.url, gone.events], ["", [["error", { src: goneId }]]]);
@@ -1767,13 +1878,13 @@ async function smoke() {
   ok("对方删我加的菜，照片一起删掉；对方导出时也带上我传的照片");
 
   // ======== 云函数还没部署 ========
-  photoFunctionDeployed = false;
+  apiDeployed = false;
   launchApp("partner");
   const herMine = newPage("pages/mine/index");
   await herMine.onCheckDatabase();
   const report = lastCall("modal")[2];
-  assert.ok(/❌ 照片：云函数 photo 还没部署/.test(report), report);
-  assert.ok(/右键 photo 文件夹.*上传并部署：云端安装依赖/.test(report), "告诉对方怎么部署");
+  assert.ok(/❌ 云函数 api：还没部署/.test(report), report);
+  assert.ok(/右键 api 文件夹.*上传并部署：云端安装依赖/.test(report), "告诉对方怎么部署");
   const fallback = newComponent(IMG, { src: myThumb });
   await settle();
   assert.strictEqual(fallback.data.url, myThumb, "退回直接用文件 ID");
@@ -1798,7 +1909,7 @@ async function smoke() {
   await settle();
   assert.ok(mine2.data.url === myThumb && imageLoads(mine2.data.url), "我自己传的照片照样能看");
   // 部署好以后重新打开：正常；下拉刷新时加载失败的照片重新加载
-  photoFunctionDeployed = true;
+  apiDeployed = true;
   launchApp("partner");
   await herMine.onCheckDatabase();
   assert.ok(/✅ 照片：正常/.test(lastCall("modal")[2]) && !/上传并部署/.test(lastCall("modal")[2]), lastCall("modal")[2]);
@@ -2235,14 +2346,16 @@ async function smoke() {
   mealPage.onStar(ev({ i: mi(LETTUCE), value: 2 })); // 再点一下同一颗星 = 不打分
   mealPage.onStar(ev({ i: mi(LETTUCE), value: 3 }));
   mealPage.onNoteInput({ detail: { value: "卤肉炖得很烂，下次少放点糖" } });
-  // meals 集合还没建：提示怎么建；建好以后在这一页重试，不会多记
+  // meals 集合还没建（云函数也建不了）：提示怎么建；建好以后在这一页重试，不会多记
   delete cloudDB.meals;
+  serverCanCreate = false;
   const logsBefore = cloudDB.cook_logs.length;
   await mealPage.onSave();
   assert.strictEqual(lastCall("modal")[1], "没记上");
   assert.ok(/meals/.test(lastCall("modal")[2]), lastCall("modal")[2]);
   assert.ok(planItems()[LUROU] && planDoc().order, "没记上就还在菜篮里");
   cloudDB.meals = [];
+  serverCanCreate = true;
   await mealPage.onSave();
   await flush();
   assert.strictEqual(cloudDB.meals.length, 1);
@@ -2323,6 +2436,7 @@ async function smoke() {
   launchApp("me");
   for (const l of cloudDB.cook_logs.filter((x) => x.mealId === meal1._id)) await svc("log").removeLog(l._id);
   assert.ok(!cloudDB.meals.some((m) => m._id === meal1._id), "这一顿也删掉了");
+  await flush();
   assert.ok(!cloudFiles[meal1.photo] && !cloudFiles[meal1.photoThumb], "整桌照片也删掉了");
   ok("忘了开饭：第二天问一下、按那天记；菜都做了清空菜篮（没买的留着）；一顿的记录删光，这一顿和照片也删掉");
 
@@ -2436,11 +2550,112 @@ async function smoke() {
   await mealC.onSave();
   await flush();
   assert.deepStrictEqual(planItems(), { [LETTUCE]: 1 });
-  assert.strictEqual(dev().dev_cook_session, undefined, "记好以后进度清掉");
+  assert.strictEqual(cacheOf("cook_session"), undefined, "记好以后进度清掉");
   basketC.onShow();
   await flush();
   assert.strictEqual(basketC.data.cooking, null);
   ok("一起做：备菜（先腌上、建议顺序、按份数算好）、按菜切换、计时器各走各的、到点跳过去、退出了接着做、做好一道切下一道、开饭只勾做好的");
+
+  // ======== 旧数据变成家庭本本：以前大家共用一份数据（记录上没有 bookId），新版本第一次打开时自动变成「我们家的小本本」 ========
+  Object.keys(cloudDB).forEach((k) => delete cloudDB[k]);
+  Object.keys(cloudFiles).forEach((k) => delete cloudFiles[k]);
+  Object.keys(devices).forEach((k) => {
+    devices[k] = {};
+  });
+  const t0 = new Date(2026, 9, 1, 12).getTime();
+  const oldCover = "cloud://test-env.1234/covers/old-wings.jpg";
+  const oldThumb = "cloud://test-env.1234/thumbs/old-wings.jpg";
+  cloudFiles[oldCover] = { owner: "partner", path: "http://tmp/old.jpg" };
+  cloudFiles[oldThumb] = { owner: "partner", path: "http://tmp/old-s.jpg" };
+  cloudDB.categories = [{ _id: "c-old", _openid: "partner", name: "家常菜", sort: 1, createdAt: t0 }];
+  cloudDB.dishes = [
+    { _id: "d-old1", _openid: "partner", name: "可乐鸡翅", categoryId: "c-old", cover: oldCover, coverThumb: oldThumb, createdAt: t0 + 1, updatedAt: t0 + 1 },
+    { _id: "d-old2", _openid: "me", name: "番茄炒蛋", categoryId: "c-old", createdAt: t0 + 2, updatedAt: t0 + 2 },
+  ];
+  cloudDB.cook_logs = [{ _id: "l-old", _openid: "me", dishId: "d-old2", dishName: "番茄炒蛋", cookedAt: t0 + 3, createdAt: t0 + 3 }];
+  cloudDB.meals = [];
+  cloudDB.plans = [
+    { _id: "current", _openid: "me", items: { "d-old1": 2 }, checked: {}, extras: {}, createdAt: t0 + 4 },
+    { _id: "pantry", _openid: "partner", items: { salt: { name: "盐", inStock: true } }, createdAt: t0 + 5 },
+  ];
+  devices.me.dev_cloud_cache = { categories: [], dishes: [], logs: [], meals: [] }; // 旧版本留下的不分本本的缓存
+  devices.me.dev_plan_cache = { items: {} };
+  testBookId = "legacy";
+  launchApp("me");
+  const legacyMenu = newPage("pages/menu/index");
+  await legacyMenu.onLoad();
+  await flush();
+  const legacyBook = cloudDB.books.find((b) => b._id === "legacy");
+  assert.ok(legacyBook && legacyBook.type === "family" && legacyBook.name === "我们家的小本本", JSON.stringify(legacyBook));
+  assert.deepStrictEqual(Object.keys(legacyBook.members).sort(), ["me", "partner"], "旧数据里加过东西的人都在里面，不用申请");
+  assert.strictEqual(legacyBook.owner, "me", "打开新版本的人当本主");
+  assert.strictEqual(svc("book").currentId(), "legacy", "第一次打开就进这本，跟以前一样");
+  assert.deepStrictEqual(legacyMenu.allDishes.map((d) => d.name), ["可乐鸡翅", "番茄炒蛋"]);
+  assert.deepStrictEqual([legacyMenu.data.basketCount, svc("pantry").list().inStock.map((i) => i.name)], [2, ["盐"]], "菜篮、库存也还在");
+  assert.strictEqual((await dishNow("番茄炒蛋")).cookCount, 1, "做菜记录也还在");
+  assert.ok(["categories", "dishes", "cook_logs"].every((n) => cloudDB[n].every((r) => r.bookId === "legacy")), "旧记录顺手补上了 bookId");
+  assert.deepStrictEqual(svc("book").takeWelcome(), { bookId: "legacy", name: "我们家的小本本", memberCount: 2 }, "第一次打开说一声数据去哪了");
+  assert.strictEqual(svc("book").takeWelcome(), null, "只说一次");
+  assert.ok(!("dev_cloud_cache" in dev()) && !("dev_plan_cache" in dev()), "以前不分本本的缓存清掉了");
+  assert.deepStrictEqual(svc("book").list().map((b) => b.name), ["我的小本本", "我们家的小本本"], "另外还有一本自己的个人本本");
+  const oldImg = newComponent(IMG, { src: oldThumb });
+  await settle();
+  assert.ok(/^https:\/\/tmp\.tcb\//.test(oldImg.data.url), "以前的照片（路径里没有 books/）算这本的，本里的人都看得到");
+  // 对方（旧数据里也加过东西）：直接进这本，不用输家庭码
+  launchApp("partner");
+  const herLegacy = newPage("pages/menu/index");
+  await herLegacy.onLoad();
+  await flush();
+  assert.strictEqual(svc("book").currentId(), "legacy");
+  assert.deepStrictEqual(herLegacy.allDishes.map((d) => d.name), ["可乐鸡翅", "番茄炒蛋"]);
+  assert.ok(svc("book").takeWelcome(), "对方第一次打开也说一声");
+  assert.strictEqual(cloudDB.books.filter((b) => b.legacy).length, 1, "只建了一本");
+  // 没在旧数据里加过东西的体验成员：只有自己的本本，读不到这本
+  launchApp("third");
+  const thirdMenu = newPage("pages/menu/index");
+  await thirdMenu.onLoad();
+  await flush();
+  assert.deepStrictEqual([svc("book").current().name, thirdMenu.data.status, svc("book").takeWelcome()], ["我的小本本", "welcome", null]);
+  await assert.rejects(svc("api").call("load", { bookId: "legacy" }), (e) => e.code === "NOT_MEMBER");
+  const thirdImg = newComponent(IMG, { src: oldThumb });
+  await settle();
+  assert.strictEqual(thirdImg.data.url, "", "也看不到这本的照片");
+  // 过渡期间：还没更新的手机（旧版本）直接写数据库，新加的菜没有 bookId，也算这本的；菜篮还是同一条
+  partnerWrites(() => {
+    cloudDB.dishes.push({ _id: "d-old3", _openid: "partner", name: "清蒸鲈鱼", categoryId: "c-old", createdAt: Date.now(), updatedAt: Date.now() });
+    cloudDB.plans.find((p) => p._id === "current").items["d-old3"] = 1;
+  });
+  launchApp("me");
+  const meLegacy = newPage("pages/menu/index");
+  await meLegacy.onLoad();
+  await flush();
+  assert.ok(meLegacy.allDishes.some((d) => d.name === "清蒸鲈鱼"), "旧版本加的菜也看得到");
+  assert.strictEqual(meLegacy.data.basketCount, 3, "旧版本点的菜，菜篮里也有");
+  assert.strictEqual(rowOf("清蒸鲈鱼").bookId, "legacy", "读到的时候补上了 bookId");
+  meLegacy.onPlus(ev({ id: "d-old2" }));
+  await flush();
+  assert.deepStrictEqual(planItems(), { "d-old1": 2, "d-old3": 1, "d-old2": 1 }, "新版本点的菜写进原来那条菜篮，旧版本也看得到");
+  ok("旧数据变成家庭本本：大家自动在里面、本主是先打开的人、菜篮库存记录照片都在、只说一次；别人进不来；旧版本新加的也算这本");
+
+  // 两台手机同时第一次打开新版本：也只建一本
+  Object.keys(cloudDB).forEach((k) => delete cloudDB[k]);
+  cloudDB.dishes = [
+    { _id: "x1", _openid: "partner", name: "老菜", createdAt: 1 },
+    { _id: "x2", _openid: "me", name: "另一道老菜", createdAt: 2 },
+  ];
+  const both = await Promise.all([callAs("me", { action: "boot" }), callAs("partner", { action: "boot" })]);
+  assert.ok(both.every((r) => r.ok && r.data.openBookId === "legacy"), JSON.stringify(both));
+  assert.strictEqual(cloudDB.books.filter((b) => b._id === "legacy").length, 1);
+  assert.deepStrictEqual(Object.keys(cloudDB.books.find((b) => b._id === "legacy").members).sort(), ["me", "partner"]);
+  assert.strictEqual(cloudDB.books.filter((b) => b.type === "personal").length, 2, "每人一本个人本本");
+  const again2 = await callAs("me", { action: "boot" });
+  assert.strictEqual(cloudDB.books.length, 3, "再打开不会多建");
+  assert.strictEqual(again2.data.welcome, null);
+  // 没有旧数据（新装的）：不建这本
+  Object.keys(cloudDB).forEach((k) => delete cloudDB[k]);
+  const fresh = await callAs("me", { action: "boot" });
+  assert.deepStrictEqual([fresh.data.books.map((b) => b.name), fresh.data.openBookId === fresh.data.me.personalBookId], [["我的小本本"], true]);
+  ok("两台手机同时第一次打开也只建一本；新装的没有旧数据就不建");
 }
 
 staticChecks();
