@@ -3,9 +3,11 @@
 //   checked   { 清单项key: true }            买菜清单里已经买到的
 //   extras    { key: { name, createdAt } }   自己加的要买的东西（比如：牛奶）
 //   order     下了单的点菜单（没下单时没有这个字段），格式见 utils/order.js 的 normalizeOrder
-//   orderSeq  点菜单编号数到几了
 // 加一份用 inc、去掉用 remove，几个人同时点不同的菜不会互相覆盖。
+// 点菜单的编号按「开过饭的」数：下一单 = 这本里开过饭的最大编号 + 1，撤单不占号（见 placeOrder）。
+// 先下单再开始做：没下单不能「一起做」、不能开饭
 const { createSharedDoc } = require("./shared-doc");
+const store = require("./store");
 const { newId } = require("../utils/id");
 const { normalizeOrder } = require("../utils/order");
 
@@ -14,7 +16,7 @@ const BASKET_TAB_INDEX = 1; // 「菜篮」是第 2 个 Tab，角标显示在它
 const clone = (data) => JSON.parse(JSON.stringify(data));
 
 function normalize(doc) {
-  const p = { items: {}, checked: {}, extras: {}, order: null, orderSeq: 0 };
+  const p = { items: {}, checked: {}, extras: {}, order: null };
   const items = (doc && doc.items) || {};
   Object.keys(items).forEach((id) => {
     const n = parseInt(items[id], 10);
@@ -30,7 +32,6 @@ function normalize(doc) {
     if (e && e.name) p.extras[key] = { name: String(e.name), createdAt: Number(e.createdAt) || 0 };
   });
   p.order = normalizeOrder(doc && doc.order);
-  p.orderSeq = Math.max(Number(doc && doc.orderSeq) || 0, p.order ? p.order.no : 0);
   return p;
 }
 
@@ -153,21 +154,60 @@ function getOrder() {
   return clone(doc.current().order);
 }
 
-// 下单：info 是 { date, meal, flavors, note, orderedBy, cook }。编号接着云上的往下数，先同步一下
+const ORDER_FIELDS = ["date", "meal", "flavors", "note", "orderedBy", "cook"];
+
+function pick(info) {
+  const out = {};
+  ORDER_FIELDS.forEach((k) => {
+    if (info && info[k] !== undefined) out[k] = info[k];
+  });
+  return out;
+}
+
+// 下一单的编号：这本里开过饭的最大编号 + 1。撤掉的单不算，只有开饭记下来了才用掉一个号
+function nextOrderNo() {
+  return store.listMeals().reduce((max, m) => Math.max(max, m.no), 0) + 1;
+}
+
+// 下单：info 是 { date, meal, flavors, note, orderedBy, cook }。先同步一下菜篮和开过饭的记录，编号接着往下数
 async function placeOrder(info) {
-  await doc.sync().catch(() => {}); // 没网就按手机上的数
+  await Promise.all([doc.sync().catch(() => {}), store.ensureLoaded().then(() => store.sync()).catch(() => {})]); // 没网就按手机上的数
   const p = doc.current();
   if (!getCount(p.items)) throw new Error("菜篮是空的，先去点几道菜");
-  const no = p.orderSeq + 1;
-  const order = normalizeOrder(Object.assign({}, info, { no, items: p.items, orderedAt: Date.now() }));
+  if (p.order) return clone(p.order); // 家人刚下好了单
+  const order = normalizeOrder(Object.assign(pick(info), { no: nextOrderNo(), items: p.items, orderedAt: Date.now() }));
   doc.write(
     (v) => {
       v.order = order;
-      v.orderSeq = no;
     },
-    (_) => ({ order: _.set(order), orderSeq: no })
+    (_) => ({ order: _.set(order) })
   );
   return clone(order);
+}
+
+// 改一改：改哪天、哪一顿、口味、备注、谁点的、谁掌勺。编号和下单时点的菜不变
+function updateOrder(info) {
+  const old = doc.current().order;
+  if (!old) throw new Error("这张点菜单已经撤掉了");
+  const order = normalizeOrder(Object.assign({}, old, pick(info)));
+  doc.write(
+    (v) => {
+      v.order = order;
+    },
+    (_) => ({ order: _.set(order) })
+  );
+  return clone(order);
+}
+
+// 从菜谱详情点「开始做」、还没下单：先去菜篮下单，下好单就开始做这道菜（菜篮页拿走一次）
+let startAfter = "";
+function startAfterOrder(dishId) {
+  startAfter = dishId;
+}
+function takeStartAfterOrder() {
+  const id = startAfter;
+  startAfter = "";
+  return id;
 }
 
 // 开饭了：做了的菜从菜篮拿掉，点菜单收起来；没做的留在菜篮里下次做。
@@ -281,7 +321,10 @@ module.exports = {
   clear,
   getOrder,
   placeOrder,
+  updateOrder,
   cancelOrder,
+  startAfterOrder,
+  takeStartAfterOrder,
   getPlan,
   toggleChecked,
   addExtra,

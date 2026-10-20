@@ -100,6 +100,20 @@ async function finish(input) {
   return { meal, logs };
 }
 
+// 再来一单：这顿的菜按当时的份数放回菜篮（已经删掉的菜跳过）。返回放回了几道
+async function reorder(mealId) {
+  await store.ensureLoaded();
+  const meal = store.getMeal(mealId);
+  if (!meal) return 0;
+  const counts = {};
+  meal.items.forEach((i) => {
+    if (store.getDish(i.dishId)) counts[i.dishId] = i.qty;
+  });
+  const n = Object.keys(counts).length;
+  if (n) planService.addMany(counts);
+  return n;
+}
+
 // 一顿饭的记录都删光了：这一顿和它的整桌照片也删掉（log.js 删记录时调用）
 async function removeIfEmpty(mealId) {
   if (!mealId || store.listLogs().some((l) => l.mealId === mealId)) return;
@@ -114,6 +128,11 @@ async function removeIfEmpty(mealId) {
   imageService.remove([meal.photo, meal.photoThumb]);
 }
 
+// 打开记录页时选中哪天（「点菜单记录」里点「在记录里看」）
+function setFocusDate(date) {
+  focusDate = date || "";
+}
+
 // 记录页打开时选中刚记好的那天（只用一次）
 function takeFocusDate() {
   const date = focusDate;
@@ -121,4 +140,4 @@ function takeFocusDate() {
   return date;
 }
 
-module.exports = { listMeals, newMealId, finish, removeIfEmpty, takeFocusDate };
+module.exports = { listMeals, newMealId, finish, reorder, removeIfEmpty, setFocusDate, takeFocusDate };

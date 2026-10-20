@@ -10,6 +10,7 @@
     "pages/cook/index",
     "pages/log-edit/index",
     "pages/meal/index",
+    "pages/orders/index",
     "pages/export/index",
     "pages/import/index",
     "pages/book/index",

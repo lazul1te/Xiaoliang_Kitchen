@@ -333,6 +333,101 @@ button::after {
   height: 360px;
 }
 
+/* ---------- 一顿饭（templates/meal-card.wxml，开饭时一起记的） ---------- */
+
+.meal-card {
+  margin: 0 24rpx 16rpx;
+  overflow: hidden;
+  border-radius: 20rpx;
+  background: #fff;
+}
+
+.meal-photo {
+  display: block;
+  width: 100%;
+  height: 300rpx;
+}
+
+.meal-body {
+  padding: 20rpx 24rpx 24rpx;
+}
+
+.meal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-bottom: 8rpx;
+}
+
+.meal-title {
+  margin-right: 12rpx;
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.meal-no {
+  margin-right: 12rpx;
+  font-family: Menlo, Consolas, monospace;
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
+.meal-people {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.meal-dish {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10rpx 0;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.meal-dish-name {
+  min-width: 0;
+  font-size: var(--fs-body);
+}
+
+.meal-qty {
+  color: var(--text-3);
+}
+
+.meal-stars {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 24rpx;
+  color: var(--yolk);
+}
+
+.meal-note {
+  margin-top: 14rpx;
+  font-size: var(--fs-sub);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.meal-acts {
+  display: flex;
+  margin-top: 18rpx;
+}
+
+.meal-act {
+  margin-right: 16rpx;
+  padding: 6rpx 24rpx;
+  border-radius: 28rpx;
+  background: var(--cream);
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
+.meal-act.pri {
+  background: var(--yolk);
+  color: var(--pan);
+  font-weight: 600;
+}
+
 /* ---------- 菜品卡片（templates/dish-card.wxml） ---------- */
 
 .dish-card {

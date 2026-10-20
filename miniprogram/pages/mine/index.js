@@ -6,6 +6,7 @@ const invite = require("../../utils/invite");
 const planService = require("../../services/plan");
 const pantryService = require("../../services/pantry");
 const wishService = require("../../services/wish");
+const mealService = require("../../services/meal");
 const diagnose = require("../../services/diagnose");
 const ui = require("../../utils/ui");
 
@@ -16,6 +17,7 @@ Page({
     wishCount: 0, // 想吃清单里有几个
     outCount: 0, // 库存里几样用完了
     stockCount: 0, // 库存里家里有几样
+    orderCount: 0, // 开过饭的点菜单有几单
     book: null, // 正在用的小本本（services/book.js 的 current()）
     requestText: "", // 你是本主的本本里有人申请加入
     footerText: "",
@@ -62,8 +64,9 @@ Page({
   async refresh() {
     this.renderBook();
     let dishes;
+    let meals;
     try {
-      dishes = await dishService.listDishes();
+      [dishes, meals] = await Promise.all([dishService.listDishes(), mealService.listMeals()]);
     } catch (err) {
       return; // 读不到就先显示 0，菜单页会提示具体原因
     }
@@ -77,6 +80,7 @@ Page({
       wishCount: wishService.list().length,
       outCount: pantryService.list().outOfStock.length,
       stockCount: pantryService.list().inStock.length,
+      orderCount: meals.filter((m) => m.no > 0).length,
     });
   },
 
@@ -103,6 +107,10 @@ Page({
 
   onOpenBackup() {
     wx.navigateTo({ url: "/pages/backup/index" });
+  },
+
+  onOpenOrders() {
+    wx.navigateTo({ url: "/pages/orders/index" });
   },
 
   onOpenCategories() {

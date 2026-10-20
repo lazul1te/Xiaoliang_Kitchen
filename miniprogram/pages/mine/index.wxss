@@ -154,6 +154,12 @@
   flex: 1;
 }
 
+.setting-value {
+  margin-right: 12rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
 .setting-item + .setting-item {
   border-top: 2rpx solid var(--line);
 }

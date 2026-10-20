@@ -10,8 +10,7 @@ const photoService = require("../../services/photo");
 const ui = require("../../utils/ui");
 const ticketUtil = require("../../utils/ticket");
 const { groupByMonth, logStats, buildMonth, dateValue, dayText, toLogCard, timeOf } = require("../../utils/log");
-const { entriesOf } = require("../../utils/meal");
-const { orderNoText, peopleText, dateText } = require("../../utils/order");
+const { entriesOf, mealTicket } = require("../../utils/meal");
 
 Page({
   data: {
@@ -145,61 +144,21 @@ Page({
   // ---------- 一顿饭 ----------
 
   // 再来一单：这顿的菜按当时的份数放回菜篮（已经删掉的菜跳过）
-  onReorder(e) {
-    const meal = this.meals[e.currentTarget.dataset.id];
-    if (!meal) return;
-    const counts = {};
-    meal.items.forEach((i) => {
-      if (this.names[i.dishId]) counts[i.dishId] = i.qty;
-    });
-    if (!Object.keys(counts).length) {
+  async onReorder(e) {
+    if (!(await mealService.reorder(e.currentTarget.dataset.id))) {
       ui.toast("这顿的菜都已经删掉了");
       return;
     }
-    planService.addMany(counts);
     wx.switchTab({ url: "/pages/today/index", success: () => ui.toast("放进菜篮了") });
   },
 
   // 分享这顿饭：画一张盖着「已开饭」的小票，最上面是整桌照片，弹出微信的分享图片菜单
   async onShareMeal(e) {
     const meal = this.meals[e.currentTarget.dataset.id];
-    if (!meal || this.drawing) return;
-    this.drawing = true;
-    wx.showLoading({ title: "生成图片", mask: true });
-    let path;
-    try {
-      const canvas = await ticketUtil.getCanvas(this);
-      const photo = meal.photo ? await ticketUtil.loadImage(canvas, await photoService.urlOf(meal.photo)) : null;
-      const logs = this.logs.filter((l) => l.mealId === meal._id);
-      const qty = {};
-      meal.items.forEach((i) => {
-        qty[i.dishId] = i.qty;
-      });
-      path = await ticketUtil.ticketImage(canvas, {
-        title: meal.no ? "点菜单" : "这一顿",
-        noText: meal.no ? orderNoText(meal.no) : "",
-        lines: [`${dateText(meal.date)} · ${meal.meal}`].concat(peopleText(meal) ? [peopleText(meal)] : []),
-        items: logs.map((l) => ({
-          name: `${this.names[l.dishId] || l.dishName}${qty[l.dishId] > 1 ? ` ×${qty[l.dishId]}` : ""}`,
-          right: l.rating ? "★".repeat(l.rating) + "☆".repeat(5 - l.rating) : "",
-        })),
-        notes: meal.note ? [meal.note] : [],
-        stamp: "已开饭",
-        photo,
-      });
-    } catch (err) {
-      wx.hideLoading();
-      this.drawing = false;
-      ui.alert("图片没生成好", ui.errorText(err));
-      return;
-    }
-    wx.hideLoading();
-    this.drawing = false;
-    if (wx.showShareImageMenu) {
-      wx.showShareImageMenu({ path, fail: (err) => ui.apiFail("分享图片", err) });
-    } else {
-      wx.previewImage({ urls: [path] });
-    }
+    if (!meal) return;
+    const logs = this.logs.filter((l) => l.mealId === meal._id);
+    const photo = meal.photo ? await photoService.urlOf(meal.photo) : "";
+    await ticketUtil.shareTicket(this, mealTicket(meal, logs, this.names), photo);
   },
 
   // ---------- 记录 ----------

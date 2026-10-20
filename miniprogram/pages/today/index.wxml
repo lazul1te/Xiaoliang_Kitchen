@@ -39,9 +39,15 @@
   <view class="empty-title">菜篮还是空的</view>
   <view class="empty-desc">{{shared ? '去菜单里挑几道想做的菜，家人点的也会放进来' : '去菜单里挑几道想做的菜'}}</view>
   <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
+  <view class="empty-orders" bindtap="onOpenOrders">以前的点菜单 ›</view>
 </view>
 
 <view wx:else class="today {{(stage === 'picking' && items.length) || stage === 'ordered' ? 'has-bar' : ''}}">
+  <view class="top-row">
+    <text class="top-title">{{editing ? '改点菜单 ' + ticket.noText : (stage === 'ordered' ? '这顿的点菜单' : '确认点菜单')}}</text>
+    <text class="top-link" bindtap="onOpenOrders">点菜单记录 ›</text>
+  </view>
+
   <!-- 一起做到一半退出了：接着做 -->
   <view wx:if="{{cooking}}" class="banner">
     <text class="banner-text">正在一起做：{{cooking.done}}/{{cooking.total}} 道做好了</text>
@@ -52,7 +58,7 @@
   </view>
 
   <!-- ========== 下单以后：点菜单 ========== -->
-  <block wx:if="{{stage === 'ordered'}}">
+  <block wx:if="{{stage === 'ordered' && !editing}}">
     <!-- 点菜单上的日子过了还没开饭：问一下做了没有 -->
     <view wx:if="{{overdue}}" class="banner">
       <text class="banner-text">{{overdue}}</text>
@@ -80,11 +86,11 @@
       <button class="t-act pri" open-type="share">发给 TA</button>
       <view class="t-act" bindtap="onSaveImage">存成图片</view>
       <view class="t-act" bindtap="onAddMore">加菜</view>
-      <view class="t-act" bindtap="onCancelOrder">撤单</view>
+      <view class="t-act" bindtap="onEditOrder">改一改</view>
     </view>
   </block>
 
-  <!-- ========== 下单前：确认点菜单 ========== -->
+  <!-- ========== 下单前：确认点菜单；下单以后「改一改」也是这一页 ========== -->
   <block wx:elif="{{items.length}}">
     <view class="card">
       <view class="o-label">这顿是</view>
@@ -108,7 +114,6 @@
       <block wx:for="{{items}}" wx:key="_id">
         <template is="orderRow" data="{{...item, broken: broken[item.cover]}}" />
       </block>
-      <view wx:if="{{!cooking}}" class="o-direct" bindtap="onStartCook">不下单，直接开始做 ›</view>
     </view>
 
     <view class="card">
@@ -139,6 +144,9 @@
         </view>
       </view>
     </view>
+
+    <!-- 改一改的时候：撤单放在最下面，不容易点错 -->
+    <view wx:if="{{editing}}" class="cancel-row"><text class="cancel-order hit" bindtap="onCancelOrder">撤掉这张点菜单</text></view>
   </block>
 
   <!-- 只剩自己加的要买的东西，还没点菜 -->
@@ -207,14 +215,20 @@
   <view class="clear-row"><text class="clear hit" bindtap="onClear">清空菜篮</text></view>
 </view>
 
-<!-- 下单前：底部的下单栏 -->
+<!-- 下单前：底部的下单栏（从菜谱详情点「开始做」过来的，下好单直接开始做） -->
 <view wx:if="{{stage === 'picking' && items.length}}" class="order-bar">
   <text class="order-bar-text">{{slowText || '共 ' + count + ' 份'}}</text>
-  <view class="btn-primary order-btn" bindtap="onPlaceOrder">下单</view>
+  <view class="btn-primary order-btn" bindtap="onPlaceOrder">{{startAfter ? '下单，开始做' : '下单'}}</view>
+</view>
+
+<!-- 改一改 -->
+<view wx:if="{{stage === 'ordered' && editing}}" class="order-bar">
+  <text class="order-bar-link" bindtap="onCancelEdit">不改了</text>
+  <view class="btn-primary order-btn" bindtap="onSaveOrder">改好了</view>
 </view>
 
 <!-- 下单以后：买齐了就开始做（几道菜一起做），做好了开饭 -->
-<view wx:if="{{stage === 'ordered'}}" class="order-bar">
+<view wx:if="{{stage === 'ordered' && !editing}}" class="order-bar">
   <text class="order-bar-link" bindtap="onFinishMeal">做好了，开饭</text>
   <view class="btn-primary order-btn" bindtap="onStartCook">{{cooking ? '继续做菜' : '开始做菜（' + items.length + ' 道）'}}</view>
 </view>

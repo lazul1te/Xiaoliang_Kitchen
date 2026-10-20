@@ -46,6 +46,12 @@
   </view>
 
   <view class="card settings">
+    <view class="setting-item" bindtap="onOpenOrders">
+      <image class="ic lg" src="/images/icons/orders.png" />
+      <text class="setting-name">点菜单记录</text>
+      <text wx:if="{{orderCount}}" class="setting-value">{{orderCount}} 单</text>
+      <text class="arrow">›</text>
+    </view>
     <view class="setting-item" bindtap="onOpenCategories">
       <image class="ic lg" src="/images/icons/category.png" />
       <text class="setting-name">分类管理</text>

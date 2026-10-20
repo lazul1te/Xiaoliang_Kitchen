@@ -1,0 +1,92 @@
+.orders {
+  padding: 20rpx 0 calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* 正在进行的那一单 */
+.current {
+  margin: 0 24rpx 24rpx;
+  padding: 24rpx 28rpx;
+  border: 3rpx solid var(--yolk);
+  border-radius: 20rpx;
+  background: #fff;
+}
+
+.current-head {
+  display: flex;
+  align-items: baseline;
+}
+
+.current-tag {
+  flex-shrink: 0;
+  margin-right: 12rpx;
+  padding: 0 12rpx;
+  border-radius: 8rpx;
+  background: var(--yolk);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  line-height: 36rpx;
+}
+
+.current-no {
+  flex-shrink: 0;
+  margin-right: 12rpx;
+  font-family: Menlo, Consolas, monospace;
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
+.current-title {
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+
+.current-dishes {
+  margin-top: 10rpx;
+  font-size: var(--fs-sub);
+  color: var(--text-2);
+}
+
+.current-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10rpx;
+  font-size: var(--fs-small);
+}
+
+.current-people {
+  color: var(--text-3);
+}
+
+.current-go {
+  color: var(--wood);
+}
+
+/* 开过饭的 */
+.month-title {
+  padding: 16rpx 28rpx 12rpx;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.order {
+  margin-bottom: 24rpx;
+}
+
+.order .meal-card {
+  margin-bottom: 0;
+}
+
+.order-day {
+  padding: 12rpx 28rpx 0;
+  text-align: right;
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
+.list-end {
+  padding: 24rpx 40rpx;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}

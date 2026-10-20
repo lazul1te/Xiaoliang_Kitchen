@@ -1,10 +1,13 @@
 // 把点菜单画成图片：「存成图片」是一张长条小票，「发给 TA」的小程序卡片用 5:4 的封面；邀请家人的卡片也在这里画。
 // 页面里放一个看不见的画布 <canvas type="2d" id="ticket-canvas" class="ticket-canvas" />（样式在 app.wxss），
-// 用 getCanvas(page) 拿到它，再交给 ticketImage / cardImage / inviteImage，返回手机上的临时图片路径。
+// 用 getCanvas(page) 拿到它，再交给 ticketImage / cardImage / inviteImage，返回手机上的临时图片路径；
+// shareTicket(page, data) 画好小票直接弹出微信的分享图片菜单。
 // 要画的内容（data）：
 //   { title: "点菜单", noText: "No.012", lines: ["10月19日 周一 · 晚饭", "点菜 小鱼 · 掌勺 大熊"],
 //     items: [{ name, right: "×2", tag: "加" }], notes: ["共 4 道菜 5 份", "备注：少辣"], stamp: "已下单",
 //     photo: 画布上加载好的图片（可选，画在最上面） }
+const ui = require("./ui");
+
 const C = {
   cream: "#FFF8EE",
   white: "#FFFFFF",
@@ -335,6 +338,31 @@ function inviteImage(canvas, data) {
   return toImage(canvas);
 }
 
+// 画一张小票，弹出微信的分享图片菜单（发给朋友、收藏、保存到手机）。photoUrl：最上面放的照片（可以显示的地址，可选）
+async function shareTicket(page, data, photoUrl) {
+  if (page.drawing) return;
+  page.drawing = true;
+  wx.showLoading({ title: "生成图片", mask: true });
+  let path;
+  try {
+    const canvas = await getCanvas(page);
+    const photo = photoUrl ? await loadImage(canvas, photoUrl) : null;
+    path = await ticketImage(canvas, Object.assign({}, data, { photo }));
+  } catch (err) {
+    wx.hideLoading();
+    page.drawing = false;
+    ui.alert("图片没生成好", ui.errorText(err));
+    return;
+  }
+  wx.hideLoading();
+  page.drawing = false;
+  if (wx.showShareImageMenu) {
+    wx.showShareImageMenu({ path, fail: (err) => ui.apiFail("分享图片", err) });
+  } else {
+    wx.previewImage({ urls: [path] }); // 微信版本太旧：打开大图，长按可以发送、保存
+  }
+}
+
 // 照片画到画布上之前要先加载；加载不了返回 null（图片里就不放照片）
 function loadImage(canvas, src) {
   return new Promise((resolve) => {
@@ -349,4 +377,4 @@ function loadImage(canvas, src) {
   });
 }
 
-module.exports = { getCanvas, ticketImage, cardImage, inviteImage, loadImage };
+module.exports = { getCanvas, ticketImage, cardImage, inviteImage, loadImage, shareTicket };

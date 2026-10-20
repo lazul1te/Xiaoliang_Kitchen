@@ -1,8 +1,7 @@
-// 烹饪模式：一步一步大字显示，左右滑动或点按钮切换；带计时的步骤可以开计时器，时间到了响铃、震动。做菜时屏幕不会自动熄灭。
-// 从菜谱详情进来（?id=菜品id）只做这一道，最后一页「打个卡」。
-// 从菜篮进来（?from=basket）是「一起做」：上面按菜切换，第一页是备菜（要提前做的、建议顺序、备菜清单）；
-// 计时器各走各的，切到别的菜也不停；进度存在这台手机上（services/cook-session.js），退出了回来能接着做；
-// 每道菜做完点「这道做好了」，都做好了去开饭页一次记下来。
+// 做菜（一起做）：先下单再开始做，做的就是点菜单上的菜（?from=basket；&dish=菜品id 直接打开那道菜）。
+// 一步一步大字显示，左右滑动或点按钮切换；带计时的步骤可以开计时器，时间到了响铃、震动。做菜时屏幕不会自动熄灭。
+// 上面按菜切换，第一页是备菜（要提前做的、建议顺序、备菜清单）；计时器各走各的，切到别的菜也不停；
+// 进度存在这台手机上（services/cook-session.js），退出了回来能接着做；每道菜做完点「这道做好了」，都做好了去开饭页一次记下来。
 const dishService = require("../../services/dish");
 const planService = require("../../services/plan");
 const cookSession = require("../../services/cook-session");
@@ -32,9 +31,8 @@ const TIMER_ACTIONS = { idle: "开始计时", running: "暂停", paused: "继续
 
 Page({
   data: {
-    multi: false, // 一起做（从菜篮进来）
     tab: "", // 正在看的：PREP 备菜，或者菜品 id
-    tabs: [], // 一起做时上面的标签 [{ key, label, sub, done }]
+    tabs: [], // 上面的标签 [{ key, label, sub, done }]
     // 备菜
     waits: [], // 要提前做的步骤（腌、泡……）
     sequence: [], // 建议顺序
@@ -49,12 +47,13 @@ Page({
     swiperKey: "", // 换了菜就换一个，滑动区重新建，直接停在那道菜做到的那一步
     stepLabel: "",
     progress: 0, // 进度条百分比
-    dishDone: false, // 一起做时这道菜点过「做好了」
+    dishDone: false, // 这道菜点过「做好了」
     nextText: "", // 「下一道：番茄鸡蛋汤」
     running: [], // 正在走的计时，显示在上面：[{ key, label }]
     showIngredients: false,
     notFound: false,
-    emptyText: "这道菜找不到了",
+    emptyText: "",
+    emptyDesc: "",
   },
 
   async onLoad(options) {
@@ -64,30 +63,11 @@ Page({
     this.pos = {}; // 菜品id → 做到第几页
     this.done = {}; // 菜品id → 做好了
     this.prepChecked = {}; // 原料key → 备好了
-    if (options.from === "basket") {
-      await this.loadBasket();
-      return;
-    }
-    let dish;
-    try {
-      dish = await dishService.getDish(options.id);
-    } catch (err) {
-      ui.alert("没读到这道菜", ui.errorText(err));
-      return;
-    }
-    if (!dish) {
-      this.setData({ notFound: true });
-      return;
-    }
-    this.entries[dish._id] = { dish, qty: 1 };
-    this.ids = [dish._id];
-    wx.setNavigationBarTitle({ title: dish.name });
-    this.showDish(dish._id);
+    await this.loadBasket(options.dish);
   },
 
-  // 一起做：菜篮里的菜，用时长的先做；做到一半退出过的，接着上次的进度
-  async loadBasket() {
-    this.multi = true;
+  // 点菜单上的菜，用时长的先做；做到一半退出过的，接着上次的进度。focus：直接打开这道菜
+  async loadBasket(focus) {
     let dishes;
     try {
       dishes = await dishService.listDishes();
@@ -95,10 +75,14 @@ Page({
       ui.alert("没读到菜谱", ui.errorText(err));
       return;
     }
+    if (!planService.getOrder()) {
+      this.setData({ notFound: true, emptyText: "还没下单", emptyDesc: "先在菜篮里下单，再开始做" });
+      return;
+    }
     const basket = planService.getBasket();
     const planned = cookOrder(dishes.filter((d) => basket[d._id]).map((dish) => ({ dish, qty: basket[dish._id] })));
     if (!planned.length) {
-      this.setData({ notFound: true, emptyText: "菜篮是空的，先去点几道菜" });
+      this.setData({ notFound: true, emptyText: "点菜单上没有菜", emptyDesc: "先去菜单点几道菜" });
       return;
     }
     planned.forEach((p) => {
@@ -121,12 +105,12 @@ Page({
       this.ids = ids;
       this.startedAt = Date.now();
     }
+    if (focus && this.entries[focus]) tab = focus;
     const ordered = this.ids.map((id) => this.entries[id]);
     const timed = ordered.filter((p) => p.dish.duration > 0);
     this.prepKeys = [].concat(...prepGroups(ordered).map((g) => g.items.map((i) => i.key)));
     wx.setNavigationBarTitle({ title: `一起做 · ${this.ids.length} 道菜` });
     this.setData({
-      multi: true,
       waits: waitSteps(ordered),
       sequence: ordered.map(({ dish }) => ({ _id: dish._id, name: dish.name, durationText: dish.duration > 0 ? `${dish.duration} 分钟` : "没写用时" })),
       sequenceTip: timed.length >= 2 ? `快手菜等${shortName(timed[0].dish.name)}快好了再下锅，差不多能一起出锅` : "",
@@ -157,9 +141,9 @@ Page({
     this.guardLeave(false);
   },
 
-  // 一起做的进度存到手机上（单做一道菜不用存）
+  // 做菜的进度存到手机上，退出了回来接着做
   persist() {
-    if (!this.multi) return;
+    if (!this.ids.length) return;
     cookSession.save({
       dishIds: this.ids,
       tab: this.data.tab || PREP,
@@ -179,7 +163,6 @@ Page({
   },
 
   renderTabs() {
-    if (!this.multi) return;
     const prepDone = this.prepAllDone();
     const tabs = [{ key: PREP, label: "备菜", sub: prepDone ? "✓" : "", done: prepDone }].concat(
       this.ids.map((id) => {
@@ -245,7 +228,7 @@ Page({
   pageOf(index, total) {
     const current = Math.max(0, Math.min(total, index));
     let stepLabel = `第 ${current + 1} / ${total} 步`;
-    if (current === total) stepLabel = !total ? "还没写做法" : this.multi ? "最后一步做完了" : "做好啦";
+    if (current === total) stepLabel = !total ? "还没写做法" : "最后一步做完了";
     return { current, stepLabel, progress: total ? Math.round((current / total) * 100) : 100 };
   },
 
@@ -348,8 +331,7 @@ Page({
       .filter((k) => this.timers[k].running)
       .map((k) => {
         const [dishId, i] = parseKey(k);
-        const label = `第 ${i + 1} 步 ${clock(this.timers[k].remaining)}`;
-        return { key: k, label: this.multi ? `${shortName(this.entries[dishId].dish.name)} · ${label}` : label };
+        return { key: k, label: `${shortName(this.entries[dishId].dish.name)} · 第 ${i + 1} 步 ${clock(this.timers[k].remaining)}` };
       });
     this.setData(data);
     this.guardLeave(this.hasRunning());
@@ -410,7 +392,7 @@ Page({
     if (rang.length) this.ring(rang);
   },
 
-  // 时间到：响铃 + 震动 + 弹窗。一起做时写明是哪道菜，点「去看看」跳过去
+  // 时间到：响铃 + 震动 + 弹窗，写明是哪道菜，点「去看看」跳过去
   ring(keys) {
     wx.vibrateLong({ fail() {} });
     playDing();
@@ -419,10 +401,6 @@ Page({
       const dish = this.entries[id].dish;
       return { id, i, name: shortName(dish.name), text: dish.steps[i].text.slice(0, 40) };
     });
-    if (!this.multi) {
-      ui.alert("⏰ 时间到了", `第 ${items[0].i + 1} 步：${items[0].text}`);
-      return;
-    }
     const content =
       items.length === 1
         ? `${items[0].name} · 第 ${items[0].i + 1} 步：${items[0].text}`
@@ -437,8 +415,7 @@ Page({
     if (on === !!this.guarding) return;
     this.guarding = on;
     if (on && wx.enableAlertBeforeUnload) {
-      const message = this.multi ? "还有计时在走，确定退出吗？进度会留着，回来接着做" : "还有计时在走，确定退出吗？";
-      wx.enableAlertBeforeUnload({ message, fail() {} });
+      wx.enableAlertBeforeUnload({ message: "还有计时在走，确定退出吗？进度会留着，回来接着做", fail() {} });
     } else if (!on && wx.disableAlertBeforeUnload) {
       wx.disableAlertBeforeUnload({ fail() {} });
     }
@@ -446,15 +423,7 @@ Page({
 
   // ---------- 做好了 ----------
 
-  // 单做一道：去打卡
-  onFinish() {
-    this.stopTicking();
-    this.timers = {};
-    this.guardLeave(false);
-    wx.redirectTo({ url: `/pages/log-edit/index?dishId=${this.data.tab}` });
-  },
-
-  // 一起做：这道做好了，切到下一道；都做好了就开饭
+  // 这道做好了，切到下一道；都做好了就开饭
   onDishDone() {
     const id = this.data.tab;
     this.done[id] = true;
@@ -483,11 +452,8 @@ Page({
     wx.navigateTo({ url: "/pages/meal/index?from=cook" });
   },
 
-  onEditDish() {
-    wx.redirectTo({ url: `/pages/dish-edit/index?id=${this.data.tab}` });
-  },
-
-  onBack() {
-    wx.navigateBack();
+  // 还没下单：回菜篮
+  onGoBasket() {
+    wx.switchTab({ url: "/pages/today/index" });
   },
 });

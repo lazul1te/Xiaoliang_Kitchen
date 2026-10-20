@@ -7,6 +7,7 @@ const planService = require("../../services/plan");
 const ui = require("../../utils/ui");
 const { toDetail } = require("../../utils/dish");
 const { toLogCard } = require("../../utils/log");
+const { orderNoText } = require("../../utils/order");
 
 const RECENT_LOGS = 5; // 详情页最多显示几条做菜记录
 
@@ -96,8 +97,32 @@ Page({
     ui.photoHint();
   },
 
-  onStartCook() {
-    wx.navigateTo({ url: `/pages/cook/index?id=${this.dishId}` });
+  // 开始做：先下单再开始做。
+  // 已经下了单：这道菜不在点菜单上就问一下要不要加菜，然后打开做菜页，直接到这道菜；
+  // 还没下单：放进菜篮，去菜篮下单，下好单直接开始做
+  async onStartCook() {
+    const id = this.dishId;
+    const order = planService.getOrder();
+    if (order) {
+      if (!planService.getBasket()[id]) {
+        const ok = await ui.confirm({
+          title: "加菜一起做？",
+          content: `把「${this.data.dish.name}」加进点菜单 ${orderNoText(order.no)}，跟这顿的菜一起做`,
+          confirmText: "加菜",
+        });
+        if (!ok) return;
+        planService.add(id);
+        this.refreshQty();
+      }
+      wx.navigateTo({ url: `/pages/cook/index?from=basket&dish=${id}` });
+      return;
+    }
+    if (!planService.getBasket()[id]) {
+      planService.add(id);
+      this.refreshQty();
+    }
+    planService.startAfterOrder(id);
+    wx.switchTab({ url: "/pages/today/index" });
   },
 
   // ---------- 做菜记录 ----------

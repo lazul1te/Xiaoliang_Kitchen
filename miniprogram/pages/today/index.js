@@ -1,6 +1,7 @@
 // 菜篮：这本小本本里大家一起点的菜、点菜单，和自动合并出来的买菜清单。
-// 下单前是「确认点菜单」（哪一顿、口味、谁点的、谁掌勺），下单以后最上面是点菜单，可以发给对方、存成图片。
-// 买菜清单会对比家里的库存：家里有的不提醒；买到一样勾一样，两边都能看到
+// 下单前是「确认点菜单」（哪一顿、口味、谁点的、谁掌勺），下单以后最上面是点菜单，可以发给家人、存成图片、改一改（撤单也在那里）。
+// 先下单再开始做：下了单才有「开始做菜」「开饭」。从菜谱详情点「开始做」过来的，下好单直接开始做。
+// 买菜清单会对比家里的库存：家里有的不提醒；买到一样勾一样，大家都能看到
 const dishService = require("../../services/dish");
 const bookService = require("../../services/book");
 const planService = require("../../services/plan");
@@ -59,6 +60,8 @@ Page({
     showShopping: false, // 下单前买菜清单先收起来
     showStocked: false, // 「家里有的」展开没有
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
+    editing: false, // 正在改点菜单（改一改）
+    startAfter: "", // 从菜谱详情点「开始做」过来的：下好单就开始做这道菜（菜品 id）
   },
 
   onLoad(options) {
@@ -70,11 +73,21 @@ Page({
   onShow() {
     planService.updateBadge();
     bookService.updateDot();
+    const startAfter = planService.takeStartAfterOrder();
+    if (startAfter) {
+      this.setData({ startAfter });
+      ui.toast("先下单，下好单就开始做");
+    }
     this.refresh();
-    // 对方可能刚点了菜、下了单、勾了清单、改了库存，隔一会儿回来就去云上看看
+    // 家人可能刚点了菜、下了单、勾了清单、改了库存，隔一会儿回来就去云上看看
     dishService.refreshIfStale().then((changed) => {
       if (changed) this.refresh();
     });
+  },
+
+  // 离开菜篮就不算「下好单就开始做」了
+  onHide() {
+    if (this.data.startAfter) this.setData({ startAfter: "" });
   },
 
   async onPullDownRefresh() {
@@ -127,6 +140,11 @@ Page({
     const planned = dishes.filter((d) => plan.items[d._id]).map((dish) => ({ dish, qty: plan.items[dish._id] }));
     const shopping = buildShoppingList(planned, plan.checked, plan.extras, pantryService.getItems());
     const stage = plan.order && planned.length ? "ordered" : planned.length || shopping.extras.length ? "picking" : "empty";
+    // 点菜单没了（撤单了、开饭了、家人在别的手机上撤了）：不在改了，一起做的进度也用不上了
+    if (stage !== "ordered") {
+      if (this.data.editing) this.leaveEditing();
+      if (cookSession.load()) cookSession.clear();
+    }
     const ticket = stage === "ordered" ? ticketOf(plan.order, planned) : null;
     const overdue = ticket && ticket.date < this.data.today ? `${ticket.dateText.split(" ")[0]}的${ticket.meal}做了吗？` : "";
     const form = this.data.form;
@@ -138,7 +156,7 @@ Page({
       slowText: slowestText(planned),
       ticket,
       overdue,
-      cooking: cookSession.progress(plan.items),
+      cooking: stage === "ordered" ? cookSession.progress(plan.items) : null,
       shopping,
       hasPlan: stage !== "empty",
       shared: bookService.isShared(),
@@ -240,6 +258,7 @@ Page({
 
   async onPlaceOrder() {
     if (this.ordering) return;
+    const startAfter = this.data.startAfter;
     if (!this.data.items.length) {
       ui.toast("先去菜单点几道菜");
       return;
@@ -259,8 +278,13 @@ Page({
     }
     this.ordering = false;
     // 下一单重新填口味和备注
-    this.setData({ "form.flavors": [], "form.note": "" });
+    this.setData({ "form.flavors": [], "form.note": "", startAfter: "" });
     await this.refresh();
+    if (startAfter && planService.getBasket()[startAfter]) {
+      // 从菜谱详情点「开始做」过来的：下好单直接开始做那道菜
+      wx.navigateTo({ url: `/pages/cook/index?from=basket&dish=${startAfter}` });
+      return;
+    }
     wx.pageScrollTo({ scrollTop: 0, duration: 200 });
     ui.toast("下单啦");
   },
@@ -271,20 +295,68 @@ Page({
     wx.switchTab({ url: "/pages/menu/index" });
   },
 
+  // 改一改：打开跟下单时一样的确认页，原来填的都在；改好了编号不变
+  onEditOrder() {
+    const order = planService.getOrder();
+    if (!order) return;
+    this.formBeforeEdit = this.data.form;
+    this.setData({
+      editing: true,
+      form: { date: order.date, meal: order.meal, flavors: order.flavors, note: order.note, orderedBy: order.orderedBy, cook: order.cook },
+      flavorChips: this.flavorChips(order.flavors),
+      dateLabel: dateText(order.date),
+    });
+    wx.pageScrollTo({ scrollTop: 0, duration: 200 });
+  },
+
+  // 不在改了：确认页换回下一单用的默认内容
+  leaveEditing() {
+    const form = this.formBeforeEdit || this.data.form;
+    this.formBeforeEdit = null;
+    this.setData({ editing: false, form, flavorChips: this.flavorChips(form.flavors), dateLabel: dateText(form.date) });
+  },
+
+  onCancelEdit() {
+    this.leaveEditing();
+  },
+
+  async onSaveOrder() {
+    try {
+      planService.updateOrder(this.data.form);
+    } catch (err) {
+      ui.alert("没改成", ui.errorText(err));
+    }
+    this.leaveEditing();
+    await this.refresh();
+    ui.toast("改好了");
+  },
+
+  // 撤单：点的菜还在菜篮里；编号不占，再下单还是这个号。一起做的进度清掉
   async onCancelOrder() {
     const ok = await ui.confirm({
-      title: "撤销这张点菜单？",
-      content: "点的菜还在菜篮里，改好了可以再下单。",
+      title: "撤掉这张点菜单？",
+      content: `点的菜还在菜篮里，改好了可以再下单，编号还是这个。${this.data.cooking ? "一起做的进度会清掉。" : ""}`,
       confirmText: "撤单",
+      danger: true,
     });
     if (!ok) return;
     planService.cancelOrder();
+    cookSession.clear();
+    if (this.data.editing) this.leaveEditing();
     return this.refresh();
   },
 
-  // 一起做：菜篮里的菜一起做（做到一半退出过的接着做）
+  // 一起做：点菜单上的菜一起做（做到一半退出过的接着做）
   onStartCook() {
+    if (!planService.getOrder()) {
+      ui.toast("先下单，再开始做");
+      return;
+    }
     wx.navigateTo({ url: "/pages/cook/index?from=basket" });
+  },
+
+  onOpenOrders() {
+    wx.navigateTo({ url: "/pages/orders/index" });
   },
 
   async onDropCooking() {
@@ -327,26 +399,9 @@ Page({
   },
 
   // 存成图片：画一张小票，弹出微信的分享图片菜单（发给朋友、收藏、保存到手机）
-  async onSaveImage() {
-    if (!this.data.ticket || this.drawing) return;
-    this.drawing = true;
-    wx.showLoading({ title: "生成图片", mask: true });
-    let path;
-    try {
-      path = await ticketUtil.ticketImage(await ticketUtil.getCanvas(this), this.ticketData("已下单"));
-    } catch (err) {
-      wx.hideLoading();
-      this.drawing = false;
-      ui.alert("图片没生成好", ui.errorText(err));
-      return;
-    }
-    wx.hideLoading();
-    this.drawing = false;
-    if (wx.showShareImageMenu) {
-      wx.showShareImageMenu({ path, fail: (err) => ui.apiFail("分享图片", err) });
-    } else {
-      wx.previewImage({ urls: [path] }); // 微信版本太旧：打开大图，长按可以发送、保存
-    }
+  onSaveImage() {
+    if (!this.data.ticket) return Promise.resolve();
+    return ticketUtil.shareTicket(this, this.ticketData("已下单"));
   },
 
   // 小程序卡片的封面先画好（点菜单变了才重画），点「发给 TA」时直接用

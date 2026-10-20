@@ -6,7 +6,6 @@ const categoryService = require("../../services/category");
 const planService = require("../../services/plan");
 const ui = require("../../utils/ui");
 const { toCard, matchKeyword } = require("../../utils/dish");
-const { orderNoText } = require("../../utils/order");
 
 const UNCATEGORIZED = "_none"; // 找不到分类的菜（比如分类被删了）临时放在这一段
 
@@ -25,7 +24,7 @@ Page({
     basket: {}, // 菜篮 { 菜品id: 份数 }
     basketCount: 0,
     basketByCat: {}, // 每个分类点了几份，显示在左侧分类上
-    orderNo: "", // 已经下了单：点菜单编号（这时再点 + 就是加菜）
+    ordered: false, // 已经下了单（这时再点 + 就是加菜）
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
     book: { initial: "", shortName: "", family: false }, // 左上角：正在用的小本本
     showBooks: false, // 切换小本本的面板
@@ -291,8 +290,7 @@ Page({
         basketByCat[d.categoryId] = (basketByCat[d.categoryId] || 0) + basket[d._id];
       }
     });
-    const order = planService.getOrder();
-    this.setData({ basket, basketCount: planService.getCount(basket), basketByCat, orderNo: order ? orderNoText(order.no) : "" });
+    this.setData({ basket, basketCount: planService.getCount(basket), basketByCat, ordered: !!planService.getOrder() });
   },
 
   onGoToday() {

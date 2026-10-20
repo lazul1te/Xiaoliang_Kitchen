@@ -16,6 +16,41 @@
   height: 200rpx;
 }
 
+.empty-orders {
+  margin-top: 32rpx;
+  font-size: var(--fs-sub);
+  color: var(--wood);
+}
+
+/* 最上面：这一页在做什么 + 点菜单记录 */
+.top-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 4rpx 4rpx 16rpx;
+}
+
+.top-title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.top-link {
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
+/* 改一改的时候，最下面的「撤掉这张点菜单」 */
+.cancel-row {
+  padding: 12rpx 0 24rpx;
+  text-align: center;
+}
+
+.cancel-order {
+  font-size: var(--fs-sub);
+  color: var(--danger);
+}
+
 .clear-row {
   padding: 8rpx 0 12rpx;
   text-align: center;
@@ -153,13 +188,6 @@
   font-size: var(--fs-sub);
   color: var(--text-2);
   text-decoration: underline;
-}
-
-.o-direct {
-  padding-top: 16rpx;
-  text-align: right;
-  font-size: var(--fs-small);
-  color: var(--wood);
 }
 
 /* ---------- 下单以后：点菜单（小票） ---------- */

@@ -1,12 +1,13 @@
 <view wx:if="{{notFound}}" class="empty">
   <view class="empty-emoji">🍽️</view>
   <view class="empty-title">{{emptyText}}</view>
-  <view class="empty-desc">可能已经被删掉了</view>
+  <view class="empty-desc">{{emptyDesc}}</view>
+  <view class="btn-primary" bindtap="onGoBasket">去菜篮</view>
 </view>
 
 <view wx:elif="{{tab}}" class="cook">
-  <!-- 一起做：上面按菜切换，第一个是备菜 -->
-  <scroll-view wx:if="{{multi}}" class="ctabs" scroll-x enable-flex scroll-with-animation scroll-into-view="ct-{{tab}}">
+  <!-- 上面按菜切换，第一个是备菜 -->
+  <scroll-view class="ctabs" scroll-x enable-flex scroll-with-animation scroll-into-view="ct-{{tab}}">
     <view wx:for="{{tabs}}" wx:key="key" id="ct-{{item.key}}" class="ct {{item.key === tab ? 'on' : ''}} {{item.done ? 'done' : ''}}"
           data-key="{{item.key}}" bindtap="onTab">{{item.label}}<text wx:if="{{item.sub}}" class="ct-sub">{{item.sub}}</text></view>
   </scroll-view>
@@ -17,14 +18,14 @@
       <text class="step-label">{{tab === 'prep' ? '先备菜' : stepLabel}}</text>
       <view class="top-btns">
         <view wx:if="{{tab !== 'prep'}}" class="ing-btn" bindtap="onToggleIngredients"><image class="ic sm" src="/images/icons/list-wood.png" />看原料</view>
-        <view wx:if="{{multi}}" class="serve-btn" bindtap="onServe">开饭</view>
+        <view class="serve-btn" bindtap="onServe">开饭</view>
       </view>
     </view>
     <view wx:if="{{tab !== 'prep'}}" class="bar"><view class="bar-fill" style="width: {{progress}}%"></view></view>
   </view>
 
   <view class="stage">
-    <!-- 正在走的计时（一起做时写着是哪道菜），点一下跳到那一步 -->
+    <!-- 正在走的计时（写着是哪道菜），点一下跳到那一步 -->
     <view wx:if="{{running.length}}" class="running">
       <view wx:for="{{running}}" wx:key="key" class="running-chip" data-key="{{item.key}}" bindtap="onJumpStep">
         <image class="ic sm" src="/images/icons/timer-white.png" />{{item.label}}
@@ -89,22 +90,12 @@
         <!-- 最后一页 -->
         <swiper-item>
           <view class="page finish">
-            <block wx:if="{{multi}}">
-              <view class="finish-emoji">{{dishDone ? '✅' : '🍳'}}</view>
-              <view class="finish-title">{{dish.name}}{{dishDone ? '做好了' : '做好了吗？'}}</view>
-              <view class="finish-desc">{{nextText}}</view>
-              <view wx:if="{{!dishDone}}" class="btn-primary finish-btn" bindtap="onDishDone">这道做好了</view>
-              <view wx:else class="btn-outline finish-btn" bindtap="onDishUndo">还没好，接着做</view>
-              <view class="finish-skip" bindtap="onServe">直接开饭</view>
-            </block>
-            <block wx:else>
-              <view class="finish-emoji">{{total ? '🎉' : '📝'}}</view>
-              <view class="finish-title">{{total ? '做好啦！' : '这道菜还没写做法'}}</view>
-              <view class="finish-desc">{{total ? '拍张照、记两句，下次做得更好' : '可以先去把步骤写上，也可以直接打卡'}}</view>
-              <view class="btn-primary finish-btn" bindtap="onFinish">打个卡</view>
-              <view wx:if="{{!total}}" class="btn-outline finish-btn" bindtap="onEditDish">去写做法</view>
-              <view class="finish-skip" bindtap="onBack">不记了，返回</view>
-            </block>
+            <view class="finish-emoji">{{dishDone ? '✅' : '🍳'}}</view>
+            <view class="finish-title">{{dish.name}}{{dishDone ? '做好了' : '做好了吗？'}}</view>
+            <view class="finish-desc">{{nextText}}</view>
+            <view wx:if="{{!dishDone}}" class="btn-primary finish-btn" bindtap="onDishDone">这道做好了</view>
+            <view wx:else class="btn-outline finish-btn" bindtap="onDishUndo">还没好，接着做</view>
+            <view class="finish-skip" bindtap="onServe">直接开饭</view>
           </view>
         </swiper-item>
       </swiper>
@@ -117,7 +108,6 @@
     <block wx:else>
       <view class="nav-btn {{current === 0 ? 'disabled' : ''}}" bindtap="onPrev">上一步</view>
       <view wx:if="{{current !== total}}" class="nav-btn main" bindtap="onNext">{{current === total - 1 ? '做完了' : '下一步'}}</view>
-      <view wx:elif="{{!multi}}" class="nav-btn main" bindtap="onFinish">打个卡</view>
       <view wx:elif="{{!dishDone}}" class="nav-btn main" bindtap="onDishDone">这道做好了</view>
       <view wx:else class="nav-btn main" bindtap="onServe">开饭</view>
     </block>

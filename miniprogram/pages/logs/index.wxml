@@ -1,3 +1,5 @@
+<import src="/templates/meal-card.wxml" />
+
 <!-- 一条做菜记录 -->
 <template name="logCard">
   <view class="log-card" data-id="{{_id}}" bindtap="onOpenLog">
@@ -10,29 +12,6 @@
       </view>
       <view wx:if="{{note}}" class="log-note">{{note}}</view>
       <view wx:if="{{cook}}" class="log-cook">掌勺：{{cook}}</view>
-    </view>
-  </view>
-</template>
-
-<!-- 一顿饭（开饭时一起记的）：整桌照片、哪一顿、每道菜的分数 -->
-<template name="mealCard">
-  <view class="meal-card">
-    <cloud-image wx:if="{{photo}}" class="meal-photo" src="{{photo}}" mode="aspectFill" />
-    <view class="meal-body">
-      <view class="meal-head">
-        <text class="meal-title">{{title}}</text>
-        <text wx:if="{{noText}}" class="meal-no">{{noText}}</text>
-        <text wx:if="{{peopleText}}" class="meal-people">{{peopleText}}</text>
-      </view>
-      <view wx:for="{{dishes}}" wx:key="_id" class="meal-dish" data-id="{{item._id}}" bindtap="onOpenLog">
-        <text class="meal-dish-name">{{item.dishName}}<text wx:if="{{item.qtyText}}" class="meal-qty"> {{item.qtyText}}</text></text>
-        <text wx:if="{{item.stars}}" class="meal-stars">{{item.stars}}</text>
-      </view>
-      <view wx:if="{{note}}" class="meal-note">{{note}}</view>
-      <view class="meal-acts">
-        <text class="meal-act pri" data-id="{{_id}}" bindtap="onReorder">再来一单</text>
-        <text class="meal-act" data-id="{{_id}}" bindtap="onShareMeal">分享这顿饭</text>
-      </view>
     </view>
   </view>
 </template>

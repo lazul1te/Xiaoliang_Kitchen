@@ -104,9 +104,9 @@
         <image class="basket-img" src="/images/basket.png" />
         <view wx:if="{{basketCount}}" class="basket-num">{{basketCount}}</view>
       </view>
-      <text class="basket-text">{{orderNo ? '已下单 ' + orderNo + '，点 + 是加菜' : (basketCount ? '已点 ' + basketCount + ' 份' : '还没点菜')}}</text>
+      <text class="basket-text">{{basketCount ? '已点 ' + basketCount + ' 份' : '还没点菜'}}</text>
     </view>
-    <view class="basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday">{{orderNo ? '看点菜单' : '选好了'}}</view>
+    <view class="basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday">{{ordered ? '看点菜单' : '选好了'}}</view>
   </view>
 </view>
 

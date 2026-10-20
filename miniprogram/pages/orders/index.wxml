@@ -1,0 +1,35 @@
+<import src="/templates/meal-card.wxml" />
+
+<view wx:if="{{loaded}}" class="orders">
+  <!-- 正在进行的那一单 -->
+  <view wx:if="{{current}}" class="current" bindtap="onOpenCurrent">
+    <view class="current-head">
+      <text class="current-tag">进行中</text>
+      <text class="current-no">{{current.noText}}</text>
+      <text class="current-title">{{current.title}}</text>
+    </view>
+    <view class="current-dishes">{{current.dishesText}}</view>
+    <view class="current-foot">
+      <text class="current-people">{{current.peopleText}}</text>
+      <text class="current-go">回菜篮 ›</text>
+    </view>
+  </view>
+
+  <view wx:if="{{!count && !current}}" class="empty">
+    <view class="empty-emoji">🧾</view>
+    <view class="empty-title">还没有点菜单</view>
+    <view class="empty-desc">在菜篮里下单，开饭以后就记在这里</view>
+    <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
+  </view>
+
+  <!-- 开过饭的：新的在前，按月分组 -->
+  <view wx:for="{{months}}" wx:key="title" wx:for-item="month" class="month">
+    <view class="month-title">{{month.title}} · {{month.cards.length}} 单</view>
+    <view wx:for="{{month.cards}}" wx:key="_id" wx:for-item="card" class="order">
+      <template is="mealCard" data="{{...card}}" />
+      <view class="order-day" data-date="{{card.date}}" bindtap="onOpenDay">在记录里看这一天 ›</view>
+    </view>
+  </view>
+
+  <view wx:if="{{count}}" class="list-end">撤掉的单不记，编号也不占{{unnumbered ? '；以前没下单就开饭的 ' + unnumbered + ' 顿在「记录」里' : ''}}</view>
+</view>

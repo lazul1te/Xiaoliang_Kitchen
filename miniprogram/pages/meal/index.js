@@ -1,6 +1,6 @@
 // 开饭啦：这顿做了哪些菜（没做的取消勾选，留在菜篮下次做）、整桌照片、每道菜打个分、掌勺、心得，一次记下来。
-// 从菜篮「做好了，开饭」、一起做（?from=cook，点过「做好了」的默认勾上）、忘了开饭的提醒（?date=那天）进来。
-// 每道做了的菜各记一条做菜记录，日期默认是点菜单上那天；记好以后一起做的进度清掉
+// 先下单再开饭：从菜篮「做好了，开饭」、一起做（?from=cook，点过「做好了」的默认勾上）、忘了开饭的提醒（?date=那天）进来。
+// 每道做了的菜各记一条做菜记录，日期默认是点菜单上那天；记好以后点菜单的编号就用掉了，一起做的进度清掉
 const dishService = require("../../services/dish");
 const bookService = require("../../services/book");
 const planService = require("../../services/plan");
@@ -11,7 +11,7 @@ const cookSession = require("../../services/cook-session");
 const storage = require("../../utils/storage");
 const ui = require("../../utils/ui");
 const { dateValue } = require("../../utils/log");
-const { MEALS, mealByTime, dateText, orderNoText, recentNames } = require("../../utils/order");
+const { MEALS, dateText, orderNoText, recentNames } = require("../../utils/order");
 
 const COOK_NAME_KEY = "cook_name"; // 这台手机上次写的掌勺（打卡页、菜篮也用）
 
@@ -30,7 +30,7 @@ Page({
     cook: "",
     names: [], // 以前写过的名字，点一下就行
     note: "",
-    orderText: "", // 「点菜单 No.012」，没下单是空的
+    orderText: "", // 「点菜单 No.012」
     stars: [1, 2, 3, 4, 5],
   },
 
@@ -53,12 +53,18 @@ Page({
       return;
     }
     const order = plan.order;
+    if (!order) {
+      // 点菜单撤掉了（可能是家人在别的手机上撤的）
+      await ui.alert("还没下单", "先在菜篮里下单，做好了再来开饭");
+      wx.navigateBack();
+      return;
+    }
     const now = Date.now();
     const today = dateValue(now);
     // 日期：忘了开饭时是点菜单那天；点的是以后的日子但今天就做了，记在今天
-    const want = options.date || (order ? order.date : "");
+    const want = options.date || order.date;
     const date = /^\d{4}-\d{2}-\d{2}$/.test(want) && want <= today ? want : today;
-    const cook = (order && order.cook) || storage.get(COOK_NAME_KEY) || "";
+    const cook = order.cook || storage.get(COOK_NAME_KEY) || "";
     // 从一起做过来：点过「做好了」的勾上，没点的先不勾（一道都没点就全勾上）
     const session = options.from === "cook" ? cookSession.load() : null;
     const doneIds = session ? planned.filter((d) => session.done[d._id]).map((d) => d._id) : [];
@@ -72,10 +78,10 @@ Page({
       today,
       yesterday: dateValue(now - 24 * 3600 * 1000),
       dateLabel: dateText(date),
-      meal: order ? order.meal : mealByTime(now),
+      meal: order.meal,
       cook,
-      names: recentNames([cook, storage.get(COOK_NAME_KEY), order && order.orderedBy].concat(bookService.memberNames(), logs.map((l) => l.cook))),
-      orderText: order ? `点菜单 ${orderNoText(order.no)}` : "",
+      names: recentNames([cook, storage.get(COOK_NAME_KEY), order.orderedBy].concat(bookService.memberNames(), logs.map((l) => l.cook))),
+      orderText: `点菜单 ${orderNoText(order.no)}`,
     });
     this.countMade();
   },

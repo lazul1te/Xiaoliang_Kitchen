@@ -1,5 +1,5 @@
 // 一顿饭：开饭时记下的一条 meals 记录。每道做了的菜另外各有一条做菜记录（cook_logs，带 mealId）
-const { MEALS, orderNoText, peopleText } = require("./order");
+const { MEALS, orderNoText, peopleText, dateText } = require("./order");
 const { dateValue } = require("./log");
 
 const text = (v) => (v === undefined || v === null ? "" : String(v)).trim();
@@ -73,4 +73,24 @@ function entriesOf(cards, meals) {
   return entries;
 }
 
-module.exports = { normalizeMeal, mealCard, entriesOf };
+// 「分享这顿饭」的小票（utils/ticket.js 画）：盖着「已开饭」，每道菜的分数、这顿的心得。
+// logs：这顿的做菜记录；names：{ 菜品id: 现在的菜名 }（菜改过名的话用新名字）
+function mealTicket(meal, logs, names) {
+  const qty = {};
+  meal.items.forEach((i) => {
+    qty[i.dishId] = i.qty;
+  });
+  return {
+    title: meal.no ? "点菜单" : "这一顿",
+    noText: meal.no ? orderNoText(meal.no) : "",
+    lines: [`${dateText(meal.date)} · ${meal.meal}`].concat(peopleText(meal) ? [peopleText(meal)] : []),
+    items: logs.map((l) => ({
+      name: `${(names && names[l.dishId]) || l.dishName}${qty[l.dishId] > 1 ? ` ×${qty[l.dishId]}` : ""}`,
+      right: l.rating ? "★".repeat(l.rating) + "☆".repeat(5 - l.rating) : "",
+    })),
+    notes: meal.note ? [meal.note] : [],
+    stamp: "已开饭",
+  };
+}
+
+module.exports = { normalizeMeal, mealCard, entriesOf, mealTicket };
