@@ -1,9 +1,14 @@
 <import src="/templates/dish-card.wxml" />
 
 <view class="menu-page">
-  <!-- 顶部：搜索 + 新菜 -->
+  <!-- 顶部：正在用的小本本 + 搜索 + 新菜 -->
   <view class="header">
     <view class="search-row">
+      <view class="book-chip" bindtap="onOpenBooks">
+        <view class="av sm {{book.family ? 'fam' : ''}}">{{book.initial}}</view>
+        <text class="book-chip-name">{{book.shortName}}</text>
+        <text class="book-chip-caret">▾</text>
+      </view>
       <view class="search-box">
         <icon type="search" size="14" color="#A0A0A8" />
         <input class="search-input" value="{{keyword}}" placeholder="搜菜名、原料或标签"
@@ -61,7 +66,7 @@
       <view class="empty-desc">菜单还是空的。可以先放几道示例菜看看效果，以后在「我的」里一键删掉</view>
       <view class="btn-primary" bindtap="onImportSamples">放几道示例菜</view>
       <view class="btn-outline" bindtap="onStartEmpty">直接开始记菜</view>
-      <view class="state-hint">对方已经记过菜，你这里却是空的？那是数据库权限还没设成两个人共用，按 README 里的步骤改一下</view>
+      <view class="state-hint">{{welcomeHint}}</view>
     </view>
 
     <block wx:else>
@@ -104,3 +109,6 @@
     <view class="basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday">{{orderNo ? '看点菜单' : '选好了'}}</view>
   </view>
 </view>
+
+<!-- 切换小本本 -->
+<book-sheet show="{{showBooks}}" bind:close="onCloseBooks" bind:switch="onBookSwitched" />

@@ -1,0 +1,18 @@
+<view class="new">
+  <view class="para new-intro">家庭本本里的人都能看、都能改：菜谱、做菜记录、菜篮、库存、想吃清单都是大家一起的。建好以后有一个家庭码，家人用它申请加入，你同意了才算加入。</view>
+
+  <view class="field-label">名字</view>
+  <input class="field-input" value="{{name}}" maxlength="12" placeholder="比如：我们家的小本本" bindinput="onNameInput" />
+
+  <view class="field-label">我在这本里叫</view>
+  <input class="field-input" value="{{myName}}" maxlength="10" placeholder="写个名字，家人认得出来" bindinput="onMyNameInput" />
+
+  <view wx:if="{{personalCount}}" class="copy-row" bindtap="onToggleCopy">
+    <view class="check {{copy ? 'on' : ''}}">{{copy ? '✓' : ''}}</view>
+    <text>把「我的小本本」里的 {{personalCount}} 道菜复制一份过去</text>
+  </view>
+  <view wx:if="{{copy}}" class="hint copy-hint">分类按名字对上，照片也一起复制；做菜记录不复制。</view>
+
+  <view wx:if="{{full}}" class="full">已经加了 5 本家庭本本，先在「小本本设置」里退出一本再建</view>
+  <view class="btn-primary new-btn {{busy || full ? 'busy' : ''}}" bindtap="onCreate">建好了</view>
+</view>

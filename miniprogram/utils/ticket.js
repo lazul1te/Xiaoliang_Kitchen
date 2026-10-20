@@ -1,6 +1,6 @@
-// 把点菜单画成图片：「存成图片」是一张长条小票，「发给 TA」的小程序卡片用 5:4 的封面。
-// 页面里放一个看不见的画布 <canvas type="2d" id="ticket-canvas" class="ticket-canvas" />，
-// 用 getCanvas(page) 拿到它，再交给 ticketImage / cardImage，返回手机上的临时图片路径。
+// 把点菜单画成图片：「存成图片」是一张长条小票，「发给 TA」的小程序卡片用 5:4 的封面；邀请家人的卡片也在这里画。
+// 页面里放一个看不见的画布 <canvas type="2d" id="ticket-canvas" class="ticket-canvas" />（样式在 app.wxss），
+// 用 getCanvas(page) 拿到它，再交给 ticketImage / cardImage / inviteImage，返回手机上的临时图片路径。
 // 要画的内容（data）：
 //   { title: "点菜单", noText: "No.012", lines: ["10月19日 周一 · 晚饭", "点菜 小鱼 · 掌勺 大熊"],
 //     items: [{ name, right: "×2", tag: "加" }], notes: ["共 4 道菜 5 份", "备注：少辣"], stamp: "已下单",
@@ -257,6 +257,35 @@ function paintCard(ctx, data) {
   if (data.stamp) stamp(ctx, data.stamp, right - 50, CARD_H - 70, 26);
 }
 
+// 邀请卡片的封面（5:4）：谁邀请、本本的名字、家庭码
+function paintInvite(ctx, data) {
+  ctx.fillStyle = C.cream;
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
+  ctx.fillStyle = C.white;
+  roundRect(ctx, 24, 24, CARD_W - 48, CARD_H - 48, 20);
+  ctx.fill();
+  const left = 56;
+  const width = CARD_W - 112;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  setFont(ctx, 24);
+  ctx.fillStyle = C.text2;
+  ctx.fillText(fit(ctx, data.from ? `${data.from}邀请你一起记菜` : "邀请你一起记菜", width), left, 86);
+  setFont(ctx, 38, "bold");
+  ctx.fillStyle = C.pan;
+  ctx.fillText(fit(ctx, `「${data.name}」`, width + 20), left - 18, 148);
+  setFont(ctx, 22);
+  ctx.fillStyle = C.text3;
+  ctx.fillText("家庭码", left, 214);
+  setFont(ctx, 50, "bold", MONO);
+  ctx.fillStyle = C.wood;
+  ctx.fillText(String(data.code || "").split("").join(" "), left, 278);
+  setFont(ctx, 20);
+  ctx.fillStyle = C.text3;
+  ctx.fillText("点开申请加入，本主同意了就能一起记", left, CARD_H - 52);
+  stamp(ctx, "邀请", CARD_W - 106, CARD_H - 112, 26);
+}
+
 // 整张画布导出。不传 x/y/width/height（默认就是整张画布；canvas 2d 下这几个按什么单位算，文档没写清楚），
 // 只写输出的大小，免得按屏幕像素密度再放大一遍
 function toImage(canvas) {
@@ -295,6 +324,17 @@ function cardImage(canvas, data) {
   return toImage(canvas);
 }
 
+// 邀请家人的小程序卡片封面（5:4），返回临时图片路径。data：{ name 本本名字, code 家庭码, from 谁邀请 }
+function inviteImage(canvas, data) {
+  const ctx = canvas.getContext("2d");
+  canvas.width = CARD_W * CARD_SCALE;
+  canvas.height = CARD_H * CARD_SCALE;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(CARD_SCALE, CARD_SCALE);
+  paintInvite(ctx, data);
+  return toImage(canvas);
+}
+
 // 照片画到画布上之前要先加载；加载不了返回 null（图片里就不放照片）
 function loadImage(canvas, src) {
   return new Promise((resolve) => {
@@ -309,4 +349,4 @@ function loadImage(canvas, src) {
   });
 }
 
-module.exports = { getCanvas, ticketImage, cardImage, loadImage };
+module.exports = { getCanvas, ticketImage, cardImage, inviteImage, loadImage };

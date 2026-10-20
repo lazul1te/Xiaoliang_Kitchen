@@ -1,0 +1,219 @@
+.page {
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+}
+
+/* 最上面：头像、名字 */
+.head {
+  padding: 40rpx 40rpx 12rpx;
+  text-align: center;
+}
+
+.head .av {
+  margin: 0 auto;
+}
+
+.head-name {
+  margin-top: 16rpx;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.head-sub {
+  margin-top: 4rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.head-switch {
+  display: inline-block;
+  margin-top: 16rpx;
+  padding: 8rpx 28rpx;
+  border-radius: 28rpx;
+  background: var(--yolk);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.tip {
+  background: var(--apricot);
+}
+
+.tip-title {
+  margin-bottom: 8rpx;
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+/* 名字、我在这本里叫 */
+.list {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.li {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 0;
+  font-size: var(--fs-body);
+}
+
+.li + .li {
+  border-top: 2rpx solid var(--line);
+}
+
+.li-k {
+  flex-shrink: 0;
+}
+
+.li-v {
+  flex: 1;
+  min-width: 0;
+  margin: 0 12rpx 0 24rpx;
+  overflow: hidden;
+  color: var(--text-2);
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.li-v.none-v {
+  color: var(--text-3);
+}
+
+.arrow {
+  font-size: 36rpx;
+  line-height: 1;
+  color: var(--text-3);
+}
+
+/* 家庭码 */
+.row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.link {
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
+.code {
+  display: flex;
+  justify-content: space-between;
+  margin: 8rpx 0 28rpx;
+}
+
+.code-ch {
+  width: 88rpx;
+  border-radius: 14rpx;
+  background: var(--cream);
+  font-family: monospace;
+  font-size: 48rpx;
+  font-weight: 700;
+  line-height: 104rpx;
+  text-align: center;
+}
+
+.code-acts {
+  display: flex;
+  margin-bottom: 20rpx;
+}
+
+.code-btn {
+  flex: 1;
+}
+
+.code-btn + .code-btn {
+  margin-left: 20rpx;
+}
+
+/* 「邀请家人」是 <button open-type="share">，去掉按钮自带的样式，跟 .btn-primary 一样
+   （按钮自带的样式选择器比较具体，这里多写一层 .code-acts 才压得住） */
+.code-acts .share-btn {
+  width: auto;
+  height: 80rpx;
+  margin: 0 0 0 20rpx;
+  padding: 0;
+  border-radius: 40rpx;
+  background: var(--yolk);
+  color: var(--pan);
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 80rpx;
+}
+
+/* 申请、成员 */
+.person {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+}
+
+.person-text {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.person-name {
+  font-size: var(--fs-body);
+}
+
+.tag-owner,
+.tag-me {
+  margin-left: 12rpx;
+  padding: 0 12rpx;
+  border-radius: 8rpx;
+  font-size: var(--fs-tiny);
+  line-height: 34rpx;
+}
+
+.tag-owner {
+  background: var(--yolk);
+}
+
+.tag-me {
+  background: var(--cream);
+  color: var(--text-2);
+}
+
+.req-no,
+.req-yes {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  padding: 8rpx 24rpx;
+  border-radius: 28rpx;
+  font-size: var(--fs-small);
+}
+
+.req-no {
+  border: 2rpx solid #d9cfc1;
+  color: var(--text-2);
+}
+
+.req-yes {
+  background: var(--yolk);
+  font-weight: 600;
+}
+
+.remove {
+  flex-shrink: 0;
+  padding: 8rpx 16rpx;
+  font-size: var(--fs-small);
+  color: var(--danger);
+}
+
+.leave {
+  margin: 48rpx 24rpx 0;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  font-size: var(--fs-body);
+  color: var(--danger);
+  text-align: center;
+}
+
+.new-btn {
+  margin-top: 24rpx;
+}

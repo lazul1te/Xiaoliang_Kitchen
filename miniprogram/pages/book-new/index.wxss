@@ -1,0 +1,66 @@
+.new {
+  padding: 40rpx 40rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.new-intro {
+  margin-bottom: 8rpx;
+}
+
+.field-label {
+  margin-top: 32rpx;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+}
+
+.field-input {
+  height: 88rpx;
+  margin-top: 12rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: #fff;
+  font-size: var(--fs-body);
+}
+
+.copy-row {
+  display: flex;
+  align-items: center;
+  margin-top: 36rpx;
+  font-size: var(--fs-body);
+}
+
+.check {
+  flex-shrink: 0;
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+  border: 3rpx solid #d9cfc1;
+  border-radius: 10rpx;
+  background: #fff;
+  font-size: 26rpx;
+  line-height: 36rpx;
+  text-align: center;
+}
+
+.check.on {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  font-weight: 700;
+}
+
+.copy-hint {
+  margin: 8rpx 0 0 56rpx;
+}
+
+.full {
+  margin-top: 32rpx;
+  font-size: var(--fs-small);
+  color: var(--danger);
+}
+
+.new-btn {
+  margin-top: 48rpx;
+}
+
+.new-btn.busy {
+  opacity: 0.6;
+}

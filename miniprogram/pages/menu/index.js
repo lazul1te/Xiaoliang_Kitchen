@@ -1,5 +1,6 @@
-// 菜单：点单式首页（左分类、右菜品、底部点菜栏）
+// 菜单：点单式首页（左分类、右菜品、底部点菜栏）。左上角是正在用的小本本，点开能切换、新建、加入
 const dishService = require("../../services/dish");
+const bookService = require("../../services/book");
 const diagnose = require("../../services/diagnose");
 const categoryService = require("../../services/category");
 const planService = require("../../services/plan");
@@ -26,18 +27,46 @@ Page({
     basketByCat: {}, // 每个分类点了几份，显示在左侧分类上
     orderNo: "", // 已经下了单：点菜单编号（这时再点 + 就是加菜）
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
+    book: { initial: "", shortName: "", family: false }, // 左上角：正在用的小本本
+    showBooks: false, // 切换小本本的面板
+    welcomeHint: "", // 本本是空的时候，欢迎页最下面那句
   },
 
   async onLoad() {
+    await this.reload();
+  },
+
+  // 先显示手机上存着的，再等云上的最新数据回来刷新一次（打开小程序、换了一本时）
+  async reload() {
     await this.loadData();
-    // 有本地缓存时先显示的是缓存，等云上的最新数据回来再刷新一次
     try {
       await dishService.refresh();
     } catch (err) {
       if (this.data.status === "ready") ui.toast(err.code === "NO_API" ? "云函数 api 还没部署，先显示上次的菜谱" : "网络不太好，先显示上次的菜谱");
       return;
     }
-    if (this.dataVersion !== dishService.getVersion()) this.loadData();
+    if (this.dataVersion !== dishService.getVersion()) await this.loadData();
+    this.showBookNews();
+  },
+
+  // 第一次打开新版本时说一声旧数据去哪了；申请加入有结果了、被移出了，弹出来说一声
+  async showBookNews() {
+    if (this.showingNews) return;
+    this.showingNews = true;
+    const welcome = bookService.takeWelcome();
+    if (welcome) {
+      const who = welcome.memberCount > 2 ? `你们 ${welcome.memberCount} 个人都` : welcome.memberCount === 2 ? "你和 TA 都" : "你";
+      const ok = await ui.confirm({
+        title: "小本本来啦",
+        content: `你们之前记的菜、做菜记录、菜篮和库存，都放进了「${welcome.name}」，${who}已经在里面。\n\n你还有一本只有自己能看的「我的小本本」，点菜单左上角的名字就能切换。`,
+        confirmText: "知道了",
+        cancelText: "改个名字",
+      });
+      if (!ok) wx.navigateTo({ url: `/pages/book/index?id=${welcome.bookId}` });
+    }
+    const switched = await bookService.showNotices();
+    this.showingNews = false;
+    if (switched) this.reload();
   },
 
   onShow() {
@@ -49,10 +78,12 @@ Page({
       this.applyBasket(planService.getBasket());
     }
     planService.updateBadge();
-    // 对方可能刚在自己手机上改过，隔一会儿回到菜单就去云上看看
+    bookService.updateDot();
+    // 家人可能刚在自己手机上改过，隔一会儿回到菜单就去云上看看（顺便看看申请有没有结果）
     if (this.dataVersion !== undefined) {
       dishService.refreshIfStale().then((changed) => {
         if (changed) this.loadData();
+        this.showBookNews();
       });
     }
   },
@@ -81,8 +112,17 @@ Page({
     this.dataVersion = dishService.getVersion();
     // 搜索要用到原料，完整数据存在这里；不放进 data，因为页面不直接显示它
     this.allDishes = dishes;
+    const book = bookService.current();
+    this.setData({ book: { initial: book.initial, shortName: book.shortName, family: book.family } });
     if (!categories.length && !dishes.length) {
-      this.setData({ status: "welcome", categories: [], sections: [] });
+      this.setData({
+        status: "welcome",
+        categories: [],
+        sections: [],
+        welcomeHint: book.family
+          ? `「${book.name}」里还没有菜。家人记过的菜不在这儿？点左上角看看是不是在别的小本本里`
+          : "这是只有你能看的「我的小本本」。想和家人一起记，点左上角新建或者加入家庭本本",
+      });
       this.applyBasket(planService.getBasket());
       return;
     }
@@ -110,6 +150,23 @@ Page({
       () => this.loadData(),
       (err) => this.setData({ status: "error", errorText: ui.errorText(err) })
     );
+  },
+
+  // ---------- 切换小本本 ----------
+
+  onOpenBooks() {
+    this.setData({ showBooks: true });
+  },
+
+  onCloseBooks() {
+    this.setData({ showBooks: false });
+  },
+
+  // 在面板里选了另一本：先显示手机上存着的那本，再去云上同步
+  onBookSwitched() {
+    this.setData({ status: "loading", keyword: "", searching: false, searchResults: [], broken: {} });
+    planService.updateBadge();
+    return this.reload();
   },
 
   // ---------- 第一次使用 ----------
@@ -255,9 +312,9 @@ Page({
     return diagnose.run();
   },
 
-  // 右上角「...」→ 转发给对方（体验版只有体验成员能打开）
+  // 右上角「...」→ 转发（体验版只有体验成员能打开）
   onShareAppMessage() {
-    return { title: "拿手菜小本本：我们俩的菜谱", path: "/pages/menu/index" };
+    return { title: bookService.isShared() ? "拿手菜小本本：我们家的菜谱" : "拿手菜小本本", path: "/pages/menu/index" };
   },
 
   // 新菜默认放进当前高亮的分类；从某个空分类里点「添加」就放进那个分类

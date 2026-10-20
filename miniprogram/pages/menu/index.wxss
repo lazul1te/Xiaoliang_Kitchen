@@ -16,8 +16,37 @@
   align-items: center;
 }
 
+/* 左上角：正在用的小本本 */
+.book-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  margin-right: 16rpx;
+  padding: 0 16rpx 0 14rpx;
+  border-radius: 36rpx;
+  background: #fff;
+}
+
+.book-chip-name {
+  max-width: 132rpx;
+  margin-left: 8rpx;
+  overflow: hidden;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.book-chip-caret {
+  margin-left: 4rpx;
+  font-size: 20rpx;
+  color: var(--text-3);
+}
+
 .search-box {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   height: 72rpx;

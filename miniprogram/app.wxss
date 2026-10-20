@@ -291,6 +291,48 @@ button::after {
   margin-left: 20rpx;
 }
 
+/* ---------- 头像：小本本、成员都用一个字（家庭本本是黄底） ---------- */
+.av {
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--apricot);
+  color: var(--wood);
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 72rpx;
+  text-align: center;
+}
+
+.av.fam {
+  background: var(--yolk);
+  color: var(--pan);
+}
+
+.av.sm {
+  width: 44rpx;
+  height: 44rpx;
+  font-size: 22rpx;
+  line-height: 44rpx;
+}
+
+.av.lg {
+  width: 104rpx;
+  height: 104rpx;
+  font-size: 44rpx;
+  line-height: 104rpx;
+}
+
+/* 画图片（点菜单、邀请卡片）用的画布：放在屏幕外面，看不到 */
+.ticket-canvas {
+  position: fixed;
+  top: 0;
+  left: -2000rpx;
+  width: 360px;
+  height: 360px;
+}
+
 /* ---------- 菜品卡片（templates/dish-card.wxml） ---------- */
 
 .dish-card {

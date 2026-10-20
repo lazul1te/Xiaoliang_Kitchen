@@ -1,0 +1,42 @@
+<view class="join">
+  <view class="join-title">输入家庭码</view>
+  <view class="join-sub">问一下本里的人，6 位字母和数字</view>
+  <input class="code-input" value="{{code}}" maxlength="6" placeholder="K7Q3XM" placeholder-class="code-ph"
+         confirm-type="done" bindinput="onCodeInput" />
+  <view wx:if="{{checking}}" class="hint join-msg">正在找…</view>
+  <view wx:elif="{{error}}" class="join-msg error">{{error}}</view>
+
+  <block wx:if="{{found}}">
+    <view class="card found">
+      <view class="av lg fam">{{found.initial}}</view>
+      <view class="found-text">
+        <view class="found-name">{{found.name}}</view>
+        <view class="found-sub">{{found.sub}}</view>
+      </view>
+    </view>
+
+    <!-- 还没申请 -->
+    <block wx:if="{{status === ''}}">
+      <view class="field-label">我在这本里叫</view>
+      <input class="name-input" value="{{myName}}" maxlength="10" placeholder="写个名字，家人认得出来" bindinput="onNameInput" />
+      <view class="para join-note">本主同意以后，这本里的菜谱、记录、菜篮你都能看、都能改。随时可以退出。</view>
+      <view class="btn-primary join-btn {{sending ? 'busy' : ''}}" bindtap="onRequest">{{sending ? '正在申请…' : '申请加入'}}</view>
+    </block>
+
+    <!-- 申请了，等本主同意 -->
+    <block wx:elif="{{status === 'pending'}}">
+      <view class="sent">
+        <view class="sent-title">申请发出去了</view>
+        <view class="para">等「{{found.name}}」的本主同意。可以跟 TA 说一声：TA 在「我的 → 小本本设置」里就能看到你的申请。同意以后，你打开小程序会收到通知。</view>
+      </view>
+      <view class="btn-primary join-btn" bindtap="onGoMenu">先回菜单</view>
+      <view class="btn-outline join-btn" bindtap="onCancel">撤回申请</view>
+    </block>
+
+    <!-- 已经在里面了 -->
+    <block wx:else>
+      <view class="para join-note">你已经在这本里了。</view>
+      <view class="btn-primary join-btn" bindtap="onSwitch">切换过去</view>
+    </block>
+  </block>
+</view>

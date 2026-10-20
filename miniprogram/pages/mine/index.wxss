@@ -2,31 +2,82 @@
   padding-bottom: 40rpx;
 }
 
-.profile {
+/* 最上面：正在用的小本本 */
+.book-card {
+  margin-top: 24rpx;
+}
+
+.bc-top {
   display: flex;
   align-items: center;
-  padding: 36rpx 40rpx 16rpx;
 }
 
-.logo {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
+.bc-text {
+  flex: 1;
+  min-width: 0;
+  margin-left: 24rpx;
 }
 
-.profile-text {
-  margin-left: 28rpx;
-}
-
-.app-name {
-  font-size: 36rpx;
+.bc-name {
+  display: flex;
+  align-items: baseline;
+  font-size: 34rpx;
   font-weight: 700;
 }
 
-.app-slogan {
+.bc-name-t {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bc-caret {
+  flex-shrink: 0;
+  margin-left: 8rpx;
+  font-size: 22rpx;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.bc-sub {
   margin-top: 4rpx;
+  overflow: hidden;
   font-size: var(--fs-small);
-  color: var(--text-2);
+  color: var(--text-3);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bc-req {
+  margin-top: 20rpx;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  background: #fdeceb;
+  font-size: var(--fs-sub);
+  color: var(--danger);
+}
+
+.bc-acts {
+  display: flex;
+  margin-top: 24rpx;
+}
+
+/* 「邀请家人」是 <button open-type="share">，去掉按钮自带的样式（多写一层 .bc-acts 才压得住） */
+.bc-acts .bc-act {
+  width: auto;
+  height: 60rpx;
+  margin: 0 16rpx 0 0;
+  padding: 0 28rpx;
+  border-radius: 30rpx;
+  background: var(--cream);
+  color: var(--pan);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  line-height: 60rpx;
+}
+
+.bc-acts .bc-act.on {
+  background: var(--yolk);
 }
 
 .stats {

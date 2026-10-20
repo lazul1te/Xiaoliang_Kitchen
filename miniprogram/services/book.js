@@ -143,13 +143,14 @@ async function openShared(bookId) {
 // 隔一会儿再去云上看看：有没有人申请加入、申请有没有通过、成员和名字变了没有。返回有没有变
 function refresh() {
   if (refreshing) return refreshing;
+  const before = JSON.stringify(info);
+  const startedAt = Date.now();
   refreshing = ready()
-    .then(() => api.call("books", {}))
+    .then(() => (lastRefreshAt >= startedAt ? null : api.call("books", {}))) // 刚打开小程序时已经一起拿到了
     .then(
       (res) => {
         refreshing = null;
-        const before = JSON.stringify(info);
-        apply(res);
+        if (res) apply(res);
         checkCurrent();
         return JSON.stringify(info) !== before;
       },
@@ -169,8 +170,12 @@ function refreshIfStale(maxAge) {
 
 // ---------- 页面上显示的样子 ----------
 
+// 菜单左上角放得下的短名字：「我们家的小本本」→「我们家」，「我的小本本」→「我的」
 function shortName(name) {
-  const s = String(name || "").replace(/(的)?小本本$/, "") || String(name || "");
+  const full = String(name || "");
+  let s = full.replace(/小本本$/, "");
+  if (s.length > 2 && /的$/.test(s)) s = s.slice(0, -1);
+  s = s || full;
   return s.length > 4 ? `${s.slice(0, 4)}…` : s;
 }
 
@@ -181,15 +186,18 @@ function initialOf(book) {
   return /^我们/.test(s) || !s ? "家" : s.slice(0, 1);
 }
 
-function memberLabel(m) {
-  if (m.me) return m.name || "我";
-  return m.name || "家人";
+// 成员、申请人显示的名字和头像上的字（没写名字的：自己是「我」，别人是「家人」）
+function person(p, me) {
+  const label = p.name || (me ? "我" : "家人");
+  return Object.assign(p, { label, initial: label.slice(0, 1) });
 }
 
 function describe(b) {
   const book = b ? clone(b) : { _id: currentId, name: "小本本", type: "personal", owner: true, myName: "", members: [], code: "", requests: [] };
   const family = book.type === "family";
-  const labels = book.members.map(memberLabel);
+  book.members.forEach((m) => person(m, m.me));
+  book.requests.forEach((r) => person(r, false));
+  const labels = book.members.map((m) => m.label);
   const more = labels.length > MAX_NAMES ? ` 等 ${labels.length} 人` : "";
   return Object.assign(book, {
     family,
@@ -197,6 +205,7 @@ function describe(b) {
     initial: initialOf(book),
     shortName: shortName(book.name),
     sub: family ? `家庭 · ${labels.slice(0, MAX_NAMES).join("、")}${more}` : "个人 · 只有你能看",
+    requestCount: book.owner ? book.requests.length : 0,
   });
 }
 

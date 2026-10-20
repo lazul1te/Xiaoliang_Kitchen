@@ -2,6 +2,7 @@
 // 从菜篮「做好了，开饭」、一起做（?from=cook，点过「做好了」的默认勾上）、忘了开饭的提醒（?date=那天）进来。
 // 每道做了的菜各记一条做菜记录，日期默认是点菜单上那天；记好以后一起做的进度清掉
 const dishService = require("../../services/dish");
+const bookService = require("../../services/book");
 const planService = require("../../services/plan");
 const mealService = require("../../services/meal");
 const logService = require("../../services/log");
@@ -73,7 +74,7 @@ Page({
       dateLabel: dateText(date),
       meal: order ? order.meal : mealByTime(now),
       cook,
-      names: recentNames([cook, storage.get(COOK_NAME_KEY), order && order.orderedBy].concat(logs.map((l) => l.cook))),
+      names: recentNames([cook, storage.get(COOK_NAME_KEY), order && order.orderedBy].concat(bookService.memberNames(), logs.map((l) => l.cook))),
       orderText: order ? `点菜单 ${orderNoText(order.no)}` : "",
     });
     this.countMade();

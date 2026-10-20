@@ -325,15 +325,6 @@
   background: var(--yolk);
 }
 
-/* 画图片用的画布：放在屏幕外面，看不到 */
-.ticket-canvas {
-  position: fixed;
-  top: 0;
-  left: -2000rpx;
-  width: 360px;
-  height: 360px;
-}
-
 /* ---------- 买菜清单 ---------- */
 
 .shopping {

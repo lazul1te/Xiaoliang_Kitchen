@@ -1,0 +1,108 @@
+.join {
+  padding: 48rpx 40rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.join-title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.join-sub {
+  margin-top: 4rpx;
+  font-size: var(--fs-sub);
+  color: var(--text-3);
+}
+
+.code-input {
+  height: 120rpx;
+  margin-top: 32rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  font-family: monospace;
+  font-size: 56rpx;
+  font-weight: 700;
+  letter-spacing: 20rpx;
+  text-align: center;
+}
+
+.code-ph {
+  color: #e2d9cc;
+}
+
+.join-msg {
+  margin-top: 16rpx;
+  text-align: center;
+}
+
+.join-msg.error {
+  font-size: var(--fs-small);
+  color: var(--danger);
+}
+
+/* 找到的那本 */
+.found {
+  display: flex;
+  align-items: center;
+  margin: 32rpx 0 0;
+}
+
+.found-text {
+  flex: 1;
+  min-width: 0;
+  margin-left: 24rpx;
+}
+
+.found-name {
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.found-sub {
+  margin-top: 4rpx;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.field-label {
+  margin-top: 40rpx;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+}
+
+.name-input {
+  height: 88rpx;
+  margin-top: 12rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: #fff;
+  font-size: var(--fs-body);
+}
+
+.join-note {
+  margin-top: 24rpx;
+}
+
+.join-btn {
+  margin-top: 32rpx;
+}
+
+.join-btn + .join-btn {
+  margin-top: 20rpx;
+}
+
+.join-btn.busy {
+  opacity: 0.6;
+}
+
+.sent {
+  margin-top: 32rpx;
+  padding: 28rpx;
+  border-radius: 20rpx;
+  background: var(--apricot);
+}
+
+.sent-title {
+  margin-bottom: 8rpx;
+  font-size: var(--fs-title);
+  font-weight: 700;
+}

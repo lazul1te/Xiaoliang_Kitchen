@@ -2,6 +2,7 @@
 // 下单前是「确认点菜单」（哪一顿、口味、谁点的、谁掌勺），下单以后最上面是点菜单，可以发给对方、存成图片。
 // 买菜清单会对比家里的库存：家里有的不提醒；买到一样勾一样，两边都能看到
 const dishService = require("../../services/dish");
+const bookService = require("../../services/book");
 const planService = require("../../services/plan");
 const pantryService = require("../../services/pantry");
 const logService = require("../../services/log");
@@ -65,6 +66,7 @@ Page({
 
   onShow() {
     planService.updateBadge();
+    bookService.updateDot();
     this.refresh();
     // 对方可能刚点了菜、下了单、勾了清单、改了库存，隔一会儿回来就去云上看看
     dishService.refreshIfStale().then((changed) => {
@@ -137,7 +139,9 @@ Page({
       shopping,
       hasPlan: stage !== "empty",
       flavorChips: this.flavorChips(form.flavors),
-      names: recentNames([form.orderedBy, form.cook, storage.get(ORDER_NAME_KEY), storage.get(COOK_NAME_KEY)].concat(logs.map((l) => l.cook))),
+      names: recentNames(
+        [form.orderedBy, form.cook, storage.get(ORDER_NAME_KEY), storage.get(COOK_NAME_KEY)].concat(bookService.memberNames(), logs.map((l) => l.cook))
+      ),
       dateLabel: dateText(form.date),
     });
     if (ticket) this.prepareCard();

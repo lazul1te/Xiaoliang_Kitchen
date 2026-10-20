@@ -1,0 +1,45 @@
+<view wx:if="{{show}}" class="sheet-mask" bindtap="onClose">
+  <view class="sheet" catchtap="noop">
+    <block wx:if="{{!picking}}">
+      <view class="sheet-title">切换小本本</view>
+      <view wx:for="{{books}}" wx:key="_id" class="bs-row {{item.current ? 'on' : ''}}" data-id="{{item._id}}" bindtap="onPick">
+        <view class="av {{item.family ? 'fam' : ''}}">{{item.initial}}</view>
+        <view class="bs-text">
+          <view class="bs-name">{{item.name}}</view>
+          <view class="bs-sub">{{item.sub}}</view>
+        </view>
+        <text wx:if="{{item.current}}" class="bs-tag">正在用</text>
+        <text wx:elif="{{item.requestCount}}" class="bs-tag warn">{{item.requestCount}} 个申请</text>
+      </view>
+      <view wx:for="{{pending}}" wx:key="_id" class="bs-row pending">
+        <view class="av fam">{{item.initial}}</view>
+        <view class="bs-text">
+          <view class="bs-name">{{item.name}}</view>
+          <view class="bs-sub">申请了，等本主同意</view>
+        </view>
+        <text class="bs-cancel" data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onCancelRequest">撤回</text>
+      </view>
+      <view class="bs-acts">
+        <view class="bs-act" bindtap="onNew">＋ 新建家庭本本</view>
+        <view class="bs-act" bindtap="onJoin">输入家庭码加入</view>
+      </view>
+      <view class="bs-default" bindtap="onOpenDefault">
+        <text>打开小程序时进入</text>
+        <text class="bs-default-v">{{defaultText}} ›</text>
+      </view>
+    </block>
+
+    <!-- 打开小程序时进入哪本 -->
+    <block wx:else>
+      <view class="sheet-title">打开小程序时进入</view>
+      <view wx:for="{{options}}" wx:key="id" class="bs-opt {{item.on ? 'on' : ''}}" data-id="{{item.id}}" bindtap="onSetDefault">
+        <text class="bs-opt-name">{{item.label}}</text>
+        <text wx:if="{{item.on}}" class="bs-check">✓</text>
+      </view>
+      <view class="hint bs-hint">选了某一本、以后又退出了那本，就进「我的小本本」</view>
+      <view class="sheet-foot">
+        <view class="sheet-btn" bindtap="onCloseDefault">返回</view>
+      </view>
+    </block>
+  </view>
+</view>

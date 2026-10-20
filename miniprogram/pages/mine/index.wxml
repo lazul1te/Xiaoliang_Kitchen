@@ -1,9 +1,17 @@
 <view class="mine">
-  <view class="profile">
-    <image class="logo" src="/images/logo.png" />
-    <view class="profile-text">
-      <view class="app-name">拿手菜小本本</view>
-      <view class="app-slogan">好好做饭，也好好记录</view>
+  <!-- 正在用的小本本：点名字切换 -->
+  <view wx:if="{{book}}" class="card book-card">
+    <view class="bc-top" bindtap="onOpenBooks">
+      <view class="av lg {{book.family ? 'fam' : ''}}">{{book.initial}}</view>
+      <view class="bc-text">
+        <view class="bc-name"><text class="bc-name-t">{{book.name}}</text><text class="bc-caret">▾</text></view>
+        <view class="bc-sub">{{book.sub}}</view>
+      </view>
+    </view>
+    <view wx:if="{{requestText}}" class="bc-req" bindtap="onOpenRequests">{{requestText}}，去看看 ›</view>
+    <view class="bc-acts">
+      <button wx:if="{{book.family}}" class="bc-act on" open-type="share">邀请家人</button>
+      <view class="bc-act" bindtap="onOpenSettings">小本本设置</view>
     </view>
   </view>
 
@@ -56,7 +64,12 @@
   </view>
 
   <view class="footer">
-    <view>两个人共用一本菜谱，都能看、都能改</view>
+    <view>{{footerText}}</view>
     <text class="footer-link hit" bindtap="onCheckDatabase">遇到问题？检查一下云开发</text>
   </view>
 </view>
+
+<!-- 切换小本本 -->
+<book-sheet show="{{showBooks}}" bind:close="onCloseBooks" bind:switch="onBookSwitched" />
+<!-- 画邀请卡片封面用的画布（看不到） -->
+<canvas type="2d" id="ticket-canvas" class="ticket-canvas" />

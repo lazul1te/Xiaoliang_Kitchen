@@ -1,0 +1,116 @@
+/* 面板外框、标题、头像用 app.wxss 的 .sheet-mask / .sheet / .sheet-title / .av；这里的类名都带 bs- 前缀，免得和页面撞名 */
+.bs-row {
+  display: flex;
+  align-items: center;
+  margin: 0 -16rpx;
+  padding: 18rpx 16rpx;
+  border-radius: 16rpx;
+}
+
+.bs-row.on {
+  background: var(--cream);
+}
+
+.bs-text {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.bs-name {
+  overflow: hidden;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bs-sub {
+  overflow: hidden;
+  font-size: var(--fs-small);
+  color: var(--text-3);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bs-tag {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  font-size: var(--fs-small);
+  color: var(--wood);
+}
+
+.bs-tag.warn {
+  color: var(--danger);
+}
+
+.bs-row.pending .bs-name {
+  color: var(--text-2);
+}
+
+.bs-cancel {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  padding: 6rpx 20rpx;
+  border: 2rpx solid #d9cfc1;
+  border-radius: 28rpx;
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
+.bs-acts {
+  display: flex;
+  margin-top: 20rpx;
+}
+
+.bs-act {
+  flex: 1;
+  border-radius: 40rpx;
+  background: var(--cream);
+  font-size: var(--fs-sub);
+  line-height: 76rpx;
+  text-align: center;
+}
+
+.bs-act + .bs-act {
+  margin-left: 20rpx;
+}
+
+.bs-default {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 2rpx solid var(--line);
+  font-size: var(--fs-sub);
+  color: var(--text-2);
+}
+
+.bs-default-v {
+  max-width: 60%;
+  overflow: hidden;
+  color: var(--pan);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bs-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 4rpx;
+  border-bottom: 2rpx solid var(--line);
+  font-size: var(--fs-body);
+}
+
+.bs-opt.on {
+  font-weight: 600;
+}
+
+.bs-check {
+  color: var(--wood);
+}
+
+.bs-hint {
+  margin-top: 16rpx;
+}

@@ -490,6 +490,8 @@ global.wx.cloud.callFunction = async ({ name, data }) => {
   serverUser = caller;
   return { result: clone(await require(apiFunctionFile).main(clone(data), {})) };
 };
+// 成员、申请人在小程序里的 id（跟云函数里一样算）
+const memberKeyOf = (bookId, openid) => require("crypto").createHash("sha256").update(`${bookId}:${openid}`).digest("hex").slice(0, 12);
 // 直接调云函数（不经过手机上的代码）：模拟几台手机同时调用
 async function callAs(user, data) {
   await Promise.resolve();
@@ -1338,32 +1340,80 @@ async function smoke() {
 
   // 对方的手机：第一次打开新版本，先是只有自己的「我的小本本」；用家庭码申请加入，我同意了才看得到
   launchApp("partner");
-  const pBook = svc("book");
-  await pBook.ready();
-  assert.deepStrictEqual([pBook.current().name, pBook.list().length], ["我的小本本", 1], "对方先是自己的个人本本");
+  const pMenu0 = newPage("pages/menu/index");
+  await pMenu0.onLoad();
+  await flush();
+  assert.deepStrictEqual([pMenu0.data.status, pMenu0.data.book.shortName, pMenu0.data.book.initial], ["welcome", "我的", "我"], "对方先是自己的个人本本");
+  assert.ok(/只有你能看的「我的小本本」/.test(pMenu0.data.welcomeHint), pMenu0.data.welcomeHint);
   await assert.rejects(svc("api").call("load", { bookId: testBookId }), (e) => e.code === "NOT_MEMBER", "还没加入，读不到");
+  // 菜单左上角 → 切换小本本 → 输入家庭码加入
+  pMenu0.onOpenBooks();
+  assert.strictEqual(pMenu0.data.showBooks, true);
+  const pSheet = newComponent("components/book-sheet/index", { show: true });
+  await flush();
+  assert.deepStrictEqual(pSheet.data.books.map((b) => `${b.name}${b.current ? "（正在用）" : ""}`), ["我的小本本（正在用）"]);
+  pSheet.onJoin();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/join/index"]);
+  const join = newPage("pages/join/index");
+  join.onLoad({});
   const familyCode = cloudDB.books.find((b) => b._id === testBookId).code;
-  assert.strictEqual(await pBook.requestJoin(familyCode.toLowerCase(), "小鱼"), "pending", "申请了，等本主同意（家庭码大小写都行）");
-  assert.deepStrictEqual(pBook.pending().map((b) => b.name), ["我们家的小本本"]);
+  // 认错字了：家庭码里没有 0、O、1、I、L，不用去云上查，也不算输错一次
+  const callsBeforeCode = countCalls("callFunction");
+  assert.strictEqual(join.onCodeInput({ detail: { value: "ab0cd1" } }), "AB0CD1", "输入框里换成大写");
+  await flush();
+  assert.ok(/没有 0、O、1、I、L/.test(join.data.error) && countCalls("callFunction") === callsBeforeCode, join.data.error);
+  // 输错了：说还能试几次
+  join.onCodeInput({ detail: { value: "zzzzzz" } });
+  await flush();
+  assert.ok(/^没找到这个家庭码，再核对一下（还能试 9 次）$/.test(join.data.error), join.data.error);
+  // 对了（小写、中间有空格也行）：先看到是哪一本、几个人、几道菜、本主是谁
+  join.onCodeInput({ detail: { value: `${familyCode.slice(0, 3).toLowerCase()} ${familyCode.slice(3)}` } });
+  await flush();
+  const familyDishCount = cloudDB.dishes.filter((d) => d.bookId === testBookId).length;
+  assert.deepStrictEqual([join.data.found.name, join.data.found.sub, join.data.status], ["我们家的小本本", `1 位成员 · ${familyDishCount} 道菜 · 本主 小亮`, ""]);
+  join.onNameInput({ detail: { value: " " } });
+  await join.onRequest();
+  assert.deepStrictEqual(lastCall("toast"), ["toast", "写个名字，本主才知道是谁"]);
+  join.onNameInput({ detail: { value: "小鱼" } });
+  await join.onRequest();
+  assert.strictEqual(join.data.status, "pending", "申请了，等本主同意");
   await assert.rejects(svc("api").call("load", { bookId: testBookId }), (e) => e.code === "NOT_MEMBER", "申请了也还读不到");
-  launchApp("me");
-  const meBook = svc("book");
-  await meBook.refresh();
-  const joinReq = meBook.get(testBookId).requests;
-  assert.deepStrictEqual(joinReq.map((r) => r.name), ["小鱼"], "本主看得到申请");
-  assert.deepStrictEqual(lastCall("redDot"), ["redDot", 3, true], "「我的」上有小红点");
-  await meBook.approve(testBookId, joinReq[0].id);
-  assert.deepStrictEqual(meBook.get(testBookId).members.map((m) => `${m.name}${m.owner ? "（本主）" : ""}`), ["小亮（本主）", "小鱼"]);
-  assert.deepStrictEqual(lastCall("redDot"), ["redDot", 3, false]);
-  launchApp("partner");
-  await svc("book").ready();
-  assert.ok(svc("book").has(testBookId), "我同意了，对方就在这本里了");
-  svc("book").switchTo(testBookId);
+  const pSheet2 = newComponent("components/book-sheet/index", { show: true });
+  await flush();
+  assert.deepStrictEqual(pSheet2.data.pending.map((b) => b.name), ["我们家的小本本"], "切换面板里写着在等本主同意");
 
-  // 对方切过来：看到同一本菜谱、同一份菜篮，能加菜，也能改我加的菜
+  // 我这边：「我的」上有小红点，名片上写着有人申请；在小本本设置里同意
+  launchApp("me");
+  const meMine = newPage("pages/mine/index");
+  meMine.onShow();
+  await flush();
+  assert.deepStrictEqual(lastCall("redDot"), ["redDot", 3, true], "「我的」上有小红点");
+  assert.deepStrictEqual([meMine.data.book.name, meMine.data.requestText], ["我们家的小本本", "1 个人申请加入这本"]);
+  meMine.onOpenRequests();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", `/pages/book/index?id=${testBookId}`]);
+  const meSettings = newPage("pages/book/index");
+  meSettings.onLoad({ id: testBookId });
+  meSettings.onShow();
+  await flush();
+  assert.deepStrictEqual(meSettings.data.requests.map((r) => r.label), ["小鱼"], "本主看得到申请");
+  await meSettings.onApprove(ev({ id: meSettings.data.requests[0].id }));
+  assert.deepStrictEqual(
+    meSettings.data.members.map((m) => `${m.label}${m.owner ? "（本主）" : ""}${m.me ? "（我）" : ""}`),
+    ["小亮（本主）（我）", "小鱼"]
+  );
+  assert.deepStrictEqual([meSettings.data.requests.length, lastCall("redDot")], [0, ["redDot", 3, false]]);
+  assert.deepStrictEqual(lastCall("toast"), ["toast", "同意了，TA 打开小程序就能看到这本"]);
+
+  // 对方再打开：收到「加入成功」，点「切换过去」
+  launchApp("partner");
+  modalAnswers.push({ confirm: true });
   const pMenu = newPage("pages/menu/index");
   await pMenu.onLoad();
   await flush();
+  assert.ok(calls.some((c) => c[0] === "modal" && c[1] === "加入成功" && /「我们家的小本本」的本主同意了/.test(c[2])), "对方收到通知");
+  assert.strictEqual(svc("book").currentId(), testBookId, "点了「切换过去」");
+
+  // 对方切过来：看到同一本菜谱、同一份菜篮，能加菜，也能改我加的菜
   assert.strictEqual(pMenu.data.status, "ready", "对方打开看到的是同一本菜谱，不是欢迎页");
   assert.deepStrictEqual(pMenu.allDishes.map((d) => d.name), ["番茄炒蛋"]);
   assert.strictEqual(pMenu.data.basketCount, 1, "今日菜单两个人共用");
@@ -2556,6 +2606,229 @@ async function smoke() {
   assert.strictEqual(basketC.data.cooking, null);
   ok("一起做：备菜（先腌上、建议顺序、按份数算好）、按菜切换、计时器各走各的、到点跳过去、退出了接着做、做好一道切下一道、开饭只勾做好的");
 
+  // ======== 小本本：切换、打开时进哪本、新建（把个人本本的菜复制过去）、邀请卡片、家庭码 ========
+  launchApp("me");
+  const menuB = newPage("pages/menu/index");
+  await menuB.onLoad();
+  await flush();
+  menuB.onOpenBooks();
+  const sheetB = newComponent("components/book-sheet/index", { show: true });
+  await flush();
+  assert.deepStrictEqual(sheetB.data.books.map((b) => `${b.initial} ${b.name} ${b.sub}${b.current ? "（正在用）" : ""}`), [
+    "我 我的小本本 个人 · 只有你能看",
+    "家 我们家的小本本 家庭 · 小亮、小鱼（正在用）",
+  ]);
+  const myBookId = sheetB.data.books[0]._id;
+  // 切到个人本本：菜单、菜篮都换成那本的
+  sheetB.onPick(ev({ id: myBookId }));
+  assert.deepStrictEqual(sheetB.events.slice(-2), [["close", undefined], ["switch", { id: myBookId }]]);
+  await menuB.onBookSwitched();
+  await flush();
+  assert.deepStrictEqual([menuB.data.status, menuB.data.book.shortName, menuB.data.basketCount], ["welcome", "我的", 0], "个人本本是空的，菜篮也是这本的");
+  assert.strictEqual(cloudDB.users.find((u) => u._id === "me").lastBook, myBookId, "记住上次用的是哪本");
+  await menuB.onImportSamples(); // 个人本本里放几道示例菜，等会儿复制到新建的家庭本本
+  const myCover = `cloud://test-env.1234/books/${myBookId}/covers/my-tomato.jpg`;
+  cloudFiles[myCover] = { owner: "me", path: "http://tmp/my-tomato.jpg", content: "我的番茄炒蛋照片" };
+  const myTomato = cloudDB.dishes.find((d) => d.bookId === myBookId && d.name === "番茄炒蛋");
+  myTomato.cover = myCover;
+  assert.strictEqual(cloudDB.dishes.filter((d) => d.bookId === myBookId).length, 11);
+  // 打开小程序时进哪本：指定「我们家的小本本」
+  sheetB.onOpenDefault();
+  assert.deepStrictEqual(sheetB.data.options.map((o) => `${o.label}${o.on ? "✓" : ""}`), ["上次用的那本✓", "我的小本本", "我们家的小本本"]);
+  await sheetB.onSetDefault(ev({ id: testBookId }));
+  assert.deepStrictEqual([sheetB.data.picking, sheetB.data.defaultText], [false, "我们家的小本本"]);
+  launchApp("me");
+  await svc("book").ready();
+  assert.strictEqual(svc("book").currentId(), testBookId, "上次用的是个人本本，但指定了进「我们家的小本本」");
+  await newComponent("components/book-sheet/index", { show: true }).onSetDefault(ev({ id: "" }));
+  launchApp("me");
+  await svc("book").ready();
+  assert.strictEqual(svc("book").currentId(), myBookId, "改回「上次用的那本」");
+
+  // 新建家庭本本：名字不跟已有的重，「我在这本里叫」用别的本本里写过的；把个人本本的 11 道菜复制过去（分批复制，照片也复制一份）
+  const newBook = newPage("pages/book-new/index");
+  newBook.onLoad();
+  await flush();
+  assert.deepStrictEqual([newBook.data.name, newBook.data.myName, newBook.data.personalCount, newBook.data.full], ["家庭小本本", "小亮", 11, false]);
+  newBook.onNameInput({ detail: { value: "周末厨房" } });
+  newBook.onToggleCopy();
+  const loadingsBefore = countCalls("loading");
+  await newBook.onCreate();
+  const weekendId = svc("book").currentId();
+  assert.notStrictEqual(weekendId, myBookId, "建好就切到新的这本");
+  assert.deepStrictEqual(lastCall("redirectTo"), ["redirectTo", `/pages/book/index?id=${weekendId}&created=1`]);
+  assert.ok(calls.slice(-200).filter((c) => c[0] === "loading").map((c) => c[1]).includes("正在复制菜 11/11"), "复制的时候显示进度");
+  assert.ok(countCalls("loading") - loadingsBefore >= 4, "一次复制几道，分几次");
+  const weekendDishes = cloudDB.dishes.filter((d) => d.bookId === weekendId);
+  assert.deepStrictEqual(weekendDishes.map((d) => d.name).sort(), cloudDB.dishes.filter((d) => d.bookId === myBookId).map((d) => d.name).sort());
+  const weekendCats = cloudDB.categories.filter((c) => c.bookId === weekendId).sort((a, b) => a.sort - b.sort).map((c) => c.name);
+  assert.deepStrictEqual(weekendCats, ["家常菜", "硬菜", "汤羹", "凉菜", "主食"], "分类按原来的顺序建好");
+  const copiedTomato = weekendDishes.find((d) => d.name === "番茄炒蛋");
+  assert.ok(copiedTomato.cover.startsWith(`cloud://test-env.1234/books/${weekendId}/covers/`) && cloudFiles[copiedTomato.cover].content === "我的番茄炒蛋照片", "照片复制到新的这本里");
+  assert.ok(cloudFiles[myCover], "个人本本里的照片还在");
+  assert.ok(weekendDishes.every((d) => cloudDB.categories.find((c) => c._id === d.categoryId).bookId === weekendId), "菜放进新这本的分类里");
+
+  // 小本本设置：刚建好的提示、家庭码、复制、邀请卡片（点开就是加入页面，家庭码已经填好）
+  const weekend = newPage("pages/book/index");
+  weekend.onLoad({ id: weekendId, created: "1" });
+  weekend.onShow();
+  await settle();
+  const weekendCode = cloudDB.books.find((b) => b._id === weekendId).code;
+  assert.deepStrictEqual([weekend.data.created, weekend.data.codeChars.map((c) => c.ch).join(""), weekend.data.book.owner], [true, weekendCode, true]);
+  weekend.onCopyCode();
+  assert.strictEqual(clipboardText, weekendCode);
+  const inviteShare = weekend.onShareAppMessage();
+  assert.deepStrictEqual([inviteShare.title, inviteShare.path], ["小亮邀请你加入「周末厨房」", `/pages/join/index?code=${weekendCode}`]);
+  assert.ok(files[inviteShare.imageUrl].includes(weekendCode.split("").join(" ")) && files[inviteShare.imageUrl].includes("「周末厨房」"), "邀请卡片的封面写着本本名字和家庭码");
+  modalAnswers.push({ confirm: true, content: "周末小厨房" });
+  await weekend.onRename();
+  assert.strictEqual(cloudDB.books.find((b) => b._id === weekendId).name, "周末小厨房");
+  ok("小本本：切换、打开时进哪本、新建时把个人本本的菜（连分类、照片）复制过去、设置页的家庭码和邀请卡片、改名");
+
+  // ======== 申请加入：输错太多次要等、本主不同意、撤回、同意；换家庭码；5 本上限 ========
+  launchApp("third");
+  const thirdBook = svc("book");
+  await thirdBook.ready();
+  for (let i = 1; i <= 9; i++) {
+    await assert.rejects(thirdBook.peek("ZZZZZZ"), (e) => e.code === "BAD_CODE" && e.message.includes(`还能试 ${10 - i} 次`));
+  }
+  await assert.rejects(thirdBook.peek("ZZZZZZ"), (e) => e.code === "TOO_MANY");
+  await assert.rejects(thirdBook.peek(weekendCode), (e) => e.code === "TOO_MANY", "输错 10 次以后，对的也先不让试");
+  timeOffset += 61 * 60 * 1000;
+  const peeked = await thirdBook.peek(weekendCode);
+  assert.deepStrictEqual([peeked.name, peeked.memberCount, peeked.dishCount, peeked.ownerName, peeked.status], ["周末小厨房", 1, 11, "小亮", ""], "过了一个小时又能试了");
+  // 申请 → 本主不同意 → TA 收到通知
+  assert.strictEqual(await thirdBook.requestJoin(weekendCode, "小三"), "pending");
+  launchApp("me");
+  const weekend2 = newPage("pages/book/index");
+  weekend2.onLoad({ id: weekendId });
+  weekend2.onShow();
+  await flush();
+  modalAnswers.push({ confirm: true });
+  await weekend2.onReject(ev({ id: weekend2.data.requests[0].id, name: "小三" }));
+  assert.deepStrictEqual(weekend2.data.requests, []);
+  launchApp("third");
+  await svc("book").refresh();
+  await svc("book").showNotices();
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["没有加入", "「周末小厨房」的本主没有同意你加入"]);
+  // 再申请 → 自己撤回（在切换面板里）
+  assert.strictEqual(await svc("book").requestJoin(weekendCode, "小三"), "pending");
+  const thirdSheet = newComponent("components/book-sheet/index", { show: true });
+  await flush();
+  modalAnswers.push({ confirm: true });
+  await thirdSheet.onCancelRequest(ev({ id: weekendId, name: "周末小厨房" }));
+  assert.deepStrictEqual(thirdSheet.data.pending, []);
+  assert.deepStrictEqual(cloudDB.books.find((b) => b._id === weekendId).requests, {}, "本主那边也没有这个申请了");
+  // 本主换了家庭码：旧的马上不能用
+  launchApp("me");
+  const weekend3 = newPage("pages/book/index");
+  weekend3.onLoad({ id: weekendId });
+  weekend3.onShow();
+  await flush();
+  modalAnswers.push({ confirm: true });
+  await weekend3.onNewCode();
+  const weekendCode2 = cloudDB.books.find((b) => b._id === weekendId).code;
+  assert.ok(weekendCode2 !== weekendCode && weekend3.data.codeChars.map((c) => c.ch).join("") === weekendCode2);
+  launchApp("third");
+  await assert.rejects(svc("book").peek(weekendCode), (e) => e.code === "BAD_CODE", "旧的家庭码不能用了");
+  // 用新的申请 → 同意了，TA 就是成员（不是本主，只能看家庭码，不能换）
+  assert.strictEqual(await svc("book").requestJoin(weekendCode2, "小三"), "pending");
+  launchApp("me");
+  await svc("book").refresh();
+  await svc("book").approve(weekendId, svc("book").get(weekendId).requests[0].id);
+  launchApp("third");
+  await svc("book").refresh();
+  const thirdView = svc("book").get(weekendId);
+  assert.deepStrictEqual([thirdView.owner, thirdView.code, thirdView.requests], [false, weekendCode2, []]);
+  await assert.rejects(svc("book").newCode(weekendId), (e) => e.code === "NOT_OWNER");
+  // 5 本上限：先申请「我们家的小本本」，再建 4 本就满了：第 6 本建不了、也申请不了，本主同意时也加不进来
+  const familyCode2 = cloudDB.books.find((b) => b._id === testBookId).code;
+  assert.strictEqual(await svc("book").requestJoin(familyCode2, "小三"), "pending");
+  for (let i = 1; i <= 4; i++) await svc("book").create(`第 ${i} 本`, "小三");
+  await assert.rejects(svc("book").create("第 5 本", "小三"), (e) => e.code === "LIMIT" && /最多加 5 本家庭本本/.test(e.message));
+  await assert.rejects(svc("book").requestJoin(familyCode2, "小三"), (e) => e.code === "LIMIT");
+  const lateApprove = await callAs("me", { action: "approve", bookId: testBookId, memberId: memberKeyOf(testBookId, "third") });
+  assert.deepStrictEqual([lateApprove.ok, lateApprove.error.code, lateApprove.error.message], [false, "LIMIT", "TA 已经加了 5 本家庭本本，加不进来了"]);
+  await callAs("me", { action: "reject", bookId: testBookId, memberId: memberKeyOf(testBookId, "third") });
+  const thirdNew = newPage("pages/book-new/index");
+  thirdNew.onLoad();
+  await flush();
+  assert.strictEqual(thirdNew.data.full, true, "新建页上直接说加不了了");
+  await assert.rejects(svc("api").call("leaveBook", { bookId: svc("book").personalId() }), (e) => e.code === "PERSONAL", "个人本本不能退出");
+  ok("申请加入：输错 10 次要等一个小时、本主不同意会通知、自己能撤回、换了家庭码旧的就不能用、同意了才是成员；最多 5 本家庭本本");
+
+  // ======== 成员：本主移出别人（TA 正在用这本的话回到个人本本）；退出不用谁同意，本主退出了最早加入的人接着当；最后一个人退出，这本删掉 ========
+  launchApp("partner");
+  assert.strictEqual(await svc("book").requestJoin(weekendCode2, "小鱼"), "pending");
+  launchApp("me");
+  await svc("book").refresh();
+  await svc("book").approve(weekendId, svc("book").get(weekendId).requests[0].id);
+  launchApp("partner");
+  const herMenuW = newPage("pages/menu/index");
+  modalAnswers.push({ confirm: true }); // 加入成功 → 切换过去
+  await herMenuW.onLoad();
+  await flush();
+  assert.strictEqual(svc("book").currentId(), weekendId);
+  assert.strictEqual(herMenuW.allDishes.length, 11);
+  // 我（本主）把对方移出了：对方的小程序还开着，隔一会儿回到菜单就回到个人本本，弹窗说一声
+  const partnerMemberId = svc("book").get(weekendId).members.find((m) => m.label === "小鱼").id;
+  const removed = await callAs("me", { action: "removeMember", bookId: weekendId, memberId: partnerMemberId });
+  assert.ok(removed.ok, JSON.stringify(removed));
+  timeOffset += 20 * 1000;
+  herMenuW.onShow();
+  await flush();
+  assert.strictEqual(svc("book").currentId(), svc("book").personalId(), "回到个人本本");
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["不在这本里了", "「周末小厨房」的本主把你移出了这本"]);
+  assert.strictEqual(herMenuW.data.book.shortName, "我的");
+  await assert.rejects(svc("api").call("load", { bookId: weekendId }), (e) => e.code === "NOT_MEMBER");
+  // 我（本主）退出：最早加入的人（小三）接着当本主；我正在用这本，回到个人本本，这本的缓存也清掉
+  launchApp("me");
+  svc("book").switchTo(weekendId);
+  const meWeekendMenu = newPage("pages/menu/index");
+  await meWeekendMenu.onLoad();
+  await flush();
+  assert.ok(dev()[`dev_cloud_cache@${weekendId}`], "这本的缓存");
+  const weekend4 = newPage("pages/book/index");
+  weekend4.onLoad({});
+  weekend4.onShow();
+  await flush();
+  modalAnswers.push({ confirm: true });
+  await weekend4.onLeave();
+  assert.ok(/你是本主，退出以后最早加入的人接着当本主/.test(calls.filter((c) => c[0] === "modal").pop()[2]));
+  const weekendRow = cloudDB.books.find((b) => b._id === weekendId);
+  assert.deepStrictEqual([Object.keys(weekendRow.members), weekendRow.owner], [["third"], "third"]);
+  assert.deepStrictEqual([svc("book").currentId(), lastCall("switchTab")], [myBookId, ["switchTab", "/pages/menu/index"]]);
+  assert.strictEqual(dev()[`dev_cloud_cache@${weekendId}`], undefined, "退出的那本，手机上的缓存清掉");
+  assert.strictEqual(cloudDB.dishes.filter((d) => d.bookId === weekendId).length, 11, "记的东西留在这本里");
+  // 对方又来申请；小三是最后一个人，退出：这本连同菜、分类、菜篮、照片都删掉，申请的人收到通知
+  launchApp("partner");
+  assert.strictEqual(await svc("book").requestJoin(weekendCode2, "小鱼"), "pending");
+  launchApp("third");
+  svc("book").switchTo(weekendId);
+  svc("plan").add(copiedTomato._id);
+  await flush();
+  assert.ok((cloudDB.plans || []).some((p) => p._id === `${weekendId}-current`), "这本的菜篮");
+  const weekend5 = newPage("pages/book/index");
+  weekend5.onLoad({ id: weekendId });
+  weekend5.onShow();
+  await flush();
+  modalAnswers.push({ confirm: true });
+  await weekend5.onLeave();
+  assert.strictEqual(calls.filter((c) => c[0] === "modal").pop()[1], "删掉这本？");
+  assert.ok(!cloudDB.books.some((b) => b._id === weekendId), "这本删掉了");
+  assert.deepStrictEqual(
+    [cloudDB.dishes.filter((d) => d.bookId === weekendId).length, cloudDB.categories.filter((c) => c.bookId === weekendId).length, (cloudDB.plans || []).filter((p) => p._id.startsWith(weekendId)).length],
+    [0, 0, 0],
+    "菜、分类、菜篮都删掉了"
+  );
+  assert.ok(!cloudFiles[copiedTomato.cover] && cloudFiles[myCover], "这本的照片删掉了，别的本里的照片还在");
+  launchApp("partner");
+  await svc("book").refresh();
+  await svc("book").showNotices();
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["这本没有了", "「周末小厨房」已经删掉了，你的申请也没有了"]);
+  assert.deepStrictEqual(svc("book").pending(), []);
+  ok("成员：本主能移出别人（TA 正开着就回到个人本本）；退出不用谁同意，本主退出了最早加入的接着当；最后一个人退出，这本连同照片删掉，申请的人收到通知");
+
   // ======== 旧数据变成家庭本本：以前大家共用一份数据（记录上没有 bookId），新版本第一次打开时自动变成「我们家的小本本」 ========
   Object.keys(cloudDB).forEach((k) => delete cloudDB[k]);
   Object.keys(cloudFiles).forEach((k) => delete cloudFiles[k]);
@@ -2581,6 +2854,8 @@ async function smoke() {
   devices.me.dev_cloud_cache = { categories: [], dishes: [], logs: [], meals: [] }; // 旧版本留下的不分本本的缓存
   devices.me.dev_plan_cache = { items: {} };
   testBookId = "legacy";
+  const welcomes = () => calls.filter((c) => c[0] === "modal" && c[1] === "小本本来啦");
+  const welcomeBefore = welcomes().length;
   launchApp("me");
   const legacyMenu = newPage("pages/menu/index");
   await legacyMenu.onLoad();
@@ -2594,8 +2869,8 @@ async function smoke() {
   assert.deepStrictEqual([legacyMenu.data.basketCount, svc("pantry").list().inStock.map((i) => i.name)], [2, ["盐"]], "菜篮、库存也还在");
   assert.strictEqual((await dishNow("番茄炒蛋")).cookCount, 1, "做菜记录也还在");
   assert.ok(["categories", "dishes", "cook_logs"].every((n) => cloudDB[n].every((r) => r.bookId === "legacy")), "旧记录顺手补上了 bookId");
-  assert.deepStrictEqual(svc("book").takeWelcome(), { bookId: "legacy", name: "我们家的小本本", memberCount: 2 }, "第一次打开说一声数据去哪了");
-  assert.strictEqual(svc("book").takeWelcome(), null, "只说一次");
+  assert.strictEqual(welcomes().length, welcomeBefore + 1, "第一次打开说一声数据去哪了");
+  assert.ok(/都放进了「我们家的小本本」，你和 TA 都已经在里面[\s\S]*「我的小本本」/.test(welcomes().pop()[2]), welcomes().pop()[2]);
   assert.ok(!("dev_cloud_cache" in dev()) && !("dev_plan_cache" in dev()), "以前不分本本的缓存清掉了");
   assert.deepStrictEqual(svc("book").list().map((b) => b.name), ["我的小本本", "我们家的小本本"], "另外还有一本自己的个人本本");
   const oldImg = newComponent(IMG, { src: oldThumb });
@@ -2608,14 +2883,15 @@ async function smoke() {
   await flush();
   assert.strictEqual(svc("book").currentId(), "legacy");
   assert.deepStrictEqual(herLegacy.allDishes.map((d) => d.name), ["可乐鸡翅", "番茄炒蛋"]);
-  assert.ok(svc("book").takeWelcome(), "对方第一次打开也说一声");
+  assert.strictEqual(welcomes().length, welcomeBefore + 2, "对方第一次打开也说一声");
   assert.strictEqual(cloudDB.books.filter((b) => b.legacy).length, 1, "只建了一本");
   // 没在旧数据里加过东西的体验成员：只有自己的本本，读不到这本
   launchApp("third");
   const thirdMenu = newPage("pages/menu/index");
   await thirdMenu.onLoad();
   await flush();
-  assert.deepStrictEqual([svc("book").current().name, thirdMenu.data.status, svc("book").takeWelcome()], ["我的小本本", "welcome", null]);
+  assert.deepStrictEqual([svc("book").current().name, thirdMenu.data.status, welcomes().length], ["我的小本本", "welcome", welcomeBefore + 2]);
+  assert.strictEqual(thirdMenu.data.welcomeHint, "这是只有你能看的「我的小本本」。想和家人一起记，点左上角新建或者加入家庭本本");
   await assert.rejects(svc("api").call("load", { bookId: "legacy" }), (e) => e.code === "NOT_MEMBER");
   const thirdImg = newComponent(IMG, { src: oldThumb });
   await settle();
@@ -2630,6 +2906,7 @@ async function smoke() {
   await meLegacy.onLoad();
   await flush();
   assert.ok(meLegacy.allDishes.some((d) => d.name === "清蒸鲈鱼"), "旧版本加的菜也看得到");
+  assert.strictEqual(welcomes().length, welcomeBefore + 2, "只说一次");
   assert.strictEqual(meLegacy.data.basketCount, 3, "旧版本点的菜，菜篮里也有");
   assert.strictEqual(rowOf("清蒸鲈鱼").bookId, "legacy", "读到的时候补上了 bookId");
   meLegacy.onPlus(ev({ id: "d-old2" }));

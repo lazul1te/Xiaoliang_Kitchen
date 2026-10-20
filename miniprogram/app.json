@@ -12,6 +12,9 @@
     "pages/meal/index",
     "pages/export/index",
     "pages/import/index",
+    "pages/book/index",
+    "pages/join/index",
+    "pages/book-new/index",
     "pages/backup/index",
     "pages/pantry/index",
     "pages/wishes/index",
@@ -58,7 +61,8 @@
   },
   "usingComponents": {
     "cloud-image": "/components/cloud-image/index",
-    "dish-picker": "/components/dish-picker/index"
+    "dish-picker": "/components/dish-picker/index",
+    "book-sheet": "/components/book-sheet/index"
   },
   "sitemapLocation": "sitemap.json",
   "style": "v2",

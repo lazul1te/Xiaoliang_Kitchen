@@ -2,6 +2,7 @@
 // 点日历上的某一天，只看那天的记录；点没做饭的日子可以补记一条。
 // 开饭时一起记的菜合成一张「一顿饭」的卡片：整桌照片、每道菜的分数，可以再来一单、分享这顿饭
 const dishService = require("../../services/dish");
+const bookService = require("../../services/book");
 const logService = require("../../services/log");
 const mealService = require("../../services/meal");
 const planService = require("../../services/plan");
@@ -33,6 +34,7 @@ Page({
 
   onShow() {
     planService.updateBadge();
+    bookService.updateDot();
     // 刚开完饭：直接看那一天
     const focus = mealService.takeFocusDate();
     if (focus) {
