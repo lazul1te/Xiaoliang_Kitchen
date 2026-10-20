@@ -1,6 +1,6 @@
 // 显示云存储里的照片，用法和 <image> 一样：
 //   <cloud-image class="cover" src="{{fileID}}" mode="aspectFill" binderror="onCoverError" />
-// 先请云函数换成两个人都能看的临时链接（见 services/photo.js）。链接过期了自动换新的再试一次，
+// 先请云函数换成这本里的人都能看的临时链接（见 services/photo.js）。链接过期了自动换新的再试一次，
 // 还是不行就发出 error 事件，页面可以换成占位图。手机上刚选的临时照片直接显示。
 const photo = require("../../services/photo");
 

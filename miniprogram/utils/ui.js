@@ -49,6 +49,18 @@ function prompt({ title, placeholder, value }) {
   });
 }
 
+// 从底部弹出的几个选项（最多 6 个），返回点了第几个；取消返回 -1
+function actionSheet(items) {
+  return new Promise((resolve) => {
+    wx.showActionSheet({
+      itemList: items,
+      itemColor: PAN,
+      success: (res) => resolve(res.tapIndex),
+      fail: () => resolve(-1),
+    });
+  });
+}
+
 // 微信接口调用失败时给个看得懂的说明；自己点了取消的不提示
 function apiFail(action, err) {
   const msg = (err && (err.errMsg || err.message)) || String(err || "");
@@ -83,4 +95,4 @@ function photoHint() {
   toast("有照片加载不出来，去「我的」底部点「检查一下云开发」");
 }
 
-module.exports = { toast, alert, confirm, prompt, apiFail, errorText, showError, photoHint };
+module.exports = { toast, alert, confirm, prompt, actionSheet, apiFail, errorText, showError, photoHint };

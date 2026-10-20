@@ -1,4 +1,4 @@
-// 菜篮：两个人一起点的菜、点菜单，和自动合并出来的买菜清单。
+// 菜篮：这本小本本里大家一起点的菜、点菜单，和自动合并出来的买菜清单。
 // 下单前是「确认点菜单」（哪一顿、口味、谁点的、谁掌勺），下单以后最上面是点菜单，可以发给对方、存成图片。
 // 买菜清单会对比家里的库存：家里有的不提醒；买到一样勾一样，两边都能看到
 const dishService = require("../../services/dish");
@@ -55,13 +55,16 @@ Page({
     cooking: null, // 一起做到一半：{ done, total }
     shopping: null, // 买菜清单 { buy, unknown, stocked, extras, total, done }
     hasPlan: false,
+    shared: false, // 正在用的是家庭本本（说法用「家人」，个人本本里不说）
     showShopping: false, // 下单前买菜清单先收起来
     showStocked: false, // 「家里有的」展开没有
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
   },
 
-  onLoad() {
+  onLoad(options) {
     this.initForm();
+    // 点家人发来的点菜单卡片打开：切到发卡片的那本（你也在那本里的话）
+    if (options && options.book) bookService.openShared(options.book).then(() => this.refresh());
   },
 
   onShow() {
@@ -138,6 +141,7 @@ Page({
       cooking: cookSession.progress(plan.items),
       shopping,
       hasPlan: stage !== "empty",
+      shared: bookService.isShared(),
       flavorChips: this.flavorChips(form.flavors),
       names: recentNames(
         [form.orderedBy, form.cook, storage.get(ORDER_NAME_KEY), storage.get(COOK_NAME_KEY)].concat(bookService.memberNames(), logs.map((l) => l.cook))
@@ -165,7 +169,7 @@ Page({
   async onClear() {
     const ok = await ui.confirm({
       title: "清空菜篮？",
-      content: "点的菜、点菜单和买菜清单都会清空，两个人的都会清空。库存不受影响。",
+      content: bookService.isShared() ? "点的菜、点菜单和买菜清单都会清空，这本里大家的都会清空。库存不受影响。" : "点的菜、点菜单和买菜清单都会清空。库存不受影响。",
       confirmText: "清空",
     });
     if (!ok) return;
@@ -366,8 +370,9 @@ Page({
   // 「发给 TA」按钮、右上角「...」转发：下了单就发点菜单，没下单发菜单页
   onShareAppMessage() {
     const ticket = this.data.ticket;
-    if (!ticket) return { title: "拿手菜小本本：今天吃什么", path: "/pages/menu/index" };
-    const share = { title: shareTitle(ticket), path: "/pages/today/index" };
+    const book = `?book=${bookService.currentId()}`; // 对方点开时切到这本
+    if (!ticket) return { title: "拿手菜小本本：今天吃什么", path: `/pages/menu/index${book}` };
+    const share = { title: shareTitle(ticket), path: `/pages/today/index${book}` };
     if (this.cardImage) return Object.assign({ imageUrl: this.cardImage }, share);
     // 封面还没画好：先用默认的，画好了换上（微信最多等 3 秒）
     return Object.assign({}, share, {

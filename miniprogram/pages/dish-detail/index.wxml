@@ -95,6 +95,8 @@
     </view>
     <view wx:if="{{logCount > logs.length}}" class="logs-more" bindtap="onAllLogs">在「记录」里看全部 ›</view>
   </view>
+
+  <view wx:if="{{canCopy}}" class="copy-link" bindtap="onCopyToBook">复制到另一本小本本 ›</view>
 </view>
 
 <!-- 底部操作栏 -->

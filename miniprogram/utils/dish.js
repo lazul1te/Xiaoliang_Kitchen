@@ -117,7 +117,7 @@ function toDetail(dish) {
       dish.cookCount > 0
         ? `做过 ${dish.cookCount} 次` + (lastCooked ? ` · 上次 ${lastCooked}` : "")
         : "还没做过，等你第一次下厨",
-    updatedText: formatMonthDay(dish.updatedAt), // 最近一次修改的日期，两个人一起改时方便看
+    updatedText: formatMonthDay(dish.updatedAt), // 最近一次修改的日期，几个人一起改时方便看
     ingredientGroups: INGREDIENT_GROUPS.map((group) => ({
       type: group.type,
       label: group.label,

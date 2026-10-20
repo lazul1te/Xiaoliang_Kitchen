@@ -261,6 +261,14 @@
   color: var(--wood);
 }
 
+/* 复制到另一本小本本 */
+.copy-link {
+  margin: 32rpx 24rpx 0;
+  text-align: center;
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
 /* ---------- 底部操作栏 ---------- */
 
 .action-bar {

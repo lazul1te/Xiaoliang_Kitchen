@@ -1,5 +1,5 @@
 // 库存：家里常备的东西（调料、米面、干货……）。买菜清单会自动对比，家里有的就不提醒买了。
-// 两个人共用：谁发现用完了，点一下「用完了」，下次买菜清单里就会出现
+// 这本小本本里的人共用：谁发现用完了，点一下「用完了」，下次买菜清单里就会出现
 const dishService = require("../../services/dish");
 const pantryService = require("../../services/pantry");
 const ui = require("../../utils/ui");

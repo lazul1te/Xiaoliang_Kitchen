@@ -32,7 +32,9 @@ Page({
     welcomeHint: "", // 本本是空的时候，欢迎页最下面那句
   },
 
-  async onLoad() {
+  async onLoad(options) {
+    // 点家人发来的卡片打开：切到发卡片的那本（你也在那本里的话）
+    if (options && options.book) await bookService.openShared(options.book);
     await this.reload();
   },
 
@@ -314,7 +316,7 @@ Page({
 
   // 右上角「...」→ 转发（体验版只有体验成员能打开）
   onShareAppMessage() {
-    return { title: bookService.isShared() ? "拿手菜小本本：我们家的菜谱" : "拿手菜小本本", path: "/pages/menu/index" };
+    return { title: bookService.isShared() ? "拿手菜小本本：我们家的菜谱" : "拿手菜小本本", path: `/pages/menu/index?book=${bookService.currentId()}` };
   },
 
   // 新菜默认放进当前高亮的分类；从某个空分类里点「添加」就放进那个分类

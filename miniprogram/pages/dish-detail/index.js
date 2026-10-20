@@ -1,5 +1,6 @@
-// 菜品详情：原料、分步做法、小贴士、做菜记录；底部可以加入菜篮、编辑、开始做
+// 菜品详情：原料、分步做法、小贴士、做菜记录；底部可以加入菜篮、编辑、开始做；最下面能复制到另一本小本本
 const dishService = require("../../services/dish");
+const bookService = require("../../services/book");
 const logService = require("../../services/log");
 const mealService = require("../../services/meal");
 const planService = require("../../services/plan");
@@ -17,11 +18,14 @@ Page({
     logCount: 0,
     notFound: false,
     heroBroken: false, // 成品照加载失败，显示占位图
+    canCopy: false, // 还有别的小本本，能复制过去
   },
 
   onLoad(options) {
     this.dishId = options.id;
-    this.load();
+    // 点家人发来的卡片打开：先切到发卡片的那本（你也在那本里的话）
+    if (options.book) bookService.openShared(options.book).then(() => this.load());
+    else this.load();
   },
 
   onShow() {
@@ -62,6 +66,7 @@ Page({
       logCount: logs.length,
       notFound: false,
       heroBroken: false,
+      canCopy: bookService.list().length > 1,
     });
     this.refreshQty();
   },
@@ -109,12 +114,44 @@ Page({
     wx.switchTab({ url: "/pages/logs/index" });
   },
 
-  // 右上角「...」→ 转发：把这道菜发给对方（体验版只有体验成员能打开）
+  // 复制到另一本小本本：菜谱和照片复制一份（分类按名字对上），做菜记录不复制；那本里已经有同名的就不复制
+  async onCopyToBook() {
+    const others = bookService.list().filter((b) => !b.current);
+    if (!others.length) return;
+    const dish = this.data.dish;
+    let target = others[0];
+    if (others.length > 1) {
+      const i = await ui.actionSheet(others.map((b) => b.name));
+      if (i < 0) return;
+      target = others[i];
+    } else {
+      const ok = await ui.confirm({
+        title: `复制到「${target.name}」？`,
+        content: "菜谱和照片复制一份过去，做菜记录不复制。以后两边各改各的。",
+        confirmText: "复制",
+      });
+      if (!ok) return;
+    }
+    wx.showLoading({ title: "正在复制", mask: true });
+    let result;
+    try {
+      result = await bookService.copyDishes(bookService.currentId(), target._id, [this.dishId]);
+    } catch (err) {
+      wx.hideLoading();
+      ui.alert("没复制成", ui.errorText(err));
+      return;
+    }
+    wx.hideLoading();
+    if (result.copied) ui.toast(`复制到「${target.name}」了`);
+    else ui.alert("没有复制", `「${target.name}」里已经有「${dish.name}」了`);
+  },
+
+  // 右上角「...」→ 转发：把这道菜发给家人（体验版只有体验成员能打开；对方点开时切到这本）
   onShareAppMessage() {
     const dish = this.data.dish;
     return {
       title: dish ? `${dish.name}｜拿手菜小本本` : "拿手菜小本本",
-      path: `/pages/dish-detail/index?id=${this.dishId}`,
+      path: `/pages/dish-detail/index?id=${this.dishId}&book=${bookService.currentId()}`,
     };
   },
 });

@@ -37,7 +37,7 @@
 <view wx:if="{{stage === 'empty'}}" class="empty">
   <image class="empty-img" src="/images/basket-big.png" />
   <view class="empty-title">菜篮还是空的</view>
-  <view class="empty-desc">去菜单里挑几道想做的菜，两个人点的都会放进来</view>
+  <view class="empty-desc">{{shared ? '去菜单里挑几道想做的菜，家人点的也会放进来' : '去菜单里挑几道想做的菜'}}</view>
   <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
 </view>
 
@@ -154,7 +154,7 @@
       <view class="shop-copy hit" bindtap="onCopyList"><image class="ic sm" src="/images/icons/copy-gray.png" />复制</view>
     </view>
     <block wx:if="{{stage === 'ordered' || showShopping || !items.length}}">
-      <view class="shopping-hint">按菜谱用量 × 份数算好了，家里有的不用买。买到一样点一下，两个人都能看到；点「复制」可以发到微信里</view>
+      <view class="shopping-hint">按菜谱用量 × 份数算好了，家里有的不用买。买到一样点一下{{shared ? '，家人也能看到' : ''}}；点「复制」可以发到微信里</view>
 
       <view wx:if="{{shopping.buy.length}}" class="shop-group">
         <view class="shop-label">要买的</view>

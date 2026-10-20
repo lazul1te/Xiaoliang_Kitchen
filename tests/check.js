@@ -200,6 +200,7 @@ function serverCollection(name) {
 // ---------------- 假的 wx、Page、App ----------------
 const calls = [];
 const modalAnswers = []; // 依次弹出的 showModal 怎么回答：{ confirm, content }
+const sheetAnswers = []; // 依次弹出的 showActionSheet 点第几个（没有就是取消）
 let chooseCount = 0;
 let chooseMediaFail = null;
 let pageStack = [];
@@ -272,6 +273,11 @@ global.wx = {
     const res = { confirm: !!answer.confirm, cancel: !answer.confirm, content: answer.content || "" };
     if (o.success) o.success(res);
     if (o.complete) o.complete(res);
+  },
+  showActionSheet: (o) => {
+    calls.push(["actionSheet", o.itemList]);
+    if (sheetAnswers.length) o.success({ tapIndex: sheetAnswers.shift() });
+    else o.fail({ errMsg: "showActionSheet:fail cancel" });
   },
   chooseMedia: (o) => {
     if (chooseMediaFail) {
@@ -2338,7 +2344,7 @@ async function smoke() {
   assert.deepStrictEqual(lastCall("canvasImage").slice(2, 3), [720], "图片放大 2 倍，看着清楚");
   // 发给对方：小程序卡片，标题写着吃什么，封面是点菜单
   const share = basketO2.onShareAppMessage({ from: "button" });
-  assert.strictEqual(share.path, "/pages/today/index");
+  assert.strictEqual(share.path, `/pages/today/index?book=${testBookId}`, "对方点开时切到这本");
   assert.ok(/^今晚吃这些：.+等 4 道菜$/.test(share.title), share.title);
   assert.ok(share.imageUrl && files[share.imageUrl].includes("点菜单 No.001 · 晚饭"), "卡片封面先画好了");
   // 撤单：点的菜还在；再下单，编号接着往下数
@@ -2828,6 +2834,80 @@ async function smoke() {
   assert.deepStrictEqual(lastCall("modal").slice(1), ["这本没有了", "「周末小厨房」已经删掉了，你的申请也没有了"]);
   assert.deepStrictEqual(svc("book").pending(), []);
   ok("成员：本主能移出别人（TA 正开着就回到个人本本）；退出不用谁同意，本主退出了最早加入的接着当；最后一个人退出，这本连同照片删掉，申请的人收到通知");
+
+  // ======== 一道菜复制到另一本；点家人发来的卡片，切到那本；个人本本里不说「两个人」「对方」 ========
+  launchApp("me");
+  svc("book").switchTo(testBookId);
+  const famDish = cloudDB.dishes.find((d) => d.bookId === testBookId && d.name === "莴笋炒肉");
+  const detailC = newPage("pages/dish-detail/index");
+  detailC.onLoad({ id: famDish._id });
+  await flush();
+  assert.strictEqual(detailC.data.canCopy, true, "还有别的本，能复制过去");
+  // 只有一本可以去：问一下就复制；那本里没有「家常菜」分类，自动建一个
+  await detailC.onCopyToBook();
+  assert.strictEqual(lastCall("modal")[1], "复制到「我的小本本」？");
+  const copiedLettuce = cloudDB.dishes.find((d) => d.bookId === myBookId && d.name === "莴笋炒肉");
+  assert.ok(copiedLettuce && copiedLettuce._id !== famDish._id, "复制了一份到个人本本");
+  assert.strictEqual(cloudDB.categories.find((c) => c._id === copiedLettuce.categoryId).bookId, myBookId);
+  assert.ok(copiedLettuce.cover && copiedLettuce.cover.includes(`/books/${myBookId}/covers/`) && copiedLettuce.cover !== famDish.cover, "照片也复制了一份");
+  assert.deepStrictEqual(lastCall("toast"), ["toast", "复制到「我的小本本」了"]);
+  // 再复制一次：那本里已经有了
+  await detailC.onCopyToBook();
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["没有复制", "「我的小本本」里已经有「莴笋炒肉」了"]);
+  // 好几本可以去：选一本（取消就不复制）
+  const extraBook = await svc("book").create("爸妈家", "小亮");
+  svc("book").switchTo(testBookId);
+  const detailC2 = newPage("pages/dish-detail/index");
+  detailC2.onLoad({ id: famDish._id });
+  await flush();
+  const dishCountBefore = cloudDB.dishes.length;
+  await detailC2.onCopyToBook();
+  assert.deepStrictEqual(lastCall("actionSheet")[1], ["我的小本本", "爸妈家"]);
+  assert.strictEqual(cloudDB.dishes.length, dishCountBefore, "取消了就不复制");
+  sheetAnswers.push(1);
+  await detailC2.onCopyToBook();
+  assert.ok(cloudDB.dishes.some((d) => d.bookId === extraBook && d.name === "莴笋炒肉"));
+  // 转发这道菜：带上是哪本；家人点开时，先切到那本再显示
+  const dishShare = detailC2.onShareAppMessage();
+  assert.strictEqual(dishShare.path, `/pages/dish-detail/index?id=${famDish._id}&book=${testBookId}`);
+  launchApp("partner");
+  svc("book").switchTo(svc("book").personalId() || cloudDB.users.find((u) => u._id === "partner").personalBookId);
+  await flush();
+  const herDetail = newPage("pages/dish-detail/index");
+  herDetail.onLoad({ id: famDish._id, book: testBookId });
+  await flush();
+  assert.deepStrictEqual([svc("book").currentId(), herDetail.data.dish && herDetail.data.dish.name], [testBookId, "莴笋炒肉"], "点卡片打开，切到了那本");
+  // 不在那本里：不切，显示找不到
+  launchApp("third");
+  await svc("book").ready();
+  const thirdBefore = svc("book").currentId();
+  const thirdDetail = newPage("pages/dish-detail/index");
+  thirdDetail.onLoad({ id: famDish._id, book: testBookId });
+  await flush();
+  assert.deepStrictEqual([svc("book").currentId(), thirdDetail.data.notFound], [thirdBefore, true]);
+  // 个人本本里的说法：不说「两个人」「对方」
+  launchApp("me");
+  svc("book").switchTo(myBookId);
+  const myBasket = newPage("pages/today/index");
+  myBasket.onLoad({});
+  myBasket.onShow();
+  await flush();
+  assert.strictEqual(myBasket.data.shared, false);
+  assert.deepStrictEqual(classOf("pages/today/index", "empty-desc", {}), ["empty-desc"]);
+  const todayWxml = fs.readFileSync(path.join(root, "pages/today/index.wxml"), "utf8");
+  assert.ok(!/两个人|对方/.test(todayWxml), "菜篮页上的说法跟着本本变");
+  modalAnswers.push({ confirm: false });
+  await myBasket.onClear();
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["清空菜篮？", "点的菜、点菜单和买菜清单都会清空。库存不受影响。"]);
+  const myEdit = newPage("pages/dish-edit/index");
+  await myEdit.onLoad({ id: copiedLettuce._id });
+  modalAnswers.push({ confirm: false });
+  await myEdit.onDelete();
+  assert.strictEqual(lastCall("modal")[2], "删除后照片也会一起删掉，找不回来。");
+  const myMine = newPage("pages/mine/index");
+  await myMine.refresh();
+  assert.deepStrictEqual([myMine.data.footerText, myMine.data.book.family], ["「我的小本本」只有你能看", false]);
+  ok("一道菜复制到另一本（照片、分类一起；已经有了不重复）；点家人发来的卡片会切到那本；个人本本里的说法不说「两个人」「对方」");
 
   // ======== 旧数据变成家庭本本：以前大家共用一份数据（记录上没有 bookId），新版本第一次打开时自动变成「我们家的小本本」 ========
   Object.keys(cloudDB).forEach((k) => delete cloudDB[k]);

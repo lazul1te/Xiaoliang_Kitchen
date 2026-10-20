@@ -25,6 +25,7 @@ function normalize(v) {
 let currentId = storage.get(CURRENT_KEY) || "";
 let info = normalize(storage.get(INFO_KEY)); // { me, books, pending }：上次从云上拿到的
 let booting = null;
+let chosen = false; // 这次打开以后自己切过本本：云函数说的「这次进哪本」就不用了
 let refreshing = null;
 let lastRefreshAt = 0;
 let version = 0;
@@ -101,7 +102,7 @@ function ready() {
         apply(res);
         if (res.welcome) welcome = res.welcome;
         OLD_KEYS.forEach((key) => storage.remove(key));
-        setCurrent(res.openBookId);
+        if (!chosen || !info.books.some((b) => b._id === currentId)) setCurrent(res.openBookId);
       },
       (err) => {
         booting = null; // 下次再试
@@ -130,6 +131,7 @@ function cacheKey(base, bookId) {
 // 切到另一本：先换成手机上存着的那本，再记到云上（下次打开默认进它）
 function switchTo(id) {
   if (!id || id === currentId) return;
+  chosen = true;
   setCurrent(id);
   api.call("switchBook", { bookId: id }).catch(() => {});
 }

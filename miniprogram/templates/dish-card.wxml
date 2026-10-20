@@ -4,7 +4,7 @@
     <template is="dishCard" data="{{dish: item, basket: basket, broken: broken}}" />
   dish 是 utils/dish.js 里 toCard() 的结果，basket 是菜篮 { 菜品id: 份数 }，
   broken 是加载失败的照片 { 照片地址: true }，显示占位图（换了新照片会重新加载）。
-  照片用 cloud-image 组件显示（components/cloud-image），对方传的照片也看得到。
+  照片用 cloud-image 组件显示（components/cloud-image），家人传的照片也看得到。
   点击事件 onOpenDish / onPlus / onMinus / onCoverError 由使用它的页面提供；样式在 app.wxss。
 -->
 <template name="dishCard">

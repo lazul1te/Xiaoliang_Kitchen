@@ -1,5 +1,6 @@
 // 新增 / 编辑菜品：成品照、基本信息、标签、原料（主料/辅料/调料）、分步做法（可配图、可设计时）、小贴士
 const dishService = require("../../services/dish");
+const bookService = require("../../services/book");
 const categoryService = require("../../services/category");
 const imageService = require("../../services/image");
 const wishService = require("../../services/wish");
@@ -427,7 +428,9 @@ Page({
     if (dish === "CONFLICT") {
       const ok = await ui.confirm({
         title: "这道菜刚被改过",
-        content: "可能是对方刚刚也改了这道菜。要用你现在填的内容覆盖吗？",
+        content: bookService.isShared()
+          ? "可能是家人刚刚也改了这道菜。要用你现在填的内容覆盖吗？"
+          : "可能在另一台手机上改过这道菜。要用你现在填的内容覆盖吗？",
         confirmText: "覆盖",
         danger: true,
       });
@@ -444,7 +447,7 @@ Page({
     });
   },
 
-  // 提交到云上：成功返回菜品；对方刚改过返回 "CONFLICT"；其他失败弹窗说明，返回 null
+  // 提交到云上：成功返回菜品；别人刚改过返回 "CONFLICT"；其他失败弹窗说明，返回 null
   async submit(options) {
     wx.showLoading({ title: "保存中", mask: true });
     try {
@@ -462,7 +465,7 @@ Page({
   async onDelete() {
     const ok = await ui.confirm({
       title: `删除「${this.data.form.name}」？`,
-      content: "删除后两个人的菜单里都没有了，照片也会一起删掉，找不回来。",
+      content: bookService.isShared() ? "删除后这本里大家的菜单里都没有了，照片也会一起删掉，找不回来。" : "删除后照片也会一起删掉，找不回来。",
       confirmText: "删除",
       danger: true,
     });
