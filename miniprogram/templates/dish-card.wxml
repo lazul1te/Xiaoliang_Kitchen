@@ -8,7 +8,7 @@
   点击事件 onOpenDish / onPlus / onMinus / onCoverError 由使用它的页面提供；样式在 app.wxss。
 -->
 <template name="dishCard">
-  <view class="dish-card {{basket[dish._id] > 0 ? 'picked' : ''}}" data-id="{{dish._id}}" bindtap="onOpenDish">
+  <view class="dish-card {{basket[dish._id] > 0 ? 'picked' : ''}}" data-id="{{dish._id}}" bindtap="onOpenDish" hover-class="tap-card" hover-stay-time="100">
     <cloud-image wx:if="{{dish.cover && !broken[dish.cover]}}" class="cover" src="{{dish.cover}}" mode="aspectFill"
            data-src="{{dish.cover}}" binderror="onCoverError" />
     <view wx:else class="cover cover-placeholder">{{dish.initial}}</view>
@@ -20,10 +20,10 @@
         <text class="dish-cook">{{dish.cookText}}</text>
         <view class="stepper">
           <block wx:if="{{basket[dish._id] > 0}}">
-            <view class="stepper-btn minus" data-id="{{dish._id}}" catchtap="onMinus">−</view>
+            <view class="stepper-btn minus" data-id="{{dish._id}}" catchtap="onMinus" hover-class="tap" hover-stay-time="100" hover-stop-propagation>−</view>
             <text class="stepper-num">{{basket[dish._id]}}</text>
           </block>
-          <view class="stepper-btn plus" data-id="{{dish._id}}" catchtap="onPlus">+</view>
+          <view class="stepper-btn plus" data-id="{{dish._id}}" catchtap="onPlus" hover-class="tap" hover-stay-time="100" hover-stop-propagation>+</view>
         </view>
       </view>
     </view>

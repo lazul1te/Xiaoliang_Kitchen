@@ -67,16 +67,31 @@
 }
 
 
+/* 新菜：圆形的黄底 +（两根短横竖画出来，比字符「＋」居中） */
 .add-btn {
+  position: relative;
   flex-shrink: 0;
+  width: 72rpx;
   height: 72rpx;
   margin-left: 16rpx;
-  padding: 0 26rpx;
-  border-radius: 36rpx;
+  border-radius: 50%;
   background: var(--yolk);
-  font-size: 26rpx;
-  font-weight: 600;
-  line-height: 72rpx;
+}
+
+.add-btn::before,
+.add-btn::after {
+  content: "";
+  position: absolute;
+  top: 34rpx;
+  left: 22rpx;
+  width: 28rpx;
+  height: 5rpx;
+  border-radius: 3rpx;
+  background: var(--pan);
+}
+
+.add-btn::after {
+  transform: rotate(90deg);
 }
 
 /* ---------- 搜索结果 ---------- */
@@ -279,6 +294,33 @@
   opacity: 1;
 }
 
+/* 加了一份：菜篮弹一下。bump1 / bump2 轮流换，连着点也每次都弹 */
+.basket-icon.bump1 {
+  animation: basket-bump-1 0.36s ease-out;
+}
+
+.basket-icon.bump2 {
+  animation: basket-bump-2 0.36s ease-out;
+}
+
+@keyframes basket-bump-1 {
+  35% {
+    transform: translateY(-10rpx) scale(1.18);
+  }
+  70% {
+    transform: translateY(0) scale(0.94);
+  }
+}
+
+@keyframes basket-bump-2 {
+  35% {
+    transform: translateY(-10rpx) scale(1.18);
+  }
+  70% {
+    transform: translateY(0) scale(0.94);
+  }
+}
+
 .basket-num {
   position: absolute;
   top: -12rpx;
@@ -302,14 +344,7 @@
 }
 
 .basket-go {
-  height: 80rpx;
   padding: 0 44rpx;
-  border-radius: 40rpx;
-  background: var(--yolk);
-  color: var(--pan);
-  font-size: 28rpx;
-  font-weight: 600;
-  line-height: 80rpx;
 }
 
 .basket-go.disabled {

@@ -7,12 +7,12 @@
   <view class="field-label">我在这本里叫</view>
   <input class="field-input" value="{{myName}}" maxlength="10" placeholder="写个名字，家人认得出来" bindinput="onMyNameInput" />
 
-  <view wx:if="{{personalCount}}" class="copy-row" bindtap="onToggleCopy">
+  <view wx:if="{{personalCount}}" class="copy-row" bindtap="onToggleCopy" hover-class="tap-row" hover-stay-time="100">
     <view class="check {{copy ? 'on' : ''}}">{{copy ? '✓' : ''}}</view>
     <text>把「我的小本本」里的 {{personalCount}} 道菜复制一份过去</text>
   </view>
   <view wx:if="{{copy}}" class="hint copy-hint">分类按名字对上，照片也一起复制；做菜记录不复制。</view>
 
   <view wx:if="{{full}}" class="full">已经加了 5 本家庭本本，先在「小本本设置」里退出一本再建</view>
-  <view class="btn-primary new-btn {{busy || full ? 'busy' : ''}}" bindtap="onCreate">建好了</view>
+  <view class="btn-primary new-btn {{busy || full ? 'busy' : ''}}" bindtap="onCreate" hover-class="tap" hover-stay-time="100">建好了</view>
 </view>

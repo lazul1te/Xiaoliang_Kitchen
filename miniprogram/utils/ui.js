@@ -95,4 +95,9 @@ function photoHint() {
   toast("有照片加载不出来，去「我的」底部点「检查一下云开发」");
 }
 
-module.exports = { toast, alert, confirm, prompt, actionSheet, apiFail, errorText, showError, photoHint };
+// 手机轻轻震一下：加菜、下单、开饭这些「成了」的时候。type：light（默认）/ medium / heavy，老版本微信不认 type 就是普通的短震
+function buzz(type) {
+  if (wx.vibrateShort) wx.vibrateShort({ type: type || "light", fail() {} });
+}
+
+module.exports = { toast, alert, confirm, prompt, actionSheet, apiFail, errorText, showError, photoHint, buzz };

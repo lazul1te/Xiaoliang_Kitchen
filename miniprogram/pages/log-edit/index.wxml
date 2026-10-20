@@ -1,20 +1,20 @@
 <view wx:if="{{form}}" class="log-edit">
   <!-- 成品照：点一下拍照或从相册选 -->
-  <view class="photo-box" bindtap="onChoosePhoto">
+  <view class="photo-box" bindtap="onChoosePhoto" hover-class="tap-card" hover-stay-time="100">
     <cloud-image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
     <view wx:else class="photo-empty">
       <image class="ic xl" src="/images/icons/camera-wood.png" />
       <text>拍一张成品照</text>
     </view>
     <view wx:if="{{form.photo}}" class="photo-actions">
-      <text class="photo-btn">换一张</text>
-      <text class="photo-btn" catchtap="onRemovePhoto">删除</text>
+      <view class="photo-btn">换一张</view>
+      <view class="photo-btn" catchtap="onRemovePhoto" hover-class="tap" hover-stay-time="100" hover-stop-propagation>删除</view>
     </view>
   </view>
 
   <view class="card">
     <!-- 选菜：弹出可以搜索、按分类排好的面板（菜多了比滚轮好找） -->
-    <view wx:if="{{!dishLocked}}" class="field" bindtap="onOpenDishPicker">
+    <view wx:if="{{!dishLocked}}" class="field" bindtap="onOpenDishPicker" hover-class="tap-row" hover-stay-time="100">
       <text class="label">做的菜</text>
       <text class="value {{dishName ? '' : 'placeholder'}}">{{dishName || '选一道菜'}}</text>
       <text class="arrow">›</text>
@@ -27,8 +27,8 @@
     <view class="field field-wrap">
       <text class="label">哪天做的</text>
       <view class="chips">
-        <view class="chip {{form.date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onQuickDate">今天</view>
-        <view class="chip {{form.date === yesterday ? 'on' : ''}}" data-date="{{yesterday}}" bindtap="onQuickDate">昨天</view>
+        <view class="chip {{form.date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onQuickDate" hover-class="tap" hover-stay-time="100">今天</view>
+        <view class="chip {{form.date === yesterday ? 'on' : ''}}" data-date="{{yesterday}}" bindtap="onQuickDate" hover-class="tap" hover-stay-time="100">昨天</view>
         <picker mode="date" value="{{form.date}}" end="{{today}}" bindchange="onDateChange">
           <view class="chip {{form.date !== today && form.date !== yesterday ? 'on' : ''}}">{{form.date !== today && form.date !== yesterday ? form.date : '其他日子'}}</view>
         </picker>
@@ -50,7 +50,7 @@
                data-field="cook" bindinput="onInput" />
         <view wx:if="{{cookNames.length}}" class="chips">
           <view wx:for="{{cookNames}}" wx:key="*this" class="chip {{form.cook === item ? 'on' : ''}}"
-                data-name="{{item}}" bindtap="onPickCook">{{item}}</view>
+                data-name="{{item}}" bindtap="onPickCook" hover-class="tap" hover-stay-time="100">{{item}}</view>
         </view>
       </view>
     </view>
@@ -63,11 +63,11 @@
   </view>
 
   <view wx:if="{{showCoverOption || showPlanOption}}" class="card">
-    <view wx:if="{{showCoverOption}}" class="option" bindtap="onToggleCover">
+    <view wx:if="{{showCoverOption}}" class="option" bindtap="onToggleCover" hover-class="tap-row" hover-stay-time="100">
       <view class="checkbox {{useAsCover ? 'on' : ''}}">{{useAsCover ? '✓' : ''}}</view>
       <text>用这张照片当这道菜的成品照</text>
     </view>
-    <view wx:if="{{showPlanOption}}" class="option" bindtap="onTogglePlan">
+    <view wx:if="{{showPlanOption}}" class="option" bindtap="onTogglePlan" hover-class="tap-row" hover-stay-time="100">
       <view class="checkbox {{removeFromPlan ? 'on' : ''}}">{{removeFromPlan ? '✓' : ''}}</view>
       <text>从菜篮里拿掉这道菜</text>
     </view>
@@ -76,8 +76,8 @@
 
 <!-- 底部保存栏 -->
 <view wx:if="{{form}}" class="save-bar">
-  <view wx:if="{{isEdit}}" class="delete-btn" bindtap="onDelete">删除</view>
-  <view class="btn-primary save-btn" bindtap="onSave">{{isEdit ? '保存' : '打卡'}}</view>
+  <view wx:if="{{isEdit}}" class="delete-btn" bindtap="onDelete" hover-class="tap" hover-stay-time="100">删除</view>
+  <view class="btn-primary save-btn" bindtap="onSave" hover-class="tap" hover-stay-time="100">{{isEdit ? '保存' : '打卡'}}</view>
 </view>
 
 <dish-picker show="{{showDishPicker}}" selected="{{form.dishId}}" bind:select="onDishPicked" bind:close="onCloseDishPicker" />

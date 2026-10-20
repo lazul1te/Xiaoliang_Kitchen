@@ -1,8 +1,18 @@
 <import src="/templates/meal-card.wxml" />
 
-<view wx:if="{{loaded}}" class="orders">
+<!-- 第一次读取：灰色占位 -->
+<view wx:if="{{!loaded}}" class="sk-page">
+  <view wx:for="{{[1, 2, 3]}}" wx:key="*this" class="sk-card">
+    <view class="sk sk-photo"></view>
+    <view class="sk sk-bar w60"></view>
+    <view class="sk sk-bar"></view>
+    <view class="sk sk-bar"></view>
+  </view>
+</view>
+
+<view wx:else class="orders">
   <!-- 正在进行的那一单 -->
-  <view wx:if="{{current}}" class="current" bindtap="onOpenCurrent">
+  <view wx:if="{{current}}" class="current" bindtap="onOpenCurrent" hover-class="tap-card" hover-stay-time="100">
     <view class="current-head">
       <text class="current-tag">进行中</text>
       <text class="current-no">{{current.noText}}</text>
@@ -16,10 +26,10 @@
   </view>
 
   <view wx:if="{{!count && !current}}" class="empty">
-    <view class="empty-emoji">🧾</view>
+    <image class="empty-img" src="/images/empty/receipt.png" />
     <view class="empty-title">还没有点菜单</view>
     <view class="empty-desc">点好菜去下单，开饭以后就记在这里</view>
-    <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
+    <view class="btn-primary" bindtap="onGoMenu" hover-class="tap" hover-stay-time="100">去点菜</view>
   </view>
 
   <!-- 开过饭的：新的在前，按月分组 -->
@@ -27,7 +37,7 @@
     <view class="month-title">{{month.title}} · {{month.cards.length}} 单</view>
     <view wx:for="{{month.cards}}" wx:key="_id" wx:for-item="card" class="order">
       <template is="mealCard" data="{{...card}}" />
-      <view class="order-day" data-date="{{card.date}}" bindtap="onOpenDay">在记录里看这一天 ›</view>
+      <view class="order-day" data-date="{{card.date}}" bindtap="onOpenDay" hover-class="tap" hover-stay-time="100">在记录里看这一天 ›</view>
     </view>
   </view>
 

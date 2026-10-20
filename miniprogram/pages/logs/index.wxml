@@ -2,7 +2,7 @@
 
 <!-- 一条做菜记录 -->
 <template name="logCard">
-  <view class="log-card" data-id="{{_id}}" bindtap="onOpenLog">
+  <view class="log-card" data-id="{{_id}}" bindtap="onOpenLog" hover-class="tap-card" hover-stay-time="100">
     <cloud-image wx:if="{{photo}}" class="log-photo" src="{{photo}}" mode="aspectFill" />
     <view wx:else class="log-photo log-photo-empty">{{initial}}</view>
     <view class="log-info">
@@ -17,26 +17,32 @@
 </template>
 
 <view wx:if="{{loaded}}" class="logs">
-  <!-- 做饭日历 -->
+  <!-- 做饭日历：默认收起，只显示一周；展开看整月，左右滑换月 -->
   <view class="card calendar">
     <view class="cal-head">
-      <text class="cal-arrow hit" bindtap="onPrevMonth">‹</text>
+      <view wx:if="{{calOpen}}" class="cal-arrow hit" bindtap="onPrevMonth" hover-class="tap" hover-stay-time="100">‹</view>
       <view class="cal-title">{{cal.title}}</view>
-      <text class="cal-arrow hit" bindtap="onNextMonth">›</text>
+      <view wx:if="{{calOpen}}" class="cal-arrow hit" bindtap="onNextMonth" hover-class="tap" hover-stay-time="100">›</view>
     </view>
     <view class="cal-summary">{{calSummary}}</view>
-    <view class="cal-row cal-week">
-      <text>一</text><text>二</text><text>三</text><text>四</text><text>五</text><text>六</text><text>日</text>
-    </view>
-    <view wx:for="{{cal.weeks}}" wx:key="key" wx:for-item="week" class="cal-row">
-      <view wx:for="{{week.days}}" wx:key="key" wx:for-item="d"
-            class="cal-day {{d.count ? 'cooked' : ''}} {{d.isToday ? 'today' : ''}} {{d.isFuture ? 'future' : ''}} {{d.date && d.date === selected ? 'selected' : ''}}"
-            data-date="{{d.date}}" data-count="{{d.count}}" data-future="{{d.isFuture}}" bindtap="onTapDay">
-        <text class="cal-num">{{d.day}}</text>
-        <text wx:if="{{d.count}}" class="cal-dot">{{d.count > 1 ? d.count + '道' : '●'}}</text>
+    <view class="cal-grid {{calAnim}}" bindtouchstart="onCalTouchStart" bindtouchend="onCalTouchEnd">
+      <view class="cal-row cal-week">
+        <text>一</text><text>二</text><text>三</text><text>四</text><text>五</text><text>六</text><text>日</text>
+      </view>
+      <view wx:for="{{weeks}}" wx:key="key" wx:for-item="week" class="cal-row">
+        <view wx:for="{{week.days}}" wx:key="key" wx:for-item="d"
+              class="cal-day {{d.count ? 'cooked' : ''}} {{d.isToday ? 'today' : ''}} {{d.isFuture ? 'future' : ''}} {{d.date && d.date === selected ? 'selected' : ''}}"
+              data-date="{{d.date}}" data-count="{{d.count}}" data-future="{{d.isFuture}}" bindtap="onTapDay" hover-class="tap" hover-stay-time="100">
+          <text class="cal-num">{{d.day}}</text>
+          <text wx:if="{{d.count}}" class="cal-dot">{{d.count > 1 ? d.count + '道' : '●'}}</text>
+        </view>
       </view>
     </view>
-    <view class="cal-stats">一共下厨 {{stats.total}} 次 · 做过 {{stats.dishCount}} 道不同的菜 · 点日子看那天</view>
+    <view wx:if="{{calOpen}}" class="cal-stats">一共下厨 {{stats.total}} 次 · 做过 {{stats.dishCount}} 道不同的菜 · 左右滑换月</view>
+    <view class="cal-toggle" bindtap="onToggleCalendar" hover-class="tap" hover-stay-time="100">
+      <text>{{calOpen ? '收起' : '展开整月'}}</text>
+      <view class="cal-caret {{calOpen ? 'up' : ''}}"></view>
+    </view>
   </view>
 
   <!-- 选中某一天 -->
@@ -45,7 +51,7 @@
       <text class="day-bar-title">{{dayTitle}}</text>
       <text class="day-bar-all" bindtap="onShowAll">看全部</text>
     </view>
-    <view class="add-log" data-date="{{selected}}" bindtap="onAddLog">＋ 这天再记一道</view>
+    <view class="add-log" data-date="{{selected}}" bindtap="onAddLog" hover-class="tap" hover-stay-time="100">＋ 这天再记一道</view>
     <block wx:for="{{dayEntries}}" wx:key="key" wx:for-item="entry">
       <template wx:if="{{entry.type === 'meal'}}" is="mealCard" data="{{...entry.meal}}" />
       <template wx:else is="logCard" data="{{...entry.log}}" />
@@ -54,9 +60,9 @@
 
   <!-- 全部记录 -->
   <block wx:else>
-    <view class="add-log" bindtap="onAddLog">＋ 记一笔</view>
+    <view class="add-log" bindtap="onAddLog" hover-class="tap" hover-stay-time="100">＋ 记一笔</view>
     <view wx:if="{{!months.length}}" class="empty small">
-      <view class="empty-emoji">📒</view>
+      <image class="empty-img" src="/images/empty/book.png" />
       <view class="empty-title">还没有做菜记录</view>
       <view class="empty-desc">在菜谱详情页点「开始做」，做完打个卡；以前做过的，点日历上那天补记</view>
     </view>
@@ -72,6 +78,19 @@
     </view>
     <view wx:if="{{months.length}}" class="list-end">— 下拉可以刷新 —</view>
   </block>
+</view>
+
+<!-- 第一次读取：灰色占位（日历 + 几条记录） -->
+<view wx:else class="sk-page">
+  <view class="sk-card">
+    <view class="sk sk-bar w30"></view>
+    <view class="sk sk-bar"></view>
+    <view class="sk sk-bar"></view>
+  </view>
+  <view wx:for="{{[1, 2, 3]}}" wx:key="*this" class="sk-card">
+    <view class="sk sk-bar w60"></view>
+    <view class="sk sk-bar"></view>
+  </view>
 </view>
 
 <!-- 画「分享这顿饭」图片用的画布，不显示出来 -->

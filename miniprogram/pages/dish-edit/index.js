@@ -5,6 +5,7 @@ const categoryService = require("../../services/category");
 const imageService = require("../../services/image");
 const wishService = require("../../services/wish");
 const ui = require("../../utils/ui");
+const { closeSheet } = require("../../utils/sheet");
 const { formatSeconds, splitAmount, parseDuration } = require("../../utils/dish");
 
 const STATUS_OPTIONS = [
@@ -130,6 +131,7 @@ Page({
     tagChips: [], // [{ name, on }]
     timerPresets: TIMER_PRESETS,
     timerStep: -1, // 正在给第几步选计时，-1 表示没打开
+    timerClosing: false, // 选计时的面板正在收起来（播动画）
     timerCurrent: 0,
   },
 
@@ -373,7 +375,7 @@ Page({
   },
 
   onCloseTimer() {
-    this.setData({ timerStep: -1 });
+    closeSheet(this, "timerClosing", () => this.setData({ timerStep: -1 }));
   },
 
   onPickTimer(e) {

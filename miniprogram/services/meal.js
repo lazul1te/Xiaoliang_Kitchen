@@ -12,6 +12,7 @@ const { normalizeMeal } = require("../utils/meal");
 
 const COLLECTION = "meals";
 let focusDate = ""; // 刚记好的那天，记录页打开时直接选中它
+let freshMealId = ""; // 刚记好的这一顿：记录页显示它时盖个「已开饭」的章
 
 async function listMeals() {
   await store.ensureLoaded();
@@ -97,6 +98,7 @@ async function finish(input) {
   logs.forEach((l) => store.putLog(l));
   planService.finishMeal(dishes.map((d) => d.dishId));
   focusDate = meal.date;
+  freshMealId = meal._id;
   return { meal, logs };
 }
 
@@ -140,4 +142,11 @@ function takeFocusDate() {
   return date;
 }
 
-module.exports = { listMeals, newMealId, finish, reorder, removeIfEmpty, setFocusDate, takeFocusDate };
+// 记录页：刚记好的那一顿（盖章用，只用一次）
+function takeFreshMeal() {
+  const id = freshMealId;
+  freshMealId = "";
+  return id;
+}
+
+module.exports = { listMeals, newMealId, finish, reorder, removeIfEmpty, setFocusDate, takeFocusDate, takeFreshMeal };

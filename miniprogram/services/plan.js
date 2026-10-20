@@ -169,6 +169,8 @@ function nextOrderNo() {
   return store.listMeals().reduce((max, m) => Math.max(max, m.no), 0) + 1;
 }
 
+let freshOrderNo = 0; // 刚在这台手机上下的单的编号（takeFreshOrder）
+
 // 下单：info 是 { date, meal, flavors, note, orderedBy, cook }。先同步一下菜篮和开过饭的记录，编号接着往下数
 async function placeOrder(info) {
   await Promise.all([doc.sync().catch(() => {}), store.ensureLoaded().then(() => store.sync()).catch(() => {})]); // 没网就按手机上的数
@@ -182,7 +184,15 @@ async function placeOrder(info) {
     },
     (_) => ({ order: _.set(order) })
   );
+  freshOrderNo = order.no;
   return clone(order);
+}
+
+// 刚在这台手机上下的单，「点菜单」页第一次显示它的时候盖章（动画）。问一次就没了
+function takeFreshOrder(no) {
+  const fresh = !!freshOrderNo && freshOrderNo === no;
+  if (fresh) freshOrderNo = 0;
+  return fresh;
 }
 
 // 改一改：改哪天、哪一顿、口味、备注、谁点的、谁掌勺。编号和下单时点的菜不变
@@ -198,8 +208,6 @@ function updateOrder(info) {
   );
   return clone(order);
 }
-
-
 
 // 开饭了：做了的菜从菜篮拿掉，点菜单收起来；没做的留在菜篮里下次做。
 // 菜篮空了，买菜清单的勾选也清掉，自己加的东西只留下还没买的
@@ -304,6 +312,7 @@ module.exports = {
   syncIfStale: doc.syncIfStale,
   getBasket,
   getCount,
+  takeFreshOrder,
   add,
   addMany,
   remove,

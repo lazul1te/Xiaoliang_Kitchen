@@ -1,14 +1,14 @@
 <view wx:if="{{form}}" class="edit">
   <!-- 成品照：点一下选照片 -->
-  <view class="cover-box" bindtap="onChooseCover">
+  <view class="cover-box" bindtap="onChooseCover" hover-class="tap-card" hover-stay-time="100">
     <cloud-image wx:if="{{form.cover}}" class="cover-img" src="{{form.cover}}" mode="aspectFill" />
     <view wx:else class="cover-empty">
       <image class="ic xl" src="/images/icons/camera-wood.png" />
       <text>添加成品照</text>
     </view>
     <view wx:if="{{form.cover}}" class="cover-actions">
-      <text class="cover-btn">换一张</text>
-      <text class="cover-btn" catchtap="onRemoveCover">删除</text>
+      <view class="cover-btn">换一张</view>
+      <view class="cover-btn" catchtap="onRemoveCover" hover-class="tap" hover-stay-time="100" hover-stop-propagation>删除</view>
     </view>
   </view>
 
@@ -23,15 +23,15 @@
       <text class="label">分类</text>
       <view class="chips">
         <view wx:for="{{categories}}" wx:key="_id" class="chip {{form.categoryId === item._id ? 'on' : ''}}"
-              data-id="{{item._id}}" bindtap="onCategoryTap">{{item.name}}</view>
-        <view class="chip add" bindtap="onNewCategory">＋ 新建</view>
+              data-id="{{item._id}}" bindtap="onCategoryTap" hover-class="tap" hover-stay-time="100">{{item.name}}</view>
+        <view class="chip add" bindtap="onNewCategory" hover-class="tap" hover-stay-time="100">＋ 新建</view>
       </view>
     </view>
     <view class="field">
       <text class="label">熟练度</text>
       <view class="chips">
         <view wx:for="{{statusOptions}}" wx:key="value" class="chip {{form.status === item.value ? 'on' : ''}}"
-              data-value="{{item.value}}" bindtap="onStatusTap">{{item.text}}</view>
+              data-value="{{item.value}}" bindtap="onStatusTap" hover-class="tap" hover-stay-time="100">{{item.text}}</view>
       </view>
     </view>
     <view class="field">
@@ -61,8 +61,8 @@
     <view class="card-title">标签</view>
     <view class="chips">
       <view wx:for="{{tagChips}}" wx:key="name" class="chip {{item.on ? 'on' : ''}}"
-            data-tag="{{item.name}}" bindtap="onTagTap">{{item.name}}</view>
-      <view class="chip add" bindtap="onAddTag">＋ 自定义</view>
+            data-tag="{{item.name}}" bindtap="onTagTap" hover-class="tap" hover-stay-time="100">{{item.name}}</view>
+      <view class="chip add" bindtap="onAddTag" hover-class="tap" hover-stay-time="100">＋ 自定义</view>
     </view>
   </view>
 
@@ -76,9 +76,9 @@
                data-g="{{g}}" data-i="{{index}}" data-field="name" bindinput="onIngInput" />
         <input class="ing-input ing-qty" value="{{item.qty}}" placeholder="用量，如 2个" maxlength="12"
                data-g="{{g}}" data-i="{{index}}" data-field="qty" bindinput="onIngInput" />
-        <view class="row-remove" data-g="{{g}}" data-i="{{index}}" bindtap="onRemoveIng">×</view>
+        <view class="row-remove" data-g="{{g}}" data-i="{{index}}" bindtap="onRemoveIng" hover-class="tap" hover-stay-time="100">×</view>
       </view>
-      <view class="row-add" data-g="{{g}}" bindtap="onAddIng">＋ 添加{{group.label}}</view>
+      <view class="row-add" data-g="{{g}}" bindtap="onAddIng" hover-class="tap" hover-stay-time="100">＋ 添加{{group.label}}</view>
     </view>
     <view class="hint">用量写「2个」「300克」「1/2小勺」「适量」都行；名称空着的行保存时会自动去掉</view>
   </view>
@@ -90,13 +90,13 @@
       <view class="step-head">
         <view class="step-no">{{index + 1}}</view>
         <view class="step-tools">
-          <view wx:if="{{index > 0}}" class="tool hit" data-i="{{index}}" data-dir="{{-1}}" bindtap="onMoveStep">
+          <view wx:if="{{index > 0}}" class="tool hit" data-i="{{index}}" data-dir="{{-1}}" bindtap="onMoveStep" hover-class="tap" hover-stay-time="100">
             <image class="tool-icon" src="/images/icons/up-gray.png" />
           </view>
-          <view wx:if="{{index !== form.steps.length - 1}}" class="tool hit" data-i="{{index}}" data-dir="{{1}}" bindtap="onMoveStep">
+          <view wx:if="{{index !== form.steps.length - 1}}" class="tool hit" data-i="{{index}}" data-dir="{{1}}" bindtap="onMoveStep" hover-class="tap" hover-stay-time="100">
             <image class="tool-icon" src="/images/icons/down-gray.png" />
           </view>
-          <view class="tool hit" data-i="{{index}}" bindtap="onRemoveStep">
+          <view class="tool hit" data-i="{{index}}" bindtap="onRemoveStep" hover-class="tap" hover-stay-time="100">
             <image class="tool-icon" src="/images/icons/trash-red.png" />
           </view>
         </view>
@@ -105,19 +105,19 @@
                 auto-height maxlength="-1" cursor-spacing="80" data-i="{{index}}" bindinput="onStepInput" />
       <view wx:if="{{item.image}}" class="step-img-box">
         <cloud-image class="step-img" src="{{item.image}}" mode="aspectFill" />
-        <view class="img-remove" data-i="{{index}}" bindtap="onRemoveStepImage">×</view>
+        <view class="img-remove" data-i="{{index}}" bindtap="onRemoveStepImage" hover-class="tap" hover-stay-time="100">×</view>
       </view>
       <view class="step-extra">
-        <view wx:if="{{!item.image}}" class="extra-btn" data-i="{{index}}" bindtap="onStepImage">
+        <view wx:if="{{!item.image}}" class="pill extra-btn" data-i="{{index}}" bindtap="onStepImage" hover-class="tap" hover-stay-time="100">
           <image class="ic sm" src="/images/icons/camera-gray.png" />加照片
         </view>
-        <view class="extra-btn {{item.timer ? 'on' : ''}}" data-i="{{index}}" bindtap="onOpenTimer">
+        <view class="pill extra-btn {{item.timer ? 'on' : ''}}" data-i="{{index}}" bindtap="onOpenTimer" hover-class="tap" hover-stay-time="100">
           <image class="ic sm" src="/images/icons/timer-wood.png" />{{item.timerText || '加计时'}}
         </view>
         <text wx:if="{{item.timer}}" class="extra-clear" data-i="{{index}}" bindtap="onClearTimer">不计时</text>
       </view>
     </view>
-    <view class="row-add" bindtap="onAddStep">＋ 添加步骤</view>
+    <view class="row-add" bindtap="onAddStep" hover-class="tap" hover-stay-time="100">＋ 添加步骤</view>
   </view>
 
   <!-- 小贴士 -->
@@ -130,22 +130,22 @@
 
 <!-- 底部保存栏 -->
 <view wx:if="{{form}}" class="save-bar">
-  <view wx:if="{{isEdit}}" class="delete-btn" bindtap="onDelete">删除</view>
-  <view class="btn-primary save-btn" bindtap="onSave">保存</view>
+  <view wx:if="{{isEdit}}" class="delete-btn" bindtap="onDelete" hover-class="tap" hover-stay-time="100">删除</view>
+  <view class="btn-primary save-btn" bindtap="onSave" hover-class="tap" hover-stay-time="100">保存</view>
 </view>
 
 <!-- 计时：常用时长点一下，别的时长自己写 -->
-<view wx:if="{{timerStep >= 0}}" class="sheet-mask" bindtap="onCloseTimer">
+<view wx:if="{{timerStep >= 0}}" class="sheet-mask {{timerClosing ? 'closing' : ''}}" bindtap="onCloseTimer">
   <view class="sheet" catchtap="noop">
     <view class="sheet-title">第 {{timerStep + 1}} 步计时多久</view>
     <view class="chips">
       <view wx:for="{{timerPresets}}" wx:key="value" class="chip {{timerCurrent === item.value ? 'on' : ''}}"
-            data-value="{{item.value}}" bindtap="onPickTimer">{{item.text}}</view>
-      <view class="chip add" bindtap="onCustomTimer">自定义…</view>
+            data-value="{{item.value}}" bindtap="onPickTimer" hover-class="tap" hover-stay-time="100">{{item.text}}</view>
+      <view class="chip add" bindtap="onCustomTimer" hover-class="tap" hover-stay-time="100">自定义…</view>
     </view>
     <view class="sheet-foot">
-      <view class="sheet-btn" bindtap="onNoTimer">不计时</view>
-      <view class="sheet-btn" bindtap="onCloseTimer">取消</view>
+      <view class="btn-mid sheet-btn" bindtap="onNoTimer" hover-class="tap" hover-stay-time="100">不计时</view>
+      <view class="btn-mid sheet-btn" bindtap="onCloseTimer" hover-class="tap" hover-stay-time="100">取消</view>
     </view>
   </view>
 </view>

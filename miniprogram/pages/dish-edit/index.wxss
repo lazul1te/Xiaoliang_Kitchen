@@ -279,11 +279,6 @@
   display: flex;
   align-items: center;
   margin-right: 16rpx;
-  padding: 6rpx 20rpx;
-  border: 2rpx solid var(--line);
-  border-radius: 24rpx;
-  font-size: 24rpx;
-  color: var(--text-2);
 }
 
 .extra-btn.on {

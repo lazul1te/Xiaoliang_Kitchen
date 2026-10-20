@@ -1,4 +1,5 @@
 // 记录：上面是做饭日历（哪天做了几道菜一眼就能看到），下面是做菜记录。
+// 日历默认收起，只显示一周；点「展开整月」看整月，展开时左右滑换月。
 // 点日历上的某一天，只看那天的记录；点没做饭的日子可以补记一条。
 // 开饭时一起记的菜合成一张「一顿饭」的卡片：整桌照片、每道菜的分数，可以再来一单、分享这顿饭
 const dishService = require("../../services/dish");
@@ -12,9 +13,15 @@ const ticketUtil = require("../../utils/ticket");
 const { groupByMonth, logStats, buildMonth, dateValue, dayText, toLogCard, timeOf } = require("../../utils/log");
 const { entriesOf, mealTicket } = require("../../utils/meal");
 
+const SWIPE_PX = 50; // 日历上横着滑这么远才算换月
+const STAMP_HIT_MS = 650; // 「已开饭」的章落下来的那一下（app.wxss 的 .meal-stamp：0.3 秒后开始、0.5 秒的 70%）
+
 Page({
   data: {
     cal: null, // { title, weeks, monthCount, dishCount, topDishId, topCount }
+    calOpen: false, // 日历展开了没有：收起时只显示一周
+    weeks: [], // 日历上显示的几周：展开是整月，收起是选中的那天（没选就是今天）那一周
+    calAnim: "", // 换月、展开时日历的动画
     calSummary: "", // 本月小结：下厨几次、几道菜、最常做哪道
     selected: "", // 选中的日期 "2026-10-02"，空表示看全部
     dayTitle: "",
@@ -34,7 +41,12 @@ Page({
   onShow() {
     planService.updateBadge();
     bookService.updateDot();
-    // 刚开完饭：直接看那一天
+    // 刚开完饭：直接看那一天，给这一顿盖个「已开饭」的章
+    const fresh = mealService.takeFreshMeal();
+    if (fresh) {
+      this.freshMeal = fresh;
+      setTimeout(() => ui.buzz("medium"), STAMP_HIT_MS);
+    }
     const focus = mealService.takeFocusDate();
     if (focus) {
       const d = new Date(timeOf(focus));
@@ -47,6 +59,10 @@ Page({
     dishService.refreshIfStale().then((changed) => {
       if (changed) this.refresh();
     });
+  },
+
+  onHide() {
+    this.freshMeal = ""; // 章只盖这一回
   },
 
   async onPullDownRefresh() {
@@ -94,18 +110,42 @@ Page({
     const cal = buildMonth(this.calYear, this.calMonth, this.logs);
     const top = cal.topDishId ? this.names[cal.topDishId] : "";
     const cards = dayLogs.map((l) => toLogCard(l, this.names, this.meals));
+    const dayEntries = entriesOf(cards, this.meals);
+    dayEntries.forEach((entry) => {
+      if (entry.type === "meal" && entry.meal._id === this.freshMeal) entry.meal.fresh = true;
+    });
     this.setData({
       cal,
+      weeks: this.data.calOpen ? cal.weeks : [cal.weeks[this.focusWeek(cal)]],
       calSummary: cal.monthCount
         ? `这个月下厨 ${cal.monthCount} 次 · 做了 ${cal.dishCount} 道菜` + (top ? ` · 最常做「${top}」` : "")
         : "这个月还没下厨",
       dayLogs: cards,
-      dayEntries: entriesOf(cards, this.meals),
+      dayEntries,
       dayTitle: selected ? `${dayText(timeOf(selected))} · 做了 ${dayLogs.length} 道菜` : "",
     });
   },
 
+  // 收起时显示哪一周：选中的那天所在的那周，没选就是今天那周（都不在这个月就显示第一周）
+  focusWeek(cal) {
+    const focus = this.data.selected || dateValue(Date.now());
+    const i = cal.weeks.findIndex((w) => w.days.some((d) => d.date === focus));
+    return i >= 0 ? i : 0;
+  },
+
   // ---------- 日历 ----------
+
+  // 展开整月 / 收起成一周。收起时回到选中的那天（没选就是今天）所在的月份
+  onToggleCalendar() {
+    const calOpen = !this.data.calOpen;
+    if (!calOpen) {
+      const d = new Date(timeOf(this.data.selected || dateValue(Date.now())));
+      this.calYear = d.getFullYear();
+      this.calMonth = d.getMonth();
+    }
+    this.setData({ calOpen, calAnim: calOpen ? "unfold" : "" });
+    this.renderCalendar();
+  },
 
   onPrevMonth() {
     this.moveMonth(-1);
@@ -119,8 +159,27 @@ Page({
     const d = new Date(this.calYear, this.calMonth + delta, 1);
     this.calYear = d.getFullYear();
     this.calMonth = d.getMonth();
-    this.setData({ selected: "" });
+    // 新的一个月从右边（下个月）或者左边（上个月）滑进来；1、2 轮流换，连着换月也每次都有动画
+    this.flip = !this.flip;
+    this.setData({ selected: "", calAnim: (delta > 0 ? "next" : "prev") + (this.flip ? "1" : "2") });
     this.renderCalendar();
+  },
+
+  onCalTouchStart(e) {
+    const t = e.touches[0];
+    this.touchStart = { x: t.clientX, y: t.clientY };
+  },
+
+  // 展开时左右滑换月：往左滑看下个月，往右滑看上个月（斜着滑、滑得短都不算）
+  onCalTouchEnd(e) {
+    const start = this.touchStart;
+    this.touchStart = null;
+    if (!start || !this.data.calOpen) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    this.moveMonth(dx < 0 ? 1 : -1);
   },
 
   async onTapDay(e) {

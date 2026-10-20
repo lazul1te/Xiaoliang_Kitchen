@@ -1,31 +1,31 @@
 <view class="mine">
   <!-- 正在用的小本本：点名字切换 -->
   <view wx:if="{{book}}" class="card book-card">
-    <view class="bc-top" bindtap="onOpenBooks">
+    <view class="bc-top" bindtap="onOpenBooks" hover-class="tap-row" hover-stay-time="100">
       <view class="av lg {{book.family ? 'fam' : ''}}">{{book.initial}}</view>
       <view class="bc-text">
         <view class="bc-name"><text class="bc-name-t">{{book.name}}</text><text class="bc-caret">▾</text></view>
         <view class="bc-sub">{{book.sub}}</view>
       </view>
     </view>
-    <view wx:if="{{requestText}}" class="bc-req" bindtap="onOpenRequests">{{requestText}}，去看看 ›</view>
+    <view wx:if="{{requestText}}" class="bc-req" bindtap="onOpenRequests" hover-class="tap-row" hover-stay-time="100">{{requestText}}，去看看 ›</view>
     <view class="bc-acts">
       <button wx:if="{{book.family}}" class="bc-act on" open-type="share">邀请家人</button>
-      <view class="bc-act" bindtap="onOpenSettings">小本本设置</view>
+      <view class="bc-act" bindtap="onOpenSettings" hover-class="tap" hover-stay-time="100">小本本设置</view>
     </view>
   </view>
 
   <!-- 统计：点了能跳到菜单 / 记录 -->
   <view class="card stats">
-    <view class="stat" bindtap="onGoMenu">
+    <view class="stat" bindtap="onGoMenu" hover-class="tap-card" hover-stay-time="100">
       <view class="stat-num">{{stats.total}}</view>
       <view class="stat-label">道菜</view>
     </view>
-    <view class="stat" bindtap="onGoMenu">
+    <view class="stat" bindtap="onGoMenu" hover-class="tap-card" hover-stay-time="100">
       <view class="stat-num">{{stats.mastered}}</view>
       <view class="stat-label">拿手菜</view>
     </view>
-    <view class="stat" bindtap="onGoLogs">
+    <view class="stat" bindtap="onGoLogs" hover-class="tap-card" hover-stay-time="100">
       <view class="stat-num">{{stats.cooked}}</view>
       <view class="stat-label">次下厨</view>
     </view>
@@ -33,12 +33,12 @@
 
   <!-- 常用的：两个大方块 -->
   <view class="tiles">
-    <view class="tile" bindtap="onOpenWishes">
+    <view class="tile" bindtap="onOpenWishes" hover-class="tap-card" hover-stay-time="100">
       <image class="tile-icon" src="/images/icons/wish.png" />
       <view class="tile-name">想吃清单</view>
       <view class="tile-note">{{wishCount ? wishCount + ' 个等着学' : '记下想吃的菜'}}</view>
     </view>
-    <view class="tile" bindtap="onOpenPantry">
+    <view class="tile" bindtap="onOpenPantry" hover-class="tap-card" hover-stay-time="100">
       <image class="tile-icon" src="/images/icons/pantry.png" />
       <view class="tile-name">家里的库存</view>
       <view class="tile-note {{outCount ? 'warn' : ''}}">{{outCount ? outCount + ' 样用完了' : (stockCount ? '家里有 ' + stockCount + ' 样' : '记下常备的调料')}}</view>
@@ -46,18 +46,18 @@
   </view>
 
   <view class="card settings">
-    <view class="setting-item" bindtap="onOpenOrders">
+    <view class="setting-item" bindtap="onOpenOrders" hover-class="tap-row" hover-stay-time="100">
       <image class="ic lg" src="/images/icons/orders.png" />
       <text class="setting-name">点菜单记录</text>
       <text wx:if="{{orderCount}}" class="setting-value">{{orderCount}} 单</text>
       <text class="arrow">›</text>
     </view>
-    <view class="setting-item" bindtap="onOpenCategories">
+    <view class="setting-item" bindtap="onOpenCategories" hover-class="tap-row" hover-stay-time="100">
       <image class="ic lg" src="/images/icons/category.png" />
       <text class="setting-name">分类管理</text>
       <text class="arrow">›</text>
     </view>
-    <view class="setting-item" bindtap="onOpenBackup">
+    <view class="setting-item" bindtap="onOpenBackup" hover-class="tap-row" hover-stay-time="100">
       <image class="ic lg" src="/images/icons/backup.png" />
       <text class="setting-name">备份与导入</text>
       <text class="arrow">›</text>
@@ -66,7 +66,7 @@
 
   <view wx:if="{{sampleCount}}" class="card sample">
     <view class="sample-text">菜单里还有 {{sampleCount}} 道示例菜，记了自己的菜以后可以一起删掉。</view>
-    <view class="sample-btn" bindtap="onRemoveSamples">删除示例菜</view>
+    <view class="pill warn sample-btn" bindtap="onRemoveSamples" hover-class="tap" hover-stay-time="100">删除示例菜</view>
   </view>
 
   <view class="footer">

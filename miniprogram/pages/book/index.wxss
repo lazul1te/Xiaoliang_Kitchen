@@ -27,11 +27,6 @@
 .head-switch {
   display: inline-block;
   margin-top: 16rpx;
-  padding: 8rpx 28rpx;
-  border-radius: 28rpx;
-  background: var(--yolk);
-  font-size: var(--fs-small);
-  font-weight: 600;
 }
 
 .tip {
@@ -182,19 +177,6 @@
 .req-yes {
   flex-shrink: 0;
   margin-left: 12rpx;
-  padding: 8rpx 24rpx;
-  border-radius: 28rpx;
-  font-size: var(--fs-small);
-}
-
-.req-no {
-  border: 2rpx solid #d9cfc1;
-  color: var(--text-2);
-}
-
-.req-yes {
-  background: var(--yolk);
-  font-weight: 600;
 }
 
 .remove {

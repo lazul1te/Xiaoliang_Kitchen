@@ -1,14 +1,14 @@
 <view wx:if="{{ready}}" class="meal">
   <!-- 整桌照片：点一下拍照或从相册选 -->
-  <view class="photo-box" bindtap="onChoosePhoto">
+  <view class="photo-box" bindtap="onChoosePhoto" hover-class="tap-card" hover-stay-time="100">
     <image wx:if="{{photo}}" class="photo" src="{{photo}}" mode="aspectFill" />
     <view wx:else class="photo-empty">
       <image class="ic xl" src="/images/icons/camera-wood.png" />
       <text>拍一张整桌的照片</text>
     </view>
     <view wx:if="{{photo}}" class="photo-actions">
-      <text class="photo-btn">换一张</text>
-      <text class="photo-btn" catchtap="onRemovePhoto">删除</text>
+      <view class="photo-btn">换一张</view>
+      <view class="photo-btn" catchtap="onRemovePhoto" hover-class="tap" hover-stay-time="100" hover-stop-propagation>删除</view>
     </view>
   </view>
 
@@ -17,7 +17,7 @@
     <view class="card-title">这顿做了哪些</view>
     <view class="hint">没做的取消勾选，会留在菜篮里下次做</view>
     <view wx:for="{{dishes}}" wx:key="dishId" class="m-dish {{item.checked ? '' : 'off'}}">
-      <view class="m-pick" data-i="{{index}}" bindtap="onToggleDish">
+      <view class="m-pick" data-i="{{index}}" bindtap="onToggleDish" hover-class="tap-row" hover-stay-time="100">
         <view class="checkbox {{item.checked ? 'on' : ''}}">{{item.checked ? '✓' : ''}}</view>
         <text class="m-name">{{item.name}}</text>
         <text wx:if="{{item.qty > 1}}" class="m-qty">×{{item.qty}}</text>
@@ -35,8 +35,8 @@
     <view class="field field-wrap">
       <text class="label">哪天</text>
       <view class="chips">
-        <view class="chip {{date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onQuickDate">今天</view>
-        <view class="chip {{date === yesterday ? 'on' : ''}}" data-date="{{yesterday}}" bindtap="onQuickDate">昨天</view>
+        <view class="chip {{date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onQuickDate" hover-class="tap" hover-stay-time="100">今天</view>
+        <view class="chip {{date === yesterday ? 'on' : ''}}" data-date="{{yesterday}}" bindtap="onQuickDate" hover-class="tap" hover-stay-time="100">昨天</view>
         <picker mode="date" value="{{date}}" end="{{today}}" bindchange="onDateChange">
           <view class="chip {{date !== today && date !== yesterday ? 'on' : ''}}">{{date !== today && date !== yesterday ? dateLabel : '其他日子'}}</view>
         </picker>
@@ -45,14 +45,14 @@
     <view class="field field-wrap">
       <text class="label">哪一顿</text>
       <view class="chips">
-        <view wx:for="{{meals}}" wx:key="*this" class="chip {{meal === item ? 'on' : ''}}" data-meal="{{item}}" bindtap="onPickMeal">{{item}}</view>
+        <view wx:for="{{meals}}" wx:key="*this" class="chip {{meal === item ? 'on' : ''}}" data-meal="{{item}}" bindtap="onPickMeal" hover-class="tap" hover-stay-time="100">{{item}}</view>
       </view>
     </view>
     <view class="field field-wrap">
       <text class="label">掌勺</text>
       <view class="chips">
-        <view wx:for="{{names}}" wx:key="*this" class="chip {{cook === item ? 'on' : ''}}" data-name="{{item}}" bindtap="onPickCook">{{item}}</view>
-        <view class="chip add" bindtap="onAddCook">{{names.length ? '＋' : '＋ 写名字'}}</view>
+        <view wx:for="{{names}}" wx:key="*this" class="chip {{cook === item ? 'on' : ''}}" data-name="{{item}}" bindtap="onPickCook" hover-class="tap" hover-stay-time="100">{{item}}</view>
+        <view class="chip add" bindtap="onAddCook" hover-class="tap" hover-stay-time="100">{{names.length ? '＋' : '＋ 写名字'}}</view>
       </view>
     </view>
   </view>
@@ -68,5 +68,5 @@
 
 <!-- 底部：记下来 -->
 <view wx:if="{{ready}}" class="save-bar">
-  <view class="btn-primary save-btn {{madeCount ? '' : 'disabled'}}" bindtap="onSave">记下来（{{madeCount}} 道菜）</view>
+  <view class="btn-primary save-btn {{madeCount ? '' : 'disabled'}}" bindtap="onSave" hover-class="tap" hover-stay-time="100">记下来（{{madeCount}} 道菜）</view>
 </view>

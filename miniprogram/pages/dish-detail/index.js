@@ -80,6 +80,7 @@ Page({
     const isFirst = this.data.qty === 0;
     planService.add(this.data.dish._id);
     this.refreshQty();
+    ui.buzz();
     if (isFirst) wx.showToast({ title: "已加入菜篮", icon: "none" });
   },
 

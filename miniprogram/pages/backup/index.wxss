@@ -60,11 +60,7 @@
 
 .tpl-btn {
   flex: 1;
-  border: 2rpx solid var(--pan);
-  border-radius: 32rpx;
-  text-align: center;
-  font-size: var(--fs-sub);
-  line-height: 64rpx;
+  padding: 0;
 }
 
 .tpl-btn + .tpl-btn {

@@ -86,20 +86,6 @@
   color: var(--danger);
 }
 
-.item-btn {
-  padding: 4rpx 20rpx;
-  border: 2rpx solid var(--line);
-  border-radius: 24rpx;
-  font-size: 24rpx;
-  color: var(--text-2);
-}
-
-.item-btn.main {
-  border-color: var(--yolk);
-  background: var(--yolk);
-  color: var(--pan);
-}
-
 .item-del {
   width: 64rpx;
   text-align: center;

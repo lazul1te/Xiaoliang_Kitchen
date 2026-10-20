@@ -21,7 +21,7 @@
       <view class="field-label">我在这本里叫</view>
       <input class="name-input" value="{{myName}}" maxlength="10" placeholder="写个名字，家人认得出来" bindinput="onNameInput" />
       <view class="para join-note">本主同意以后，这本里的菜谱、记录、菜篮你都能看、都能改。随时可以退出。</view>
-      <view class="btn-primary join-btn {{sending ? 'busy' : ''}}" bindtap="onRequest">{{sending ? '正在申请…' : '申请加入'}}</view>
+      <view class="btn-primary join-btn {{sending ? 'busy' : ''}}" bindtap="onRequest" hover-class="tap" hover-stay-time="100">{{sending ? '正在申请…' : '申请加入'}}</view>
     </block>
 
     <!-- 申请了，等本主同意 -->
@@ -30,14 +30,14 @@
         <view class="sent-title">申请发出去了</view>
         <view class="para">等「{{found.name}}」的本主同意。可以跟 TA 说一声：TA 在「我的 → 小本本设置」里就能看到你的申请。同意以后，你打开小程序会收到通知。</view>
       </view>
-      <view class="btn-primary join-btn" bindtap="onGoMenu">先回菜单</view>
-      <view class="btn-outline join-btn" bindtap="onCancel">撤回申请</view>
+      <view class="btn-primary join-btn" bindtap="onGoMenu" hover-class="tap" hover-stay-time="100">先回菜单</view>
+      <view class="btn-outline join-btn" bindtap="onCancel" hover-class="tap" hover-stay-time="100">撤回申请</view>
     </block>
 
     <!-- 已经在里面了 -->
     <block wx:else>
       <view class="para join-note">你已经在这本里了。</view>
-      <view class="btn-primary join-btn" bindtap="onSwitch">切换过去</view>
+      <view class="btn-primary join-btn" bindtap="onSwitch" hover-class="tap" hover-stay-time="100">切换过去</view>
     </block>
   </block>
 </view>

@@ -7,6 +7,7 @@ const categoryService = require("../../services/category");
 const logService = require("../../services/log");
 const planService = require("../../services/plan");
 const { matchKeyword } = require("../../utils/dish");
+const { closeSheet } = require("../../utils/sheet");
 
 const RECENT = 5; // 「最近做过」最多几道
 const UNCATEGORIZED = "未分类";
@@ -25,6 +26,7 @@ Component({
     keyword: "",
     sections: [], // [{ key, title, items: [{ _id, name }] }]
     results: [],
+    closing: false, // 正在收起来（播动画）
   },
 
   observers: {
@@ -89,7 +91,7 @@ Component({
     },
 
     onClose() {
-      this.triggerEvent("close");
+      closeSheet(this, "closing", () => this.triggerEvent("close"));
     },
 
     noop() {},

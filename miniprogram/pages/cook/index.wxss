@@ -80,20 +80,14 @@
 
 .serve-btn {
   margin-left: 16rpx;
-  padding: 8rpx 28rpx;
-  border-radius: 30rpx;
+  border-color: var(--pan);
   background: var(--pan);
-  font-size: 24rpx;
   color: #fff;
 }
 
 .ing-btn {
   display: flex;
   align-items: center;
-  padding: 8rpx 24rpx;
-  border-radius: 30rpx;
-  background: #fff;
-  font-size: 24rpx;
   color: var(--wood);
 }
 
@@ -133,6 +127,7 @@
 .running-chip {
   display: flex;
   align-items: center;
+  font-variant-numeric: tabular-nums; /* 数字等宽：走的时候不晃 */
   margin: 0 12rpx 12rpx 0;
   padding: 8rpx 20rpx;
   border-radius: 28rpx;
@@ -182,11 +177,13 @@
   text-align: center;
 }
 
+/* 数字等宽：倒计时走的时候不左右晃 */
 .timer-time {
   font-size: 96rpx;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 4rpx;
+  font-variant-numeric: tabular-nums;
 }
 
 .timer.running .timer-time {
@@ -322,6 +319,7 @@
   margin-left: 16rpx;
   font-size: var(--fs-small);
   color: var(--wood);
+  font-variant-numeric: tabular-nums;
 }
 
 .seq-row {

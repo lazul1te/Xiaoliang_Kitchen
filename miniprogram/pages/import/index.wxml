@@ -13,8 +13,8 @@
     </view>
     <view class="pick">
       <view class="pick-actions">
-        <view class="pick-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onChoose">从微信聊天选文件</view>
-        <view class="pick-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onPaste">粘贴复制的内容</view>
+        <view class="btn-mid pick-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onChoose" hover-class="tap" hover-stay-time="100">从微信聊天选文件</view>
+        <view class="btn-mid pick-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onPaste" hover-class="tap" hover-stay-time="100">粘贴复制的内容</view>
       </view>
       <view class="pick-help">
         <view>· 手机里的文件：在「文件」或文件管理里选中它，分享到微信「文件传输助手」，再回来选</view>
@@ -37,9 +37,9 @@
         <view wx:if="{{status === 'working'}}" class="step-desc">{{progress}}</view>
         <view wx:elif="{{status === 'done'}}" class="step-desc ok">导入了 {{result.added}} 道菜、{{result.logsAdded}} 条做菜记录{{result.skipped ? '，跳过 ' + result.skipped + ' 道已有的菜' : ''}}</view>
       </view>
-      <view class="step-btn main {{status === 'ready' ? '' : 'disabled'}}" bindtap="onImport">导入</view>
+      <view class="btn-mid main step-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onImport" hover-class="tap" hover-stay-time="100">导入</view>
     </view>
   </view>
 
-  <view wx:if="{{status === 'done'}}" class="btn-primary go" bindtap="onGoMenu">去菜单看看</view>
+  <view wx:if="{{status === 'done'}}" class="btn-primary go" bindtap="onGoMenu" hover-class="tap" hover-stay-time="100">去菜单看看</view>
 </view>

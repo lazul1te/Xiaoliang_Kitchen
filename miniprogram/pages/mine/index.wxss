@@ -188,11 +188,6 @@
 .sample-btn {
   flex-shrink: 0;
   margin-left: 20rpx;
-  padding: 8rpx 24rpx;
-  border: 2rpx solid var(--danger);
-  border-radius: 28rpx;
-  font-size: 24rpx;
-  color: var(--danger);
 }
 
 .footer {

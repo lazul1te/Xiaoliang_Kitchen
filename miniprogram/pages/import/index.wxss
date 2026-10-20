@@ -52,23 +52,6 @@
 
 .step-btn {
   flex-shrink: 0;
-  padding: 0 28rpx;
-  border: 2rpx solid var(--pan);
-  border-radius: 32rpx;
-  font-size: 26rpx;
-  line-height: 60rpx;
-}
-
-.step-btn.main {
-  border-color: var(--yolk);
-  background: var(--yolk);
-  font-weight: 600;
-}
-
-.step-btn.disabled {
-  border-color: var(--line);
-  background: #fff;
-  color: var(--text-3);
 }
 
 /* 文件里有什么 */
@@ -84,20 +67,10 @@
 .pick-btn {
   flex: 1;
   padding: 0 12rpx;
-  border: 2rpx solid var(--pan);
-  border-radius: 32rpx;
-  text-align: center;
-  font-size: var(--fs-sub);
-  line-height: 64rpx;
 }
 
 .pick-btn + .pick-btn {
   margin-left: 16rpx;
-}
-
-.pick-btn.disabled {
-  border-color: var(--line);
-  color: var(--text-3);
 }
 
 .pick-help {

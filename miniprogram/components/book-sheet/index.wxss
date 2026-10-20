@@ -51,11 +51,6 @@
 .bs-cancel {
   flex-shrink: 0;
   margin-left: 12rpx;
-  padding: 6rpx 20rpx;
-  border: 2rpx solid #d9cfc1;
-  border-radius: 28rpx;
-  font-size: var(--fs-small);
-  color: var(--text-2);
 }
 
 .bs-acts {
@@ -65,11 +60,6 @@
 
 .bs-act {
   flex: 1;
-  border-radius: 40rpx;
-  background: var(--cream);
-  font-size: var(--fs-sub);
-  line-height: 76rpx;
-  text-align: center;
 }
 
 .bs-act + .bs-act {

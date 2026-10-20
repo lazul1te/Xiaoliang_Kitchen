@@ -45,12 +45,17 @@
 - 主题色用 `app.wxss` 里的 CSS 变量（`--yolk`、`--pan`、`--danger` 等），黄色底上一律用深色字。
 - 界面统一的写法（都在 `app.wxss`）：
   - 字号用 `--fs-xl / lg / title / body / sub / small / tiny` 这几档；说明文字用 `.para`，小提示用 `.hint`，「还没有……」用 `.none`，页面里不要再各写一份。
-  - 图标用 `images/icons/*.png`（48 格、3.2 粗线、圆头，和 Tab 图标同一种画法；SVG 源文件在 `design/icons`，`npm run icons` 导出），写成 `<image class="ic" src="/images/icons/xxx.png" />`，大小用 `.ic.sm / .lg / .xl`。按钮上不用 emoji；空状态、庆祝页可以用。
+  - 图标用 `images/icons/*.png`（48 格、3.2 粗线、圆头，和 Tab 图标同一种画法；SVG 源文件在 `design/icons`，`npm run icons` 导出），写成 `<image class="ic" src="/images/icons/xxx.png" />`，大小用 `.ic.sm / .lg / .xl`。按钮上不用 emoji。
+  - 空页面用 `images/empty/*.png` 插画（杏色圆底 + 线条，120 格、3.6 粗线，黄色只点一处；SVG 源文件在 `design/empty`），写成 `<image class="empty-img" src="/images/empty/xxx.png" />`，不用 emoji。
+  - 按钮只有三档：大按钮 `.btn-primary`（黄底，一页最主要的那一下）/ `.btn-outline`（描边）；中按钮 `.btn-mid`（描边，`.main` 黄底，`.disabled`），一排并列的几个用；小胶囊 `.pill`（白底描边，`.pri` 黄底，`.warn` 红字），卡片、横幅里的小操作。页面的 wxss 里只写位置（外边距、flex），不要再各写一套长相。
+  - 能点的 `<view>` 都要有按下的样子：按钮、选项、小图标 `hover-class="tap"`（变淡），列表的一行 `tap-row`（底色深一点），整张卡片 `tap-card`（轻轻缩一下），都带 `hover-stay-time="100"`；`catchtap` 的再加 `hover-stop-propagation`，不然外面的卡片也跟着变。要按下效果的别用 `<text>` 做按钮（加不了 hover-class）。
   - 看着小的按钮加 `.hit` 扩大点击范围（`::after` 往外扩一圈）。不要加在绝对定位的元素上，也不要加在紧挨着别的可点元素的地方（会盖住对方）。
-  - 加载中用 `.sk` 灰色占位块（菜单页第一次读取时）。
-  - 选项不要用 `<picker>` 滚轮（日期选择除外）：选项少的直接摆成 `.chip`（分类、熟练度、标签、今天/昨天、掌勺），选菜用 `<dish-picker>` 弹出面板（能搜、按分类），选时长用常用时长 + 「自定义」（`parseDuration` 认「25分钟」「1分30秒」）。从底部弹出的面板用 app.wxss 的 `.sheet-mask / .sheet`。
+  - 加载中用 `.sk` 灰色占位块：菜单页第一次读取时；记录页、点菜单记录页整页的占位包在 `.sk-page` 里（0.25 秒内读好了就不出来，免得一闪），用 `.sk-card / .sk-bar / .sk-photo`。照片（`cloud-image`）加载好了自己淡出来。
+  - 「成了」的那一下手机震一下（`ui.buzz()`）：加菜轻震，下单、开饭的章落下时 `ui.buzz("medium")`。别的地方不要震。
+  - 下单、开饭盖章：「已下单」「已开饭」用 app.wxss 的 `stamp-in` 动画盖下来，只在刚下单（`planService.takeFreshOrder`）、刚开饭（`mealService.takeFreshMeal`）时盖一次。
+  - 选项不要用 `<picker>` 滚轮（日期选择除外）：选项少的直接摆成 `.chip`（分类、熟练度、标签、今天/昨天、掌勺），选菜用 `<dish-picker>` 弹出面板（能搜、按分类），选时长用常用时长 + 「自定义」（`parseDuration` 认「25分钟」「1分30秒」）。从底部弹出的面板用 app.wxss 的 `.sheet-mask / .sheet`：打开时自己滑上来；收起用 `utils/sheet.js` 的 `closeSheet(this, "xxxClosing", () => 真的关掉)`，`.sheet-mask` 上加 `{{xxxClosing ? 'closing' : ''}}`，先播完滑下去的动画再关。
   - 没有照片时，用菜名第一个字当占位（菜品卡片、记录、想吃清单都一样）。小本本、成员的头像也是一个字，用 `app.wxss` 的 `.av`（`.fam` 家庭本本、`.sm` / `.lg`）。
-- 记录页一直要有加记录的入口（「＋ 记一笔」，点开某天时「＋ 这天再记一道」）：点日历只对没记录的日子才会问要不要补记，同一天可以记好几道。
+- 记录页一直要有加记录的入口（「＋ 记一笔」，点开某天时「＋ 这天再记一道」）：点日历只对没记录的日子才会问要不要补记，同一天可以记好几道。日历默认收起，只显示选中的那天（没选就是今天）那一周；「展开整月」看整月，展开时左右滑换月，收起时回到选中那天的月份。
 - 导入导出给用户「本地」的办法（`utils/file.js`）：手机上小程序打不开系统文件管理器，所以导入是「从微信聊天选文件」或「粘贴复制的内容」，导出是「发到微信」、电脑版微信「存到电脑」（`wx.saveFileToDisk`）、不带照片时「复制成文字」。剪贴板要在隐私指引里声明「剪切板」，失败都走 `ui.apiFail`。
 - 「我的」页只放常用的：想吃清单、库存是两个大方块；不常用的收进二级页（`pages/backup` 备份与导入）；「检查云开发」（`services/diagnose.js`）放在底部小字链接，菜单页读不到数据时也有入口。
 - 共用的菜品卡片是 WXML 模板 `templates/dish-card.wxml`，样式放在 `app.wxss`；用到它的页面要提供 `onOpenDish` / `onPlus` / `onMinus`。
@@ -81,6 +86,6 @@
   - 导出带上 `meals`，导入时按 `createdAt` 去重，记录的 `mealId` 换成新的那一顿。
 - 买菜清单的合并规则在 `utils/shopping.js`：同名原料合在一起，数字用量 × 份数相加，单位不同或「适量」原样列出；再对比库存（名字去掉括号说明后对）：库存里有的放「家里有」，用完了的放「要买的」，库存里没记录的调料单独一组。
 - 弹窗、提示用 `utils/ui.js`（Promise 形式，可以 await）。
-- Tab 图标和头像的源文件在 `design/`（SVG），PNG 放在 `miniprogram/images/`，都用 `npm run icons` 导出。
+- Tab 图标、空页面插画和头像的源文件在 `design/`（SVG），PNG 放在 `miniprogram/images/`，都用 `npm run icons` 导出。
 - 云开发环境 ID 写在 `miniprogram/config.js`。
 - 开发者工具的问题先看它在 Windows 上的日志：`C:\Users\<用户>\AppData\Local\微信开发者工具\User Data\<id>\WeappLog\logs`（比如导航栏图标裂图，是工具自己的 403，重启就好）。

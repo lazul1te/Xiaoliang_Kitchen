@@ -182,7 +182,7 @@ Page({
         storage.set(COOK_NAME_KEY, cook);
       } catch (err) {}
     }
-    // 去记录页看这一天
-    wx.switchTab({ url: "/pages/logs/index", success: () => ui.toast(`记好了！这顿 ${made.length} 道菜`) });
+    // 去记录页看这一天，那边给这一顿盖个「已开饭」的章
+    wx.switchTab({ url: "/pages/logs/index" });
   },
 });

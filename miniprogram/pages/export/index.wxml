@@ -7,7 +7,7 @@
     <view class="row"><text>分类</text><text class="row-value">{{summary.categoryCount}} 个</text></view>
     <view class="row"><text>菜谱</text><text class="row-value">{{summary.dishCount}} 道</text></view>
     <view class="row"><text>做菜记录</text><text class="row-value">{{summary.logCount}} 条</text></view>
-    <view class="row" bindtap="onTogglePhotos">
+    <view class="row" bindtap="onTogglePhotos" hover-class="tap-row" hover-stay-time="100">
       <view class="option">
         <view class="checkbox {{withPhotos ? 'on' : ''}}">{{withPhotos ? '✓' : ''}}</view>
         <text>照片也一起打包（{{summary.photoCount}} 张）</text>
@@ -26,7 +26,7 @@
           已生成：{{file.sizeText}}{{withPhotos ? '，带了 ' + file.photoCount + ' 张照片' : ''}}{{file.failedPhotos ? '（' + file.failedPhotos + ' 张没下载下来）' : ''}}
         </view>
       </view>
-      <view class="step-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onBuild">{{status === 'ready' ? '重新生成' : '生成'}}</view>
+      <view class="btn-mid step-btn {{status === 'working' ? 'disabled' : ''}}" bindtap="onBuild" hover-class="tap" hover-stay-time="100">{{status === 'ready' ? '重新生成' : '生成'}}</view>
     </view>
     <view class="step">
       <view class="step-no">2</view>
@@ -36,9 +36,9 @@
       </view>
     </view>
     <view class="save-actions">
-      <view class="save-btn main {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSend">发到微信</view>
-      <view wx:if="{{canSaveToDisk}}" class="save-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSaveToDisk">存到电脑</view>
-      <view wx:if="{{!withPhotos}}" class="save-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onCopy">复制成文字</view>
+      <view class="btn-mid main save-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSend" hover-class="tap" hover-stay-time="100">发到微信</view>
+      <view wx:if="{{canSaveToDisk}}" class="btn-mid save-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onSaveToDisk" hover-class="tap" hover-stay-time="100">存到电脑</view>
+      <view wx:if="{{!withPhotos}}" class="btn-mid save-btn {{status === 'ready' ? '' : 'disabled'}}" bindtap="onCopy" hover-class="tap" hover-stay-time="100">复制成文字</view>
     </view>
   </view>
 </view>

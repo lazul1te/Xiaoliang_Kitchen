@@ -1,11 +1,19 @@
-/* 大小、圆角、外边距由页面上的 class 决定（加在组件节点上），里面的图片铺满 */
+/* 大小、圆角、外边距由页面上的 class 决定（加在组件节点上），里面的图片铺满。
+   还没加载好时是浅杏色的底，加载好了照片淡出来 */
 :host {
   display: block;
   overflow: hidden;
+  background: #f6ecdd;
 }
 
 .img {
   display: block;
   width: 100%;
   height: 100%;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.img.loaded {
+  opacity: 1;
 }

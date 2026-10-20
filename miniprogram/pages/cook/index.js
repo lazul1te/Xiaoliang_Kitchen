@@ -6,6 +6,7 @@ const dishService = require("../../services/dish");
 const planService = require("../../services/plan");
 const cookSession = require("../../services/cook-session");
 const ui = require("../../utils/ui");
+const { closeSheet } = require("../../utils/sheet");
 const { playDing } = require("../../utils/sound");
 const { shortName, cookOrder, waitSteps, prepGroups, ingredientGroups } = require("../../utils/cook");
 
@@ -51,6 +52,7 @@ Page({
     nextText: "", // 「下一道：番茄鸡蛋汤」
     running: [], // 正在走的计时，显示在上面：[{ key, label }]
     showIngredients: false,
+    ingClosing: false, // 原料面板正在收起来（播动画）
     notFound: false,
     emptyText: "",
     emptyDesc: "",
@@ -272,7 +274,8 @@ Page({
   },
 
   onToggleIngredients() {
-    this.setData({ showIngredients: !this.data.showIngredients });
+    if (this.data.showIngredients) closeSheet(this, "ingClosing", () => this.setData({ showIngredients: false }));
+    else this.setData({ showIngredients: true });
   },
 
   noop() {},

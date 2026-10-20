@@ -43,6 +43,7 @@ Page({
     dateLabel: "", // 选了别的日子时显示「10月25日 周日」
     meals: MEALS,
     flavorChips: [], // [{ name, on }]
+    addingFlavor: false, // 正在写自己加的口味（「＋ 口味」变成了输入框）
     names: [], // 以前写过的名字、这本里大家的名字，点一下就行
     broken: {}, // 加载失败的照片
   },
@@ -133,14 +134,20 @@ Page({
     this.setData({ "form.flavors": flavors, flavorChips: this.flavorChips(flavors) });
   },
 
-  // 自己加一个口味：选上，下次也会出现在常用里
-  async onAddFlavor() {
-    const name = await ui.prompt({ title: "加个口味", placeholder: "比如：多放醋、不要葱" });
-    if (!name) return;
-    if (name.length > 10) {
-      ui.toast("最多 10 个字");
-      return;
-    }
+  // 自己加一个口味：「＋ 口味」变成输入框，直接在这里写
+  onAddFlavor() {
+    this.setData({ addingFlavor: true });
+  },
+
+  // 写好了（点了「完成」，或者点了别处）：选上，下次也会出现在常用里。什么都没写就收起来
+  onFlavorDone(e) {
+    if (!this.data.addingFlavor) return; // 「完成」以后还会来一次 blur
+    this.setData({ addingFlavor: false });
+    const name = (e.detail.value || "").trim().slice(0, 10);
+    if (name) this.addFlavor(name);
+  },
+
+  addFlavor(name) {
     const custom = recentNames([name].concat(storage.get(FLAVOR_KEY) || []), 6).filter((n) => FLAVORS.indexOf(n) < 0);
     try {
       storage.set(FLAVOR_KEY, custom);
@@ -207,7 +214,7 @@ Page({
       wx.redirectTo({ url: `/pages/cook/index?from=basket&dish=${this.startId}` });
       return;
     }
-    wx.switchTab({ url: "/pages/today/index", success: () => ui.toast("下单啦") });
+    wx.switchTab({ url: "/pages/today/index" }); // 那边盖个「已下单」的章
   },
 
   saveEdit() {

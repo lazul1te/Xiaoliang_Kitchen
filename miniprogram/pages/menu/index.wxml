@@ -1,10 +1,10 @@
 <import src="/templates/dish-card.wxml" />
 
 <view class="menu-page">
-  <!-- 顶部：正在用的小本本 + 搜索 + 新菜 -->
+  <!-- 顶部：正在用的小本本 + 搜索 + 新菜（圆形的 +） -->
   <view class="header">
     <view class="search-row">
-      <view class="book-chip" bindtap="onOpenBooks">
+      <view class="book-chip" bindtap="onOpenBooks" hover-class="tap" hover-stay-time="100">
         <view class="av sm {{book.family ? 'fam' : ''}}">{{book.initial}}</view>
         <text class="book-chip-name">{{book.shortName}}</text>
         <text class="book-chip-caret">▾</text>
@@ -15,7 +15,7 @@
                placeholder-class="search-placeholder" confirm-type="search" bindinput="onSearchInput" />
         <icon wx:if="{{keyword}}" type="clear" size="16" color="#C4C4CA" bindtap="onClearSearch" />
       </view>
-      <view class="add-btn" bindtap="onAddDish">＋ 新菜</view>
+      <view class="add-btn" aria-role="button" aria-label="新菜" bindtap="onAddDish" hover-class="tap" hover-stay-time="100"></view>
     </view>
   </view>
 
@@ -23,7 +23,7 @@
   <scroll-view wx:if="{{searching}}" class="search-list" scroll-y>
     <view wx:if="{{!searchResults.length}}" class="search-empty">
       <view>没找到「{{keyword}}」</view>
-      <view class="search-wish" bindtap="onWishFromSearch">
+      <view class="search-wish" bindtap="onWishFromSearch" hover-class="tap" hover-stay-time="100">
         <image class="ic" src="/images/icons/wish.png" />记到想吃清单，以后慢慢学
       </view>
     </view>
@@ -52,20 +52,20 @@
     </block>
 
     <view wx:elif="{{status === 'error'}}" class="state">
-      <view class="empty-emoji">📡</view>
+      <image class="empty-img" src="/images/empty/offline.png" />
       <view class="empty-title">没读到菜谱</view>
       <view class="empty-desc">{{errorText}}</view>
-      <view class="btn-primary" bindtap="onRetry">重试</view>
-      <view class="btn-outline" bindtap="onDiagnose">检查一下云开发</view>
+      <view class="btn-primary" bindtap="onRetry" hover-class="tap" hover-stay-time="100">重试</view>
+      <view class="btn-outline" bindtap="onDiagnose" hover-class="tap" hover-stay-time="100">检查一下云开发</view>
     </view>
 
     <!-- 第一次用：云上还没有任何分类和菜 -->
     <view wx:elif="{{status === 'welcome'}}" class="state">
-      <view class="empty-emoji">🍳</view>
+      <image class="empty-img" src="/images/empty/pan.png" />
       <view class="empty-title">欢迎来到拿手菜小本本</view>
       <view class="empty-desc">菜单还是空的。可以先放几道示例菜看看效果，以后在「我的」里一键删掉</view>
-      <view class="btn-primary" bindtap="onImportSamples">放几道示例菜</view>
-      <view class="btn-outline" bindtap="onStartEmpty">直接开始记菜</view>
+      <view class="btn-primary" bindtap="onImportSamples" hover-class="tap" hover-stay-time="100">放几道示例菜</view>
+      <view class="btn-outline" bindtap="onStartEmpty" hover-class="tap" hover-stay-time="100">直接开始记菜</view>
       <view class="state-hint">{{welcomeHint}}</view>
     </view>
 
@@ -73,7 +73,7 @@
       <scroll-view class="cat-list" scroll-y scroll-into-view="cat-{{activeId}}" scroll-with-animation>
         <view wx:for="{{categories}}" wx:key="_id" id="cat-{{item._id}}"
               class="cat-item {{item._id === activeId ? 'active' : ''}}"
-              data-id="{{item._id}}" bindtap="onTapCategory">
+              data-id="{{item._id}}" bindtap="onTapCategory" hover-class="tap-row" hover-stay-time="100">
           {{item.name}}
           <view wx:if="{{basketByCat[item._id]}}" class="cat-count">{{basketByCat[item._id]}}</view>
         </view>
@@ -85,7 +85,7 @@
                    bindrefresherrefresh="onPullRefresh">
         <view wx:for="{{sections}}" wx:key="_id" wx:for-item="section" id="sec-{{section._id}}" class="section">
           <view class="section-title">{{section.name}}</view>
-          <view wx:if="{{!section.dishes.length}}" class="section-empty" data-id="{{section._id}}" bindtap="onAddDish">
+          <view wx:if="{{!section.dishes.length}}" class="section-empty" data-id="{{section._id}}" bindtap="onAddDish" hover-class="tap" hover-stay-time="100">
             这个分类还没有菜，<text class="section-add">点这里添加</text>
           </view>
           <block wx:for="{{section.dishes}}" wx:key="_id">
@@ -100,19 +100,19 @@
   <!-- 底部点菜栏 -->
   <!-- 底部点菜栏：点左边看菜篮（已点的菜，能加减、清空），右边去下单 -->
   <view class="basket-bar">
-    <view class="basket-info" bindtap="onOpenCart">
-      <view class="basket-icon {{basketCount ? 'on' : ''}}">
+    <view class="basket-info" bindtap="onOpenCart" hover-class="tap" hover-stay-time="100">
+      <view class="basket-icon {{basketCount ? 'on' : ''}} {{bump ? 'bump' + bump : ''}}">
         <image class="basket-img" src="/images/basket.png" />
         <view wx:if="{{basketCount}}" class="basket-num">{{basketCount}}</view>
       </view>
       <text class="basket-text">{{basketCount ? '已点 ' + basketCount + ' 份' : '还没点菜'}}</text>
     </view>
-    <view class="basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday">{{ordered ? '看点菜单' : '去下单'}}</view>
+    <view class="btn-primary basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday" hover-class="tap" hover-stay-time="100">{{ordered ? '看点菜单' : '去下单'}}</view>
   </view>
 </view>
 
 <!-- 菜篮：已点的菜，能加减、清空。已经下了单的话，在这里加减就是给这单加菜、减菜 -->
-<view wx:if="{{showCart}}" class="sheet-mask" bindtap="onCloseCart">
+<view wx:if="{{showCart}}" class="sheet-mask {{cartClosing ? 'closing' : ''}}" bindtap="onCloseCart">
   <view class="sheet cart-sheet" catchtap="noop">
     <view class="cart-head">
       <text class="sheet-title">菜篮 · 已点 {{basketCount}} 份</text>
@@ -126,13 +126,13 @@
         <view wx:else class="cart-thumb cart-thumb-empty">{{item.initial}}</view>
         <view class="cart-name">{{item.name}}<text wx:if="{{item.added}}" class="cart-added">加</text></view>
         <view class="stepper">
-          <view class="stepper-btn minus" data-id="{{item._id}}" bindtap="onCartMinus">−</view>
+          <view class="stepper-btn minus" data-id="{{item._id}}" bindtap="onCartMinus" hover-class="tap" hover-stay-time="100">−</view>
           <text class="stepper-num">{{item.qty}}</text>
-          <view class="stepper-btn plus" data-id="{{item._id}}" bindtap="onCartPlus">+</view>
+          <view class="stepper-btn plus" data-id="{{item._id}}" bindtap="onCartPlus" hover-class="tap" hover-stay-time="100">+</view>
         </view>
       </view>
     </scroll-view>
-    <view class="btn-primary cart-go" bindtap="onGoToday">{{ordered ? '看点菜单' : '去下单'}}</view>
+    <view class="btn-primary cart-go" bindtap="onGoToday" hover-class="tap" hover-stay-time="100">{{ordered ? '看点菜单' : '去下单'}}</view>
   </view>
 </view>
 

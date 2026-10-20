@@ -1,6 +1,6 @@
 <!-- 菜篮里的一道菜（只能看，加减在菜单页底部的菜篮里）：缩略图、名字、用时、份数 -->
 <template name="orderRow">
-  <view class="o-row" data-id="{{_id}}" bindtap="onOpenDish">
+  <view class="o-row" data-id="{{_id}}" bindtap="onOpenDish" hover-class="tap-row" hover-stay-time="100">
     <cloud-image wx:if="{{cover && !broken}}" class="o-thumb" src="{{cover}}" mode="aspectFill"
                  data-src="{{cover}}" binderror="onCoverError" />
     <view wx:else class="o-thumb o-thumb-empty">{{initial}}</view>
@@ -14,8 +14,8 @@
 
 <!-- 买菜清单的一行：点一下就是买到了 / 没买到。action：have 右边显示「家里有」，remove 显示删除 -->
 <template name="shopRow">
-  <view class="shop-row {{checked ? 'done' : ''}}" data-key="{{key}}" bindtap="onToggleItem">
-    <view class="check">{{checked ? '✓' : ''}}</view>
+  <view class="shop-row {{checked ? 'done' : ''}}" data-key="{{key}}" bindtap="onToggleItem" hover-class="tap-row" hover-stay-time="100">
+    <view class="check {{pop ? 'pop' : ''}}">{{checked ? '✓' : ''}}</view>
     <view class="shop-main">
       <view class="shop-line">
         <text class="shop-name">{{name}}</text>
@@ -25,17 +25,17 @@
         <text wx:if="{{outOfStock}}" class="shop-flag">家里用完了</text>{{dishesText}}
       </view>
     </view>
-    <view wx:if="{{action === 'have'}}" class="shop-act" data-name="{{name}}" catchtap="onHaveIt">家里有</view>
-    <view wx:if="{{action === 'remove'}}" class="shop-remove" data-key="{{key}}" catchtap="onRemoveExtra">×</view>
+    <view wx:if="{{action === 'have'}}" class="pill shop-act" data-name="{{name}}" catchtap="onHaveIt" hover-class="tap" hover-stay-time="100" hover-stop-propagation>家里有</view>
+    <view wx:if="{{action === 'remove'}}" class="shop-remove" data-key="{{key}}" catchtap="onRemoveExtra" hover-class="tap" hover-stay-time="100" hover-stop-propagation>×</view>
   </view>
 </template>
 
 <view wx:if="{{stage === 'empty'}}" class="empty">
-  <image class="empty-img" src="/images/basket-big.png" />
+  <image class="empty-img" src="/images/empty/basket.png" />
   <view class="empty-title">还没点菜</view>
   <view class="empty-desc">{{shared ? '去菜单里挑几道想做的菜，家人点的也会放进菜篮' : '去菜单里挑几道想做的菜'}}</view>
-  <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
-  <view class="empty-orders" bindtap="onOpenOrders">以前的点菜单 ›</view>
+  <view class="btn-primary" bindtap="onGoMenu" hover-class="tap" hover-stay-time="100">去点菜</view>
+  <view class="empty-orders" bindtap="onOpenOrders" hover-class="tap" hover-stay-time="100">以前的点菜单 ›</view>
 </view>
 
 <view wx:else class="today {{(stage === 'picking' && items.length) || stage === 'ordered' ? 'has-bar' : ''}}">
@@ -48,8 +48,8 @@
   <view wx:if="{{cooking}}" class="banner">
     <text class="banner-text">正在一起做：{{cooking.done}}/{{cooking.total}} 道做好了</text>
     <view class="banner-acts">
-      <text class="banner-btn pri" bindtap="onStartCook">继续做菜</text>
-      <text class="banner-btn" bindtap="onDropCooking">不做了</text>
+      <view class="pill pri banner-btn" bindtap="onStartCook" hover-class="tap" hover-stay-time="100">继续做菜</view>
+      <view class="pill banner-btn" bindtap="onDropCooking" hover-class="tap" hover-stay-time="100">不做了</view>
     </view>
   </view>
 
@@ -59,8 +59,8 @@
     <view wx:if="{{overdue}}" class="banner">
       <text class="banner-text">{{overdue}}</text>
       <view class="banner-acts">
-        <text class="banner-btn pri" bindtap="onOverdueDone">做了，记一下</text>
-        <text class="banner-btn" bindtap="onCancelOrder">没做，撤单</text>
+        <view class="pill pri banner-btn" bindtap="onOverdueDone" hover-class="tap" hover-stay-time="100">做了，记一下</view>
+        <view class="pill banner-btn" bindtap="onCancelOrder" hover-class="tap" hover-stay-time="100">没做，撤单</view>
       </view>
     </view>
     <view class="ticket">
@@ -68,7 +68,7 @@
       <view class="t-title"><text class="t-name">点菜单</text><text class="t-no">{{ticket.noText}}</text></view>
       <view class="t-sub">{{ticket.meal}}{{ticket.peopleText ? ' · ' + ticket.peopleText : ''}}</view>
       <view class="t-items">
-        <view wx:for="{{ticket.items}}" wx:key="_id" class="t-item" data-id="{{item._id}}" bindtap="onOpenDish">
+        <view wx:for="{{ticket.items}}" wx:key="_id" class="t-item" data-id="{{item._id}}" bindtap="onOpenDish" hover-class="tap-row" hover-stay-time="100">
           <view class="t-dish">{{item.name}}<text wx:if="{{item.added}}" class="t-added">加</text></view>
           <text class="t-qty">×{{item.qty}}</text>
         </view>
@@ -76,13 +76,13 @@
       <view class="t-note">共 {{ticket.count}} 道菜 {{ticket.portions}} 份{{ticket.slowText ? ' · ' + ticket.slowText : ''}}</view>
       <view wx:if="{{ticket.flavorsText}}" class="t-note">口味：{{ticket.flavorsText}}</view>
       <view wx:if="{{ticket.note}}" class="t-note">备注：{{ticket.note}}</view>
-      <view class="t-stamp">已下单</view>
+      <view class="t-stamp {{stampIn ? 'stamp-in' : ''}}">已下单</view>
     </view>
     <view class="t-actions">
       <button class="t-act pri" open-type="share">发给 TA</button>
-      <view class="t-act" bindtap="onSaveImage">存成图片</view>
-      <view class="t-act" bindtap="onAddMore">加菜</view>
-      <view class="t-act" bindtap="onEditOrder">改一改</view>
+      <view class="t-act" bindtap="onSaveImage" hover-class="tap" hover-stay-time="100">存成图片</view>
+      <view class="t-act" bindtap="onAddMore" hover-class="tap" hover-stay-time="100">加菜</view>
+      <view class="t-act" bindtap="onEditOrder" hover-class="tap" hover-stay-time="100">改一改</view>
     </view>
   </block>
 
@@ -108,7 +108,7 @@
     <view class="shopping-head">
       <view class="shopping-title"><image class="ic lg" src="/images/icons/cart.png" />买菜清单</view>
       <text class="shopping-progress">已买 {{shopping.done}}/{{shopping.total}}</text>
-      <view class="shop-copy hit" bindtap="onCopyList"><image class="ic sm" src="/images/icons/copy-gray.png" />复制</view>
+      <view class="shop-copy hit" bindtap="onCopyList" hover-class="tap" hover-stay-time="100"><image class="ic sm" src="/images/icons/copy-gray.png" />复制</view>
     </view>
     <block wx:if="{{stage === 'ordered' || showShopping || !items.length}}">
       <view class="shopping-hint">按菜谱用量 × 份数算好了，家里有的不用买。买到一样点一下{{shared ? '，家人也能看到' : ''}}；点「复制」可以发到微信里</view>
@@ -135,11 +135,11 @@
         <block wx:for="{{shopping.extras}}" wx:key="key">
           <template is="shopRow" data="{{...item, action: 'remove'}}" />
         </block>
-        <view class="shop-add" bindtap="onAddExtra">＋ 加一样（比如：牛奶、纸巾）</view>
+        <view class="shop-add" bindtap="onAddExtra" hover-class="tap" hover-stay-time="100">＋ 加一样（比如：牛奶、纸巾）</view>
       </view>
 
       <view wx:if="{{shopping.stocked.length}}" class="shop-group">
-        <view class="shop-label-row" bindtap="onToggleStocked">
+        <view class="shop-label-row" bindtap="onToggleStocked" hover-class="tap-row" hover-stay-time="100">
           <text class="shop-label">家里有的 {{shopping.stocked.length}} 样，不用买</text>
           <text class="shop-all">{{showStocked ? '收起' : '展开'}}</text>
         </view>
@@ -147,15 +147,15 @@
           <view wx:for="{{shopping.stocked}}" wx:key="key" class="stock-row">
             <text class="stock-name">{{item.name}}</text>
             <text class="stock-amount">{{item.amountText}}</text>
-            <text class="shop-act" data-key="{{item.key}}" bindtap="onRanOut">用完了</text>
+            <view class="pill shop-act" data-key="{{item.key}}" bindtap="onRanOut" hover-class="tap" hover-stay-time="100">用完了</view>
           </view>
         </block>
       </view>
 
-      <view class="pantry-link" bindtap="onOpenPantry">管理家里的库存 ›</view>
-      <view wx:if="{{stage === 'picking' && items.length}}" class="shop-fold-up" bindtap="onToggleShopping">收起买菜清单</view>
+      <view class="pantry-link" bindtap="onOpenPantry" hover-class="tap" hover-stay-time="100">管理家里的库存 ›</view>
+      <view wx:if="{{stage === 'picking' && items.length}}" class="shop-fold-up" bindtap="onToggleShopping" hover-class="tap-row" hover-stay-time="100">收起买菜清单</view>
     </block>
-    <view wx:else class="shop-fold" bindtap="onToggleShopping">
+    <view wx:else class="shop-fold" bindtap="onToggleShopping" hover-class="tap-row" hover-stay-time="100">
       <text>要买 {{shopping.total - shopping.done}} 样，下单以后照着买</text>
       <text class="shop-all">展开</text>
     </view>
@@ -166,13 +166,13 @@
 <!-- 还没下单：去下单（确认点菜单） -->
 <view wx:if="{{stage === 'picking' && items.length}}" class="order-bar">
   <text class="order-bar-text">{{slowText || '共 ' + count + ' 份'}}</text>
-  <view class="btn-primary order-btn" bindtap="onGoCheckout">去下单</view>
+  <view class="btn-primary order-btn" bindtap="onGoCheckout" hover-class="tap" hover-stay-time="100">去下单</view>
 </view>
 
 <!-- 下单以后：买齐了就开始做（几道菜一起做），做好了开饭 -->
 <view wx:if="{{stage === 'ordered'}}" class="order-bar">
   <text class="order-bar-link" bindtap="onFinishMeal">做好了，开饭</text>
-  <view class="btn-primary order-btn" bindtap="onStartCook">{{cooking ? '继续做菜' : '开始做菜（' + items.length + ' 道）'}}</view>
+  <view class="btn-primary order-btn" bindtap="onStartCook" hover-class="tap" hover-stay-time="100">{{cooking ? '继续做菜' : '开始做菜（' + items.length + ' 道）'}}</view>
 </view>
 
 <!-- 画点菜单图片用的画布，不显示出来 -->

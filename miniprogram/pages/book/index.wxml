@@ -1,5 +1,5 @@
 <view wx:if="{{gone}}" class="empty">
-  <view class="empty-emoji">📒</view>
+  <image class="empty-img" src="/images/empty/book.png" />
   <view class="empty-title">这本小本本找不到了</view>
   <view class="empty-desc">可能你已经不在这本里了</view>
 </view>
@@ -9,7 +9,7 @@
     <view class="av lg {{book.family ? 'fam' : ''}}">{{book.initial}}</view>
     <view class="head-name">{{book.name}}</view>
     <view class="head-sub">{{book.family ? '家庭本本 · ' + members.length + ' 人，大家都能看、都能改' : '个人本本 · 只有你能看'}}</view>
-    <view wx:if="{{!isCurrent}}" class="head-switch" bindtap="onSwitchHere">切到这本</view>
+    <view wx:if="{{!isCurrent}}" class="pill pri head-switch" bindtap="onSwitchHere" hover-class="tap" hover-stay-time="100">切到这本</view>
   </view>
 
   <view wx:if="{{created}}" class="card tip">
@@ -18,12 +18,12 @@
   </view>
 
   <view class="card list">
-    <view class="li" bindtap="onRename">
+    <view class="li" bindtap="onRename" hover-class="tap-row" hover-stay-time="100">
       <text class="li-k">名字</text>
       <text class="li-v">{{book.name}}</text>
       <text class="arrow">›</text>
     </view>
-    <view wx:if="{{book.family}}" class="li" bindtap="onMyName">
+    <view wx:if="{{book.family}}" class="li" bindtap="onMyName" hover-class="tap-row" hover-stay-time="100">
       <text class="li-k">我在这本里叫</text>
       <text class="li-v {{book.myName ? '' : 'none-v'}}">{{book.myName || '还没写'}}</text>
       <text class="arrow">›</text>
@@ -42,7 +42,7 @@
         <text wx:for="{{codeChars}}" wx:key="i" class="code-ch">{{item.ch}}</text>
       </view>
       <view class="code-acts">
-        <view class="btn-outline code-btn" bindtap="onCopyCode">复制</view>
+        <view class="btn-outline code-btn" bindtap="onCopyCode" hover-class="tap" hover-stay-time="100">复制</view>
         <button class="code-btn share-btn" open-type="share">邀请家人</button>
       </view>
       <view class="hint">家人输入家庭码、或者点开邀请卡片申请加入，{{book.owner ? '你' : '本主'}}同意了才算加入。体验版只有体验成员能打开。</view>
@@ -57,8 +57,8 @@
           <view class="person-name">{{item.label}}</view>
           <view class="hint">{{item.timeText}} 申请加入</view>
         </view>
-        <view class="req-no" data-id="{{item.id}}" data-name="{{item.label}}" bindtap="onReject">不同意</view>
-        <view class="req-yes" data-id="{{item.id}}" bindtap="onApprove">同意</view>
+        <view class="pill req-no" data-id="{{item.id}}" data-name="{{item.label}}" bindtap="onReject" hover-class="tap" hover-stay-time="100">不同意</view>
+        <view class="pill pri req-yes" data-id="{{item.id}}" bindtap="onApprove" hover-class="tap" hover-stay-time="100">同意</view>
       </view>
     </view>
 
@@ -71,16 +71,16 @@
           <text wx:if="{{item.owner}}" class="tag-owner">本主</text>
           <text wx:if="{{item.me}}" class="tag-me">我</text>
         </view>
-        <text wx:if="{{book.owner && !item.me}}" class="remove" data-id="{{item.id}}" data-name="{{item.label}}" bindtap="onRemoveMember">移出</text>
+        <view wx:if="{{book.owner && !item.me}}" class="remove" data-id="{{item.id}}" data-name="{{item.label}}" bindtap="onRemoveMember" hover-class="tap" hover-stay-time="100">移出</view>
       </view>
     </view>
 
-    <view class="leave" bindtap="onLeave">退出这本</view>
+    <view class="leave" bindtap="onLeave" hover-class="tap" hover-stay-time="100">退出这本</view>
   </block>
 
   <view wx:else class="card">
     <view class="para">这是只有你能看的个人本本，不能邀请别人。想和家人一起记，新建一本家庭本本，可以把这里的菜复制过去。</view>
-    <view class="btn-outline new-btn" bindtap="onNewBook">新建家庭本本</view>
+    <view class="btn-outline new-btn" bindtap="onNewBook" hover-class="tap" hover-stay-time="100">新建家庭本本</view>
   </view>
 </view>
 

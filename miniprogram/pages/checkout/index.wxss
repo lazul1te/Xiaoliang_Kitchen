@@ -106,6 +106,21 @@
   color: var(--text-3);
 }
 
+/* 自己加口味的输入框：跟口味选项一样大，黄色描边 */
+.chip-input {
+  width: 220rpx;
+  height: 52rpx;
+  min-height: 0;
+  padding: 0 24rpx;
+  border: 2rpx solid var(--yolk);
+  background: #fff;
+  color: var(--pan);
+}
+
+.chip-placeholder {
+  color: var(--text-3);
+}
+
 .c-person + .c-person {
   margin-top: 12rpx;
 }

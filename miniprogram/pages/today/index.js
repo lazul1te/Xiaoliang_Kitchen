@@ -14,6 +14,9 @@ const { buildShoppingList } = require("../../utils/shopping");
 const { dateValue } = require("../../utils/log");
 const { slowestText, ticketOf, shareTitle } = require("../../utils/order");
 
+const SINK_MS = 450; // 买菜清单勾了一样，先在原地划掉，停这么久再沉到下面（马上换位置眼睛跟不上）
+const STAMP_HIT_MS = 520; // 「已下单」的章落下来的那一下（和 index.wxss 的 stamp-in 对上）
+
 // 菜篮里的一道菜（小行，只能看）：缩略图、名字、用时、份数
 function rowOf({ dish, qty }) {
   return {
@@ -45,6 +48,7 @@ Page({
     showShopping: false, // 下单前买菜清单先收起来
     showStocked: false, // 「家里有的」展开没有
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
+    stampIn: false, // 刚下的单：「已下单」的章盖下来（动画）
   },
 
   onLoad(options) {
@@ -88,6 +92,7 @@ Page({
     // 点菜单没了（撤单了、开饭了、家人在别的手机上撤了）：一起做的进度也用不上了
     if (stage !== "ordered" && cookSession.load()) cookSession.clear();
     const ticket = stage === "ordered" ? ticketOf(plan.order, planned) : null;
+    const fresh = !!ticket && planService.takeFreshOrder(plan.order.no);
     const overdue = ticket && ticket.date < dateValue(Date.now()) ? `${ticket.dateText.split(" ")[0]}的${ticket.meal}做了吗？` : "";
     this.setData({
       stage,
@@ -100,7 +105,15 @@ Page({
       shopping,
       shared: bookService.isShared(),
     });
+    if (fresh) this.playStamp();
     if (ticket) this.prepareCard();
+  },
+
+  // 刚下的单：「已下单」的章盖下来，落下的那一下手机震一下
+  playStamp() {
+    this.setData({ stampIn: true });
+    setTimeout(() => ui.buzz("medium"), STAMP_HIT_MS);
+    setTimeout(() => this.setData({ stampIn: false }), 1000);
   },
 
   // 去下单：确认点菜单（哪天、哪一顿、口味……）
@@ -229,9 +242,29 @@ Page({
     this.setData({ showShopping: !this.data.showShopping });
   },
 
+  // 买到了 / 没买到：先在原地打勾、划掉（「已买」跟着变），停一下再重新排，买到的沉到下面
   onToggleItem(e) {
-    planService.toggleChecked(e.currentTarget.dataset.key);
-    return this.refresh();
+    const key = e.currentTarget.dataset.key;
+    planService.toggleChecked(key);
+    this.markRow(key);
+    clearTimeout(this.sinkTimer); // 连着勾几样：最后一下停够了再一起排
+    return new Promise((resolve) => {
+      this.sinkTimer = setTimeout(() => resolve(this.refresh()), SINK_MS);
+    });
+  },
+
+  markRow(key) {
+    const shopping = this.data.shopping;
+    const patch = {};
+    ["buy", "unknown", "extras"].forEach((group) => {
+      shopping[group].forEach((item, i) => {
+        if (item.key !== key) return;
+        patch[`shopping.${group}[${i}].checked`] = !item.checked;
+        patch[`shopping.${group}[${i}].pop`] = !item.checked; // 勾上的那一下，勾弹一下
+        patch["shopping.done"] = shopping.done + (item.checked ? -1 : 1);
+      });
+    });
+    this.setData(patch);
   },
 
   // 家里有：加进库存（用完了的就标回「有」），以后不再提醒

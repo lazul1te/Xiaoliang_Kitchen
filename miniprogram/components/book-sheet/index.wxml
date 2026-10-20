@@ -1,8 +1,8 @@
-<view wx:if="{{show}}" class="sheet-mask" bindtap="onClose">
+<view wx:if="{{show}}" class="sheet-mask {{closing ? 'closing' : ''}}" bindtap="onClose">
   <view class="sheet" catchtap="noop">
     <block wx:if="{{!picking}}">
       <view class="sheet-title">切换小本本</view>
-      <view wx:for="{{books}}" wx:key="_id" class="bs-row {{item.current ? 'on' : ''}}" data-id="{{item._id}}" bindtap="onPick">
+      <view wx:for="{{books}}" wx:key="_id" class="bs-row {{item.current ? 'on' : ''}}" data-id="{{item._id}}" bindtap="onPick" hover-class="tap-row" hover-stay-time="100">
         <view class="av {{item.family ? 'fam' : ''}}">{{item.initial}}</view>
         <view class="bs-text">
           <view class="bs-name">{{item.name}}</view>
@@ -17,13 +17,13 @@
           <view class="bs-name">{{item.name}}</view>
           <view class="bs-sub">申请了，等本主同意</view>
         </view>
-        <text class="bs-cancel" data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onCancelRequest">撤回</text>
+        <view class="pill bs-cancel" data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onCancelRequest" hover-class="tap" hover-stay-time="100">撤回</view>
       </view>
       <view class="bs-acts">
-        <view class="bs-act" bindtap="onNew">＋ 新建家庭本本</view>
-        <view class="bs-act" bindtap="onJoin">输入家庭码加入</view>
+        <view class="btn-mid bs-act" bindtap="onNew" hover-class="tap" hover-stay-time="100">＋ 新建家庭本本</view>
+        <view class="btn-mid bs-act" bindtap="onJoin" hover-class="tap" hover-stay-time="100">输入家庭码加入</view>
       </view>
-      <view class="bs-default" bindtap="onOpenDefault">
+      <view class="bs-default" bindtap="onOpenDefault" hover-class="tap-row" hover-stay-time="100">
         <text>打开小程序时进入</text>
         <text class="bs-default-v">{{defaultText}} ›</text>
       </view>
@@ -32,13 +32,13 @@
     <!-- 打开小程序时进入哪本 -->
     <block wx:else>
       <view class="sheet-title">打开小程序时进入</view>
-      <view wx:for="{{options}}" wx:key="id" class="bs-opt {{item.on ? 'on' : ''}}" data-id="{{item.id}}" bindtap="onSetDefault">
+      <view wx:for="{{options}}" wx:key="id" class="bs-opt {{item.on ? 'on' : ''}}" data-id="{{item.id}}" bindtap="onSetDefault" hover-class="tap-row" hover-stay-time="100">
         <text class="bs-opt-name">{{item.label}}</text>
         <text wx:if="{{item.on}}" class="bs-check">✓</text>
       </view>
       <view class="hint bs-hint">选了某一本、以后又退出了那本，就进「我的小本本」</view>
       <view class="sheet-foot">
-        <view class="sheet-btn" bindtap="onCloseDefault">返回</view>
+        <view class="btn-mid sheet-btn" bindtap="onCloseDefault" hover-class="tap" hover-stay-time="100">返回</view>
       </view>
     </block>
   </view>

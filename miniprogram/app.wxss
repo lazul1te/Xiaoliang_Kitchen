@@ -114,6 +114,82 @@ button::after {
   left: -16rpx;
 }
 
+/* ---------- 按下去的样子（能点的 view 都加了 hover-class） ---------- */
+/* 按钮、选项、小图标：按下变淡 */
+.tap {
+  opacity: 0.6;
+  transition: opacity 0.1s;
+}
+
+/* 列表里的一行：按下底色深一点 */
+.tap-row {
+  background-color: rgba(59, 59, 66, 0.06);
+  transition: background-color 0.1s;
+}
+
+/* 整张卡片：按下轻轻缩一下 */
+.tap-card {
+  opacity: 0.88;
+  transform: scale(0.98);
+  transition: transform 0.12s, opacity 0.12s;
+}
+
+/* 盖章：从上面盖下来，落下时压一下（「已下单」「已开饭」）。章本身斜 12 度、0.85 的透明度 */
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-12deg) scale(2.4);
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+  70% {
+    opacity: 0.85;
+    transform: rotate(-12deg) scale(0.92);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    opacity: 0.85;
+    transform: rotate(-12deg) scale(1);
+  }
+}
+
+/* 第一次读取时整页的占位（记录页、点菜单记录页）：0.25 秒内读好了就不出来，免得一闪 */
+.sk-page {
+  animation: sk-appear 0.2s 0.25s both;
+}
+
+@keyframes sk-appear {
+  from {
+    opacity: 0;
+  }
+}
+
+.sk-card {
+  margin: 20rpx 24rpx 0;
+  padding: 28rpx;
+  border-radius: 20rpx;
+  background: #fff;
+}
+
+.sk-bar {
+  height: 28rpx;
+  margin-top: 18rpx;
+}
+
+.sk-bar.w30 {
+  width: 30%;
+  margin: 0 auto;
+}
+
+.sk-bar.w60 {
+  width: 60%;
+}
+
+.sk-photo {
+  height: 220rpx;
+  margin: -28rpx -28rpx 0;
+  border-radius: 20rpx 20rpx 0 0;
+}
+
 /* 加载中的占位块 */
 .sk {
   background: #f3e8d8;
@@ -131,6 +207,11 @@ button::after {
   }
 }
 
+/* ---------- 按钮：只有三档 ----------
+   大按钮（80rpx）：.btn-primary 黄底，一页最主要的那一下；.btn-outline 描边，旁边次要的
+   中按钮（64rpx）：.btn-mid 描边，.btn-mid.main 黄底，.disabled 灰掉。一排并列的几个用它
+   小胶囊（52rpx）：.pill 白底描边，.pill.pri 黄底，.pill.warn 红字。卡片、横幅里的小操作
+   页面上只写位置（外边距、flex），长相都用这几个 */
 .btn-primary {
   height: 80rpx;
   padding: 0 48rpx;
@@ -151,6 +232,53 @@ button::after {
   font-size: 28rpx;
   line-height: 76rpx;
   text-align: center;
+}
+
+.btn-mid {
+  height: 64rpx;
+  padding: 0 28rpx;
+  border: 2rpx solid var(--pan);
+  border-radius: 32rpx;
+  font-size: var(--fs-sub);
+  line-height: 60rpx;
+  text-align: center;
+}
+
+.btn-mid.main {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  font-weight: 600;
+}
+
+.btn-mid.disabled {
+  border-color: var(--line);
+  background: #fff;
+  color: var(--text-3);
+  font-weight: normal;
+}
+
+.pill {
+  height: 52rpx;
+  padding: 0 24rpx;
+  border: 2rpx solid rgba(59, 59, 66, 0.16);
+  border-radius: 26rpx;
+  background: #fff;
+  font-size: var(--fs-small);
+  line-height: 48rpx;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.pill.pri {
+  border-color: var(--yolk);
+  background: var(--yolk);
+  color: var(--pan);
+  font-weight: 600;
+}
+
+.pill.warn {
+  border-color: rgba(229, 83, 75, 0.5);
+  color: var(--danger);
 }
 
 .tag {
@@ -193,8 +321,12 @@ button::after {
   text-align: center;
 }
 
-.empty-emoji {
-  font-size: 96rpx;
+/* 空页面的插画（images/empty/，杏色圆底 + 线条，源文件在 design/empty） */
+.empty-img {
+  display: block;
+  width: 200rpx;
+  height: 200rpx;
+  margin: 0 auto;
 }
 
 .empty-title {
@@ -253,6 +385,7 @@ button::after {
   display: flex;
   align-items: flex-end;
   background: rgba(59, 59, 66, 0.45);
+  animation: mask-in 0.2s ease-out;
 }
 
 .sheet {
@@ -260,6 +393,41 @@ button::after {
   padding: 32rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
   background: #fff;
   border-radius: 28rpx 28rpx 0 0;
+  animation: sheet-up 0.26s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* 收起：先播完这段（utils/sheet.js 的 closeSheet），再真的关掉 */
+.sheet-mask.closing {
+  animation: mask-out 0.18s ease-in forwards;
+}
+
+.sheet-mask.closing .sheet {
+  animation: sheet-down 0.18s ease-in forwards;
+  pointer-events: none; /* 正在收：面板上的按钮不再响应，点到的都算点在灰底上 */
+}
+
+@keyframes mask-in {
+  from {
+    background-color: rgba(59, 59, 66, 0);
+  }
+}
+
+@keyframes mask-out {
+  to {
+    background-color: rgba(59, 59, 66, 0);
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-down {
+  to {
+    transform: translateY(100%);
+  }
 }
 
 .sheet-title {
@@ -280,11 +448,6 @@ button::after {
 
 .sheet-btn {
   flex: 1;
-  border-radius: 40rpx;
-  background: var(--cream);
-  text-align: center;
-  font-size: var(--fs-body);
-  line-height: 80rpx;
 }
 
 .sheet-btn + .sheet-btn {
@@ -349,7 +512,25 @@ button::after {
 }
 
 .meal-body {
+  position: relative;
   padding: 20rpx 24rpx 24rpx;
+}
+
+/* 刚开完饭：右上角盖下来一个「已开饭」 */
+.meal-stamp {
+  position: absolute;
+  top: 18rpx;
+  right: 24rpx;
+  padding: 2rpx 14rpx;
+  border: 4rpx solid var(--danger);
+  border-radius: 12rpx;
+  color: var(--danger);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  opacity: 0.85;
+  transform: rotate(-12deg);
+  animation: stamp-in 0.5s 0.3s both;
 }
 
 .meal-head {
@@ -415,17 +596,6 @@ button::after {
 
 .meal-act {
   margin-right: 16rpx;
-  padding: 6rpx 24rpx;
-  border-radius: 28rpx;
-  background: var(--cream);
-  font-size: var(--fs-small);
-  color: var(--text-2);
-}
-
-.meal-act.pri {
-  background: var(--yolk);
-  color: var(--pan);
-  font-weight: 600;
 }
 
 /* ---------- 菜品卡片（templates/dish-card.wxml） ---------- */

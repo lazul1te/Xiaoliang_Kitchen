@@ -11,11 +11,6 @@
   margin: 0 0 20rpx;
 }
 
-.empty-img {
-  width: 200rpx;
-  height: 200rpx;
-}
-
 .empty-orders {
   margin-top: 32rpx;
   font-size: var(--fs-sub);
@@ -184,15 +179,6 @@
 
 .banner-btn {
   margin-right: 16rpx;
-  padding: 8rpx 28rpx;
-  border-radius: 28rpx;
-  background: #fff;
-  font-size: var(--fs-small);
-}
-
-.banner-btn.pri {
-  background: var(--yolk);
-  font-weight: 600;
 }
 
 .ticket {
@@ -294,12 +280,17 @@
   transform: rotate(-12deg);
 }
 
+/* 刚下的单：章盖下来（stamp-in 在 app.wxss；落下那一刻是 index.js 的 STAMP_HIT_MS） */
+.t-stamp.stamp-in {
+  animation: stamp-in 0.5s 0.15s both;
+}
+
 .t-actions {
   display: flex;
   margin: 16rpx 0 20rpx;
 }
 
-/* 「发给 TA」是 <button open-type="share">，去掉按钮自带的样式，跟旁边几个长得一样
+/* 中按钮（跟 app.wxss 的 .btn-mid 一个样子）。「发给 TA」是 <button open-type="share">，要去掉按钮自带的样式
    （按钮自带的样式选择器比较具体，这里多写一层 .t-actions 才压得住） */
 .t-actions .t-act {
   flex: 1;
@@ -307,12 +298,13 @@
   height: 64rpx;
   margin: 0;
   padding: 0;
+  border: 2rpx solid var(--pan);
   border-radius: 32rpx;
-  background: #fff;
+  background: transparent;
   color: var(--pan);
-  font-size: var(--fs-small);
-  font-weight: 600;
-  line-height: 64rpx;
+  font-size: var(--fs-sub);
+  font-weight: normal;
+  line-height: 60rpx;
   text-align: center;
 }
 
@@ -321,7 +313,9 @@
 }
 
 .t-actions .t-act.pri {
+  border-color: var(--yolk);
   background: var(--yolk);
+  font-weight: 600;
 }
 
 /* ---------- 买菜清单 ---------- */
@@ -425,11 +419,26 @@
   font-weight: 700;
   line-height: 36rpx;
   color: #fff;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
 .shop-row.done .check {
   border-color: var(--scallion);
   background: var(--scallion);
+}
+
+/* 勾上的那一下：勾弹一下 */
+.check.pop {
+  animation: check-pop 0.3s ease-out;
+}
+
+@keyframes check-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.18);
+  }
 }
 
 .shop-main {
@@ -445,6 +454,7 @@
 
 .shop-name {
   font-size: 28rpx;
+  transition: color 0.2s;
 }
 
 .shop-amount {
@@ -479,11 +489,6 @@
 .shop-act {
   flex-shrink: 0;
   margin-left: 16rpx;
-  padding: 4rpx 16rpx;
-  border: 2rpx solid var(--line);
-  border-radius: 24rpx;
-  font-size: 22rpx;
-  color: var(--text-2);
 }
 
 .shop-remove {

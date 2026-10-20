@@ -5,6 +5,7 @@ const diagnose = require("../../services/diagnose");
 const categoryService = require("../../services/category");
 const planService = require("../../services/plan");
 const ui = require("../../utils/ui");
+const { closeSheet } = require("../../utils/sheet");
 const { toCard, matchKeyword } = require("../../utils/dish");
 
 const UNCATEGORIZED = "_none"; // 找不到分类的菜（比如分类被删了）临时放在这一段
@@ -23,9 +24,11 @@ Page({
     searchResults: [],
     basket: {}, // 菜篮 { 菜品id: 份数 }
     basketCount: 0,
+    bump: 0, // 加了一份菜篮弹一下：1、2 轮流换（换了 class 动画才会重播）
     basketByCat: {}, // 每个分类点了几份，显示在左侧分类上
     ordered: false, // 已经下了单（这时再点 + 就是加菜）
     showCart: false, // 菜篮（点底部点菜栏左边弹出来）
+    cartClosing: false, // 菜篮正在收起来（播动画）
     cartItems: [], // 菜篮里的菜 [{ _id, name, cover, initial, qty, added }]
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
     book: { initial: "", shortName: "", family: false }, // 左上角：正在用的小本本
@@ -279,6 +282,7 @@ Page({
 
   onPlus(e) {
     this.applyBasket(planService.add(e.currentTarget.dataset.id));
+    this.bumpBasket();
   },
 
   onMinus(e) {
@@ -311,13 +315,20 @@ Page({
   },
 
   onCloseCart() {
-    this.setData({ showCart: false });
+    closeSheet(this, "cartClosing", () => this.setData({ showCart: false }));
   },
 
   noop() {},
 
   onCartPlus(e) {
     this.applyBasket(planService.add(e.currentTarget.dataset.id));
+    ui.buzz();
+  },
+
+  // 加了一份：底部的菜篮弹一下，手机轻轻震一下
+  bumpBasket() {
+    this.setData({ bump: this.data.bump === 1 ? 2 : 1 });
+    ui.buzz();
   },
 
   onCartMinus(e) {
@@ -346,7 +357,10 @@ Page({
     const basketCount = planService.getCount(basket);
     this.setData({ basket, basketCount, basketByCat, ordered: !!planService.getOrder() });
     // 菜篮开着：跟着变；都拿掉了就收起来
-    if (this.data.showCart) this.setData(basketCount ? { cartItems: this.cartItemsOf(basket) } : { showCart: false });
+    if (this.data.showCart) {
+      if (basketCount) this.setData({ cartItems: this.cartItemsOf(basket) });
+      else this.onCloseCart();
+    }
   },
 
   // 去下单（确认点菜单）；已经下了单就去看点菜单

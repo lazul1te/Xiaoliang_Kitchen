@@ -1,5 +1,5 @@
 <view wx:if="{{notFound}}" class="empty">
-  <view class="empty-emoji">🍽️</view>
+  <image class="empty-img" src="/images/empty/plate.png" />
   <view class="empty-title">这道菜找不到了</view>
   <view class="empty-desc">可能已经被删掉了</view>
 </view>
@@ -82,7 +82,7 @@
       <text class="logs-add" bindtap="onAddLog">＋ 记一次</text>
     </view>
     <view wx:if="{{!logs.length}}" class="none">还没打过卡。点下面的「开始做」，做完打个卡</view>
-    <view wx:for="{{logs}}" wx:key="_id" class="mini-log" data-id="{{item._id}}" bindtap="onOpenLog">
+    <view wx:for="{{logs}}" wx:key="_id" class="mini-log" data-id="{{item._id}}" bindtap="onOpenLog" hover-class="tap-card" hover-stay-time="100">
       <cloud-image wx:if="{{item.photo}}" class="mini-photo" src="{{item.photo}}" mode="aspectFill" />
       <view class="mini-info">
         <view class="mini-head">
@@ -93,25 +93,25 @@
         <view wx:if="{{item.cook}}" class="mini-cook">掌勺：{{item.cook}}</view>
       </view>
     </view>
-    <view wx:if="{{logCount > logs.length}}" class="logs-more" bindtap="onAllLogs">在「记录」里看全部 ›</view>
+    <view wx:if="{{logCount > logs.length}}" class="logs-more" bindtap="onAllLogs" hover-class="tap" hover-stay-time="100">在「记录」里看全部 ›</view>
   </view>
 
-  <view wx:if="{{canCopy}}" class="copy-link" bindtap="onCopyToBook">复制到另一本小本本 ›</view>
+  <view wx:if="{{canCopy}}" class="copy-link" bindtap="onCopyToBook" hover-class="tap" hover-stay-time="100">复制到另一本小本本 ›</view>
 </view>
 
 <!-- 底部操作栏 -->
 <view wx:if="{{dish}}" class="action-bar">
-  <view class="action-edit" bindtap="onEdit">
+  <view class="action-edit" bindtap="onEdit" hover-class="tap" hover-stay-time="100">
     <image class="action-icon" src="/images/icons/edit.png" />
     <text>编辑</text>
   </view>
   <view class="action-basket">
-    <view wx:if="{{qty === 0}}" class="btn-outline" bindtap="onPlus">加入菜篮</view>
+    <view wx:if="{{qty === 0}}" class="btn-outline" bindtap="onPlus" hover-class="tap" hover-stay-time="100">加入菜篮</view>
     <view wx:else class="stepper big">
-      <view class="stepper-btn minus" bindtap="onMinus">−</view>
+      <view class="stepper-btn minus" bindtap="onMinus" hover-class="tap" hover-stay-time="100">−</view>
       <text class="stepper-num">{{qty}} 份</text>
-      <view class="stepper-btn plus" bindtap="onPlus">+</view>
+      <view class="stepper-btn plus" bindtap="onPlus" hover-class="tap" hover-stay-time="100">+</view>
     </view>
   </view>
-  <view class="btn-primary" bindtap="onStartCook">开始做</view>
+  <view class="btn-primary" bindtap="onStartCook" hover-class="tap" hover-stay-time="100">开始做</view>
 </view>

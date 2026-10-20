@@ -75,10 +75,3 @@
   color: var(--text-3);
 }
 
-.wish-learn {
-  padding: 4rpx 20rpx;
-  border-radius: 24rpx;
-  background: var(--yolk);
-  font-size: 24rpx;
-  font-weight: 600;
-}

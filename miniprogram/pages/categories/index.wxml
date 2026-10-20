@@ -1,6 +1,6 @@
 <view class="cats">
   <view wx:if="{{loaded && !list.length}}" class="empty">
-    <view class="empty-emoji">🗂️</view>
+    <image class="empty-img" src="/images/empty/category.png" />
     <view class="empty-title">还没有分类</view>
     <view class="empty-desc">比如：家常菜、汤羹、主食</view>
   </view>
@@ -12,16 +12,16 @@
         <text class="row-count">{{item.count}} 道菜</text>
       </view>
       <view class="row-tools">
-        <view class="tool hit {{index === 0 ? 'disabled' : ''}}" data-index="{{index}}" data-dir="{{-1}}" bindtap="onMove">
+        <view class="tool hit {{index === 0 ? 'disabled' : ''}}" data-index="{{index}}" data-dir="{{-1}}" bindtap="onMove" hover-class="tap" hover-stay-time="100">
           <image class="tool-icon" src="/images/icons/up-gray.png" />
         </view>
-        <view class="tool hit {{index === list.length - 1 ? 'disabled' : ''}}" data-index="{{index}}" data-dir="{{1}}" bindtap="onMove">
+        <view class="tool hit {{index === list.length - 1 ? 'disabled' : ''}}" data-index="{{index}}" data-dir="{{1}}" bindtap="onMove" hover-class="tap" hover-stay-time="100">
           <image class="tool-icon" src="/images/icons/down-gray.png" />
         </view>
-        <view class="tool hit" data-index="{{index}}" bindtap="onRename">
+        <view class="tool hit" data-index="{{index}}" bindtap="onRename" hover-class="tap" hover-stay-time="100">
           <image class="tool-icon" src="/images/icons/edit-gray.png" />
         </view>
-        <view class="tool hit" data-index="{{index}}" bindtap="onRemove">
+        <view class="tool hit" data-index="{{index}}" bindtap="onRemove" hover-class="tap" hover-stay-time="100">
           <image class="tool-icon" src="/images/icons/trash-red.png" />
         </view>
       </view>
@@ -29,5 +29,5 @@
   </view>
 
   <view class="hint">用箭头调整顺序，菜单左边就按这个顺序排。还有菜的分类不能删，先把菜改到别的分类。</view>
-  <view class="btn-primary add" bindtap="onAdd">＋ 新建分类</view>
+  <view class="btn-primary add" bindtap="onAdd" hover-class="tap" hover-stay-time="100">＋ 新建分类</view>
 </view>

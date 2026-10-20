@@ -1,13 +1,13 @@
 <view class="backup">
   <view class="card list">
-    <view class="row" bindtap="onOpenExport">
+    <view class="row" bindtap="onOpenExport" hover-class="tap-row" hover-stay-time="100">
       <view class="row-main">
         <view class="row-title">备份到微信</view>
         <view class="row-desc">把菜谱、记录和照片打包成一个文件，发到微信或者存到电脑</view>
       </view>
       <text class="arrow">›</text>
     </view>
-    <view class="row" bindtap="onOpenImport">
+    <view class="row" bindtap="onOpenImport" hover-class="tap-row" hover-stay-time="100">
       <view class="row-main">
         <view class="row-title">从文件导入</view>
         <view class="row-desc">从微信聊天选文件，或者粘贴复制的内容</view>
@@ -26,9 +26,9 @@
       <view class="rule">· 照片导入以后在菜的编辑页里加</view>
     </view>
     <view class="tpl-actions">
-      <view class="tpl-btn" bindtap="onCopyTemplate">复制模板</view>
-      <view class="tpl-btn" bindtap="onSendTemplate">发到微信</view>
-      <view wx:if="{{canSaveToDisk}}" class="tpl-btn" bindtap="onSaveTemplate">存到电脑</view>
+      <view class="btn-mid tpl-btn" bindtap="onCopyTemplate" hover-class="tap" hover-stay-time="100">复制模板</view>
+      <view class="btn-mid tpl-btn" bindtap="onSendTemplate" hover-class="tap" hover-stay-time="100">发到微信</view>
+      <view wx:if="{{canSaveToDisk}}" class="btn-mid tpl-btn" bindtap="onSaveTemplate" hover-class="tap" hover-stay-time="100">存到电脑</view>
     </view>
   </view>
 </view>

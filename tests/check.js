@@ -18,6 +18,8 @@ const clone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
 const flush = async () => {
   for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r));
 };
+// 从底部弹出的面板收起时先播 0.18 秒的动画（utils/sheet.js），播完才真的关掉
+const sheetClosed = () => new Promise((r) => setTimeout(r, 220));
 // 照片组件会把同一屏的照片攒一小会儿再一起换链接（setTimeout），要等它跑完
 const settle = async () => {
   await flush();
@@ -328,6 +330,7 @@ Object.assign(global.wx, {
   },
   setKeepScreenOn: (o) => calls.push(["keepScreenOn", o.keepScreenOn]),
   vibrateLong: () => calls.push(["vibrate"]),
+  vibrateShort: (o) => calls.push(["buzz", o.type]),
   setInnerAudioOption: () => {},
   createInnerAudioContext: () => ({
     src: "",
@@ -908,7 +911,9 @@ async function smoke() {
 
   // ---- 点菜、搜索、左右联动 ----
   menu.onPlus(ev({ id: idOf("番茄炒蛋") }));
+  assert.deepStrictEqual([menu.data.bump, lastCall("buzz")], [1, ["buzz", "light"]], "加了一份：菜篮弹一下，手机轻震");
   menu.onPlus(ev({ id: idOf("番茄炒蛋") }));
+  assert.strictEqual(menu.data.bump, 2, "连着点：换个 class，动画每次都重播");
   menu.onPlus(ev({ id: idOf("可乐鸡翅") }));
   assert.strictEqual(menu.data.basketCount, 3);
   assert.deepStrictEqual(menu.data.basketByCat, { [catOf("家常菜")]: 2, [catOf("硬菜")]: 1 });
@@ -926,7 +931,10 @@ async function smoke() {
   assert.deepStrictEqual([menu.data.basketCount, menu.data.cartItems[1].qty], [3, 2], "在菜篮里加一份");
   menu.onCartMinus(ev({ id: idOf("可乐鸡翅") }));
   menu.onCloseCart();
-  assert.deepStrictEqual([menu.data.showCart, menu.data.basketCount], [false, 2]);
+  assert.deepStrictEqual([menu.data.showCart, menu.data.cartClosing], [true, true], "先播收起的动画");
+  menu.onCloseCart(); // 动画还没播完又点了一下：不重复收
+  await sheetClosed();
+  assert.deepStrictEqual([menu.data.showCart, menu.data.cartClosing, menu.data.basketCount], [false, false, 2]);
   menu.onSearchInput({ detail: { value: "鸡蛋" } });
   const eggDishes = menu.data.searchResults.map((d) => d.name);
   assert.deepStrictEqual(eggDishes, ["番茄炒蛋", "紫菜蛋花汤", "蛋炒饭"]);
@@ -998,11 +1006,13 @@ async function smoke() {
   edit.onOpenTimer(ev({ i: 1 })); // 计时面板：点常用时长
   assert.deepStrictEqual([edit.data.timerStep, edit.data.timerCurrent], [1, 0]);
   edit.onPickTimer(ev({ value: 600 }));
+  await sheetClosed();
   assert.strictEqual(edit.data.timerStep, -1, "选好就收起来");
   // 自定义时长：写「1分30秒」；写不明白的提示一下；「不计时」清掉
   edit.onOpenTimer(ev({ i: 0 }));
   modalAnswers.push({ confirm: true, content: "1分30秒" });
   await edit.onCustomTimer();
+  await sheetClosed();
   assert.deepStrictEqual([edit.data.form.steps[0].timer, edit.data.form.steps[0].timerText, edit.data.timerStep], [90, "1 分 30 秒", -1]);
   edit.onOpenTimer(ev({ i: 0 }));
   assert.strictEqual(edit.data.timerCurrent, 90, "打开时标出现在的时长");
@@ -1011,6 +1021,7 @@ async function smoke() {
   assert.deepStrictEqual(lastCall("toast"), ["toast", "没看懂，写成「25分钟」「1分30秒」这样"]);
   assert.strictEqual(edit.data.timerStep, 0, "没看懂就先不关面板");
   edit.onNoTimer();
+  await sheetClosed();
   assert.deepStrictEqual([edit.data.form.steps[0].timer, edit.data.timerStep], [0, -1]);
   assert.strictEqual(edit.data.form.steps[1].timerText, "10 分钟");
   await edit.onStepImage(ev({ i: 1 }));
@@ -1191,7 +1202,13 @@ async function smoke() {
   assert.strictEqual(today.data.count, 2);
   assert.deepStrictEqual(show(today.data.shopping.buy), ["鸡蛋 6个", "番茄 4个", "葱 2根"], "份数变了，用量跟着变");
   const eggKey = today.data.shopping.buy[0].key;
-  await today.onToggleItem(ev({ key: eggKey }));
+  const toggling = today.onToggleItem(ev({ key: eggKey }));
+  assert.deepStrictEqual(
+    [today.data.shopping.buy.map((i) => [i.name, i.checked]), today.data.shopping.buy[0].pop, today.data.shopping.done],
+    [[["鸡蛋", true], ["番茄", false], ["葱", false]], true, 1],
+    "点了先在原地打勾、划掉，「已买」马上跟着变"
+  );
+  await toggling;
   assert.deepStrictEqual(
     today.data.shopping.buy.map((i) => [i.name, i.checked]),
     [["番茄", false], ["葱", false], ["鸡蛋", true]],
@@ -1216,6 +1233,7 @@ async function smoke() {
   modalAnswers.push({ confirm: true });
   await menu.onClearCart();
   await flush();
+  await sheetClosed();
   assert.ok(/^点的菜都拿掉，买菜清单的勾选也清掉。这本里大家的都会清空。库存不受影响。$/.test(lastCall("modal")[2]), lastCall("modal")[2]);
   assert.deepStrictEqual([menu.data.showCart, menu.data.basketCount, planItems()], [false, 0, {}], "清空了就收起来");
   await today.refresh();
@@ -1929,6 +1947,20 @@ async function smoke() {
   calPage.renderCalendar();
   const day = (date) => [].concat(...calPage.data.cal.weeks.map((w) => w.days)).find((d) => d.date === date);
   assert.deepStrictEqual([calPage.data.cal.title, day("2026-10-02").count], ["2026年10月", 3]);
+  assert.deepStrictEqual([calPage.data.calOpen, calPage.data.weeks.length], [false, 1], "日历默认收起，只显示一周");
+  calPage.onToggleCalendar();
+  assert.deepStrictEqual([calPage.data.calOpen, calPage.data.weeks.length, calPage.data.calAnim], [true, calPage.data.cal.weeks.length, "unfold"], "展开看整月");
+  const swipe = (dx, dy) => {
+    calPage.onCalTouchStart({ touches: [{ clientX: 200, clientY: 300 }] });
+    calPage.onCalTouchEnd({ changedTouches: [{ clientX: 200 + dx, clientY: 300 + dy }] });
+  };
+  swipe(-120, 10);
+  assert.deepStrictEqual([calPage.data.cal.title, calPage.data.calAnim], ["2026年11月", "next1"], "往左滑看下个月");
+  swipe(-30, 0);
+  swipe(-80, 90);
+  assert.strictEqual(calPage.data.cal.title, "2026年11月", "滑得短、斜着滑都不算");
+  swipe(120, -10);
+  assert.deepStrictEqual([calPage.data.cal.title, calPage.data.calAnim], ["2026年10月", "prev2"], "往右滑看上个月");
   await calPage.onTapDay(ev({ date: "2026-10-02", count: 3, future: false }));
   assert.deepStrictEqual([calPage.data.selected, calPage.data.dayLogs.length], ["2026-10-02", 3]);
   assert.ok(/做了 3 道菜/.test(calPage.data.dayTitle), calPage.data.dayTitle);
@@ -1943,6 +1975,23 @@ async function smoke() {
   calPage.onPrevMonth();
   assert.strictEqual(calPage.data.calSummary, "这个月还没下厨");
   calPage.onNextMonth();
+  await calPage.onTapDay(ev({ date: "2026-09-27", count: 1, future: false }));
+  calPage.onToggleCalendar();
+  assert.deepStrictEqual(
+    [calPage.data.calOpen, calPage.data.cal.title, calPage.data.weeks.map((w) => w.days.map((d) => d.day).join(","))],
+    [false, "2026年9月", ["21,22,23,24,25,26,27"]],
+    "收起：只显示选中的那天那一周"
+  );
+  calPage.onToggleCalendar();
+  await calPage.onTapDay(ev({ date: "2026-09-27", count: 1, future: false }));
+  swipe(-120, 0);
+  swipe(-120, 0);
+  calPage.onToggleCalendar();
+  assert.strictEqual(calPage.data.cal.title.slice(5), `${new Date(Date.now()).getMonth() + 1}月`, "没选日子：收起回到今天那个月");
+  calPage.onToggleCalendar();
+  calPage.calYear = 2026;
+  calPage.calMonth = 8;
+  calPage.renderCalendar();
   modalAnswers.push({ confirm: true });
   await calPage.onTapDay(ev({ date: "2026-09-20", count: 0, future: false }));
   assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/log-edit/index?date=2026-09-20"]);
@@ -2277,6 +2326,8 @@ async function smoke() {
   picker.onPick(ev({ id: idOf("青椒土豆丝"), name: "青椒土豆丝" }));
   assert.deepStrictEqual(picker.events.pop(), ["select", { id: idOf("青椒土豆丝"), name: "青椒土豆丝" }]);
   picker.onClose();
+  assert.strictEqual(picker.events.length, 0, "先播收起的动画，播完才发 close");
+  await sheetClosed();
   assert.deepStrictEqual(picker.events.pop(), ["close", undefined]);
   // 补记录：今天 / 昨天点一下；以前写过的掌勺名字点一下
   const leCook = newPage("pages/log-edit/index");
@@ -2383,9 +2434,11 @@ async function smoke() {
   co.onToggleFlavor(ev({ name: "少辣" }));
   co.onToggleFlavor(ev({ name: "不要香菜" }));
   co.onToggleFlavor(ev({ name: "少辣" })); // 再点一下取消
-  modalAnswers.push({ confirm: true, content: "多放醋" });
-  await co.onAddFlavor();
-  assert.deepStrictEqual(co.data.form.flavors, ["不要香菜", "多放醋"]);
+  co.onAddFlavor();
+  assert.strictEqual(co.data.addingFlavor, true, "「＋ 口味」变成输入框");
+  co.onFlavorDone({ detail: { value: " 多放醋 " } }); // 点了键盘上的「完成」
+  co.onFlavorDone({ detail: { value: " 多放醋 " } }); // 接着还有一次 blur：不会加两遍
+  assert.deepStrictEqual([co.data.addingFlavor, co.data.form.flavors], [false, ["不要香菜", "多放醋"]]);
   assert.ok(co.data.flavorChips.some((c) => c.name === "多放醋" && c.on), "自己加的口味也变成选项");
   co.onNoteInput({ detail: { value: "鸡翅烤焦一点" } });
   modalAnswers.push({ confirm: true, content: "小鱼" });
@@ -2395,11 +2448,17 @@ async function smoke() {
   co.onPickName(ev({ field: "cook", name: "小亮" }));
   await co.onSubmit();
   await flush();
-  assert.deepStrictEqual([lastCall("switchTab"), lastCall("toast")], [["switchTab", "/pages/today/index"], ["toast", "下单啦"]], "下好单去「点菜单」");
+  assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/today/index"], "下好单去「点菜单」");
   const basketO = newPage("pages/today/index");
   basketO.onLoad({});
   basketO.onShow();
   await flush();
+  assert.strictEqual(basketO.data.stampIn, true, "刚下的单：「已下单」的章盖下来");
+  await new Promise((r) => setTimeout(r, 600));
+  assert.deepStrictEqual(lastCall("buzz"), ["buzz", "medium"], "章落下的那一下手机震一下");
+  await basketO.refresh();
+  await new Promise((r) => setTimeout(r, 500));
+  assert.strictEqual(basketO.data.stampIn, false, "章只盖一次");
   const order1 = planDoc().order;
   assert.deepStrictEqual(
     [order1.no, order1.meal, order1.date, order1.flavors, order1.note, order1.orderedBy, order1.cook],
@@ -2545,7 +2604,6 @@ async function smoke() {
   assert.ok(!planDoc().order, "点菜单收起来了");
   assert.deepStrictEqual(Object.values(planDoc().extras).map((x) => x.name), ["牛奶"], "还剩菜，买菜清单先不动");
   assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/logs/index"]);
-  assert.deepStrictEqual(lastCall("toast"), ["toast", "记好了！这顿 3 道菜"]);
   assert.strictEqual(dev().dev_cook_name, "小亮");
   // 记录页：直接选中那天，同一顿的菜合成一张卡片
   const logsM = newPage("pages/logs/index");
@@ -2555,6 +2613,13 @@ async function smoke() {
   assert.strictEqual(logsM.data.selected, dateValue(Date.now()), "开完饭直接看那天");
   const mealEntry = logsM.data.dayEntries.find((e) => e.type === "meal");
   assert.ok(mealEntry, "那天有一张「一顿饭」的卡片");
+  assert.strictEqual(mealEntry.meal.fresh, true, "刚记好的这一顿盖个「已开饭」的章");
+  assert.strictEqual(logsM.data.calOpen, false, "日历默认收起");
+  assert.deepStrictEqual(
+    logsM.data.weeks.map((w) => w.days.some((d) => d.date === dateValue(Date.now()))),
+    [true],
+    "收起时只显示选中的那天那一周"
+  );
   assert.deepStrictEqual(
     [mealEntry.meal.title, mealEntry.meal.noText, mealEntry.meal.photo, mealEntry.meal.peopleText, mealEntry.meal.note],
     ["晚饭", "No.001", meal1.photoThumb, "点菜 小鱼 · 掌勺 小亮", "卤肉炖得很烂，下次少放点糖"]

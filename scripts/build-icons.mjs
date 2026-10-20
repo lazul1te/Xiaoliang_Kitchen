@@ -28,9 +28,13 @@ for (const name of ["menu", "today", "logs", "mine"]) {
   }
 }
 
-// 菜单底部点菜栏的菜篮（深色底上用）、「点菜单」页还没点菜时的大图
+// 菜单底部点菜栏的菜篮（深色底上用）
 await svgToPng(design("tabbar/basket-bar.svg"), join(out, "basket.png"), 96, 288);
-await svgToPng(design("tabbar/basket-big.svg"), join(out, "basket-big.png"), 240, 600);
+
+// 空页面的插画：杏色圆底 + 线条，120 格、3.6 粗线，界面上显示 200rpx，导出 300px
+for (const file of readdirSync(design("empty")).filter((f) => f.endsWith(".svg"))) {
+  await svgToPng(design(`empty/${file}`), join(out, "empty", file.replace(".svg", ".png")), 300, 600, { compressionLevel: 9 });
+}
 
 // 「我的」页顶部的小头像
 await sharp(design("avatar/avatar-b-egg.png")).resize(200, 200).png().toFile(join(out, "logo.png"));

@@ -3,25 +3,26 @@
     <import src="/templates/meal-card.wxml" />
     <template is="mealCard" data="{{...卡片}}" />     卡片是 utils/meal.js 的 mealCard()
   用到它的页面要有 onOpenLog（点一道菜，看那条做菜记录）、onReorder（再来一单）、onShareMeal（分享这顿饭），
-  data-id 是这一顿（或者那条记录）的 _id。样式在 app.wxss。
+  data-id 是这一顿（或者那条记录）的 _id。卡片带 fresh: true 时盖一个「已开饭」的章（刚开完饭）。样式在 app.wxss。
 -->
 <template name="mealCard">
   <view class="meal-card">
     <cloud-image wx:if="{{photo}}" class="meal-photo" src="{{photo}}" mode="aspectFill" />
     <view class="meal-body">
+      <view wx:if="{{fresh}}" class="meal-stamp">已开饭</view>
       <view class="meal-head">
         <text class="meal-title">{{title}}</text>
         <text wx:if="{{noText}}" class="meal-no">{{noText}}</text>
         <text wx:if="{{peopleText}}" class="meal-people">{{peopleText}}</text>
       </view>
-      <view wx:for="{{dishes}}" wx:key="_id" class="meal-dish" data-id="{{item._id}}" bindtap="onOpenLog">
+      <view wx:for="{{dishes}}" wx:key="_id" class="meal-dish" data-id="{{item._id}}" bindtap="onOpenLog" hover-class="tap-row" hover-stay-time="100">
         <text class="meal-dish-name">{{item.dishName}}<text wx:if="{{item.qtyText}}" class="meal-qty"> {{item.qtyText}}</text></text>
         <text wx:if="{{item.stars}}" class="meal-stars">{{item.stars}}</text>
       </view>
       <view wx:if="{{note}}" class="meal-note">{{note}}</view>
       <view class="meal-acts">
-        <text class="meal-act pri" data-id="{{_id}}" bindtap="onReorder">再来一单</text>
-        <text class="meal-act" data-id="{{_id}}" bindtap="onShareMeal">分享这顿饭</text>
+        <view class="pill pri meal-act" data-id="{{_id}}" bindtap="onReorder" hover-class="tap" hover-stay-time="100">再来一单</view>
+        <view class="pill meal-act" data-id="{{_id}}" bindtap="onShareMeal" hover-class="tap" hover-stay-time="100">分享这顿饭</view>
       </view>
     </view>
   </view>

@@ -5,6 +5,7 @@
 // 选了另一本就切过去，再发 switch 事件，页面重新读数据
 const bookService = require("../../services/book");
 const ui = require("../../utils/ui");
+const { closeSheet } = require("../../utils/sheet");
 
 const LAST_USED = "上次用的那本";
 
@@ -23,6 +24,7 @@ Component({
     defaultText: LAST_USED,
     picking: false, // 正在选「打开小程序时进入」哪本
     options: [], // [{ id, label, on }]
+    closing: false, // 正在收起来（播动画）
   },
 
   observers: {
@@ -59,13 +61,17 @@ Component({
     noop() {},
 
     onClose() {
-      this.triggerEvent("close");
+      closeSheet(this, "closing", () => this.triggerEvent("close"));
     },
 
+    // 点了正在用的那本：滑下去收起；换了一本：马上关掉，页面重新读那本的数据
     onPick(e) {
       const id = e.currentTarget.dataset.id;
+      if (id === bookService.currentId()) {
+        this.onClose();
+        return;
+      }
       this.triggerEvent("close");
-      if (id === bookService.currentId()) return;
       bookService.switchTo(id);
       this.triggerEvent("switch", { id });
     },
