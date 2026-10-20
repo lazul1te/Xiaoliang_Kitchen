@@ -105,6 +105,11 @@ Page({
     wx.switchTab({ url: "/pages/logs/index" });
   },
 
+  // 做饭总结：先看这个月
+  onOpenStats() {
+    wx.navigateTo({ url: "/pages/stats/index" });
+  },
+
   onOpenBackup() {
     wx.navigateTo({ url: "/pages/backup/index" });
   },

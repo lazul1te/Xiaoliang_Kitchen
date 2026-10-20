@@ -152,7 +152,64 @@ button::after {
   }
 }
 
-/* 第一次读取时整页的占位（记录页、点菜单记录页）：0.25 秒内读好了就不出来，免得一闪 */
+/* 换月、换年：新的从右边（往后翻）、左边（往前翻）滑进来。1、2 轮流换着加，连着翻也每次都有动画（记录页日历、做饭总结） */
+.slide-next1 {
+  animation: slide-next-1 0.24s ease-out;
+}
+
+.slide-next2 {
+  animation: slide-next-2 0.24s ease-out;
+}
+
+.slide-prev1 {
+  animation: slide-prev-1 0.24s ease-out;
+}
+
+.slide-prev2 {
+  animation: slide-prev-2 0.24s ease-out;
+}
+
+/* 展开、换个看法：淡出来 */
+.unfold {
+  animation: unfold 0.22s ease-out;
+}
+
+@keyframes slide-next-1 {
+  from {
+    opacity: 0;
+    transform: translateX(60rpx);
+  }
+}
+
+@keyframes slide-next-2 {
+  from {
+    opacity: 0;
+    transform: translateX(60rpx);
+  }
+}
+
+@keyframes slide-prev-1 {
+  from {
+    opacity: 0;
+    transform: translateX(-60rpx);
+  }
+}
+
+@keyframes slide-prev-2 {
+  from {
+    opacity: 0;
+    transform: translateX(-60rpx);
+  }
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-16rpx);
+  }
+}
+
+/* 第一次读取时整页的占位（记录页、点菜单记录页、做饭总结）：0.25 秒内读好了就不出来，免得一闪 */
 .sk-page {
   animation: sk-appear 0.2s 0.25s both;
 }

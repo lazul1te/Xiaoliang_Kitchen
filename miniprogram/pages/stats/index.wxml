@@ -1,0 +1,110 @@
+<!-- 按月 / 按年 / 全部；按月、按年时下面能往前往后翻 -->
+<view class="top">
+  <view class="seg">
+    <view wx:for="{{kinds}}" wx:key="key" class="seg-item {{item.key === kind ? 'on' : ''}}"
+          data-kind="{{item.key}}" bindtap="onPickKind" hover-class="tap" hover-stay-time="100">{{item.label}}</view>
+  </view>
+  <view wx:if="{{kind !== 'all' && s}}" class="period">
+    <view class="period-arrow hit {{canPrev ? '' : 'off'}}" bindtap="onPrev" hover-class="{{canPrev ? 'tap' : 'none'}}" hover-stay-time="100">‹</view>
+    <text class="period-title">{{s.title}}</text>
+    <view class="period-arrow hit {{canNext ? '' : 'off'}}" bindtap="onNext" hover-class="{{canNext ? 'tap' : 'none'}}" hover-stay-time="100">›</view>
+  </view>
+</view>
+
+<view wx:if="{{loaded}}" class="body {{anim}}">
+  <!-- 这段时间一条记录都没有 -->
+  <view wx:if="{{!s.count}}" class="empty small">
+    <image class="empty-img" src="/images/empty/book.png" />
+    <view class="empty-title">{{emptyText}}</view>
+    <view wx:if="{{current}}" class="empty-desc">做完打个卡，或者开饭时一起记下来，这里就有总结了</view>
+  </view>
+
+  <block wx:else>
+    <view class="card nums">
+      <view class="num"><view class="num-v">{{s.count}}</view><view class="num-k">次下厨</view></view>
+      <view class="num"><view class="num-v">{{s.dishCount}}</view><view class="num-k">道不同的菜</view></view>
+      <view class="num"><view class="num-v">{{s.days}}</view><view class="num-k">天在做饭</view></view>
+    </view>
+
+    <!-- 最常做的菜：条越长做得越多 -->
+    <view class="card">
+      <view class="card-title">最常做的菜</view>
+      <view wx:for="{{s.top}}" wx:key="dishId" class="rank" data-id="{{item.dishId}}" data-gone="{{item.gone}}"
+            bindtap="onOpenDish" hover-class="tap-row" hover-stay-time="100">
+        <view class="rank-no {{index === 0 ? 'first' : ''}}">{{index + 1}}</view>
+        <view class="rank-main">
+          <view class="rank-line">
+            <text class="rank-name">{{item.name}}</text>
+            <text class="rank-count">{{item.count}} 次</text>
+          </view>
+          <view class="bar"><view class="bar-fill" style="width: {{item.pct}}%"></view></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 谁掌勺：写了名字的记录 -->
+    <view wx:if="{{s.cooks.length}}" class="card">
+      <view class="card-title">谁掌勺</view>
+      <view class="split">
+        <view wx:for="{{s.cooks}}" wx:key="name" class="split-part" style="flex: {{item.count}}; background: {{item.color}}"></view>
+      </view>
+      <view class="legend">
+        <view wx:for="{{s.cooks}}" wx:key="name" class="legend-item">
+          <view class="legend-dot" style="background: {{item.color}}"></view>
+          <text>{{item.name}} {{item.count}} 次 · {{item.pct}}%</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{s.best.length}}" class="card">
+      <view class="card-title">打分最高</view>
+      <view wx:for="{{s.best}}" wx:key="dishId" class="row" data-id="{{item.dishId}}" data-gone="{{item.gone}}"
+            bindtap="onOpenDish" hover-class="tap-row" hover-stay-time="100">
+        <text class="row-name">{{item.name}}</text>
+        <text class="best-stars">{{item.stars}}</text>
+        <text class="row-note">{{item.avgText}} 分 · 打了 {{item.rated}} 次</text>
+      </view>
+    </view>
+
+    <!-- 每个月下厨几次：按年看这一年，全部看最近 12 个月 -->
+    <view wx:if="{{s.chart.length}}" class="card">
+      <view class="card-title">{{kind === 'year' ? '每个月下厨几次' : '最近 12 个月'}}</view>
+      <view class="chart">
+        <view wx:for="{{s.chart}}" wx:key="key" class="col {{item.current ? 'now' : ''}}">
+          <text class="col-n">{{item.count || ''}}</text>
+          <view class="col-track"><view class="col-bar {{item.count ? 'has' : ''}}" style="height: {{item.pct}}%"></view></view>
+          <text class="col-k">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{s.firstTimes.length}}" class="card">
+      <view class="card-title">第一次做 · {{s.firstTimes.length}} 道</view>
+      <view class="chips">
+        <view wx:for="{{s.firstTimes}}" wx:key="dishId" class="chip" data-id="{{item.dishId}}" data-gone="{{item.gone}}"
+              bindtap="onOpenDish" hover-class="tap" hover-stay-time="100">{{item.name}}</view>
+      </view>
+    </view>
+
+    <!-- 好久没做了（看全部时）：要不要再做一次 -->
+    <view wx:if="{{s.stale.length}}" class="card">
+      <view class="card-title">好久没做了</view>
+      <view wx:for="{{s.stale}}" wx:key="dishId" class="row" data-id="{{item.dishId}}"
+            bindtap="onOpenDish" hover-class="tap-row" hover-stay-time="100">
+        <text class="row-name">{{item.name}}</text>
+        <text class="row-note">{{item.text}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+  </block>
+</view>
+
+<!-- 第一次读取：灰色占位 -->
+<view wx:else class="sk-page">
+  <view class="sk-card"><view class="sk sk-bar w60"></view><view class="sk sk-bar"></view></view>
+  <view wx:for="{{[1, 2]}}" wx:key="*this" class="sk-card">
+    <view class="sk sk-bar w30"></view>
+    <view class="sk sk-bar"></view>
+    <view class="sk sk-bar w60"></view>
+  </view>
+</view>

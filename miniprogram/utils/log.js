@@ -122,36 +122,7 @@ function buildMonth(year, month, logs) {
   while (cells.length % 7) cells.push({ key: `a${cells.length}`, day: "", date: "", count: 0 });
   const weeks = [];
   for (let i = 0; i < cells.length; i += 7) weeks.push({ key: `w${i}`, days: cells.slice(i, i + 7) });
-  // 本月小结：下厨几次、做了几道不同的菜、最常做的是哪道（做过 2 次以上才算）
-  const perDish = {};
-  logs.forEach((l) => {
-    if (dateValue(l.cookedAt).indexOf(prefix) === 0) perDish[l.dishId] = (perDish[l.dishId] || 0) + 1;
-  });
-  const monthCount = Object.keys(perDish).reduce((sum, k) => sum + perDish[k], 0);
-  const topDishId = Object.keys(perDish).sort((a, b) => perDish[b] - perDish[a])[0] || "";
-  const topCount = topDishId ? perDish[topDishId] : 0;
-  return {
-    title: `${year}年${month + 1}月`,
-    weeks,
-    monthCount,
-    dishCount: Object.keys(perDish).length,
-    topDishId: topCount >= 2 ? topDishId : "",
-    topCount: topCount >= 2 ? topCount : 0,
-  };
+  return { title: `${year}年${month + 1}月`, weeks }; // 下厨几次、最常做什么这些在 utils/stats.js（做饭总结）
 }
 
-// 统计：这个月做了几次、一共几次、做过几道不同的菜
-function logStats(logs) {
-  const now = new Date();
-  const thisMonth = logs.filter((l) => {
-    const d = new Date(l.cookedAt);
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-  }).length;
-  const dishes = {};
-  logs.forEach((l) => {
-    dishes[l.dishId] = true;
-  });
-  return { thisMonth, total: logs.length, dishCount: Object.keys(dishes).length };
-}
-
-module.exports = { timeOf, dateValue, dateToTime, dayText, normalizeLog, sortLogs, toLogCard, groupByMonth, buildMonth, logStats };
+module.exports = { timeOf, dateValue, dateToTime, dayText, normalizeLog, sortLogs, toLogCard, groupByMonth, buildMonth };

@@ -17,14 +17,14 @@
 </template>
 
 <view wx:if="{{loaded}}" class="logs">
-  <!-- 做饭日历：默认收起，只显示一周；展开看整月，左右滑换月 -->
+  <!-- 做饭日历：默认收起，只显示一周；展开看整月，左右滑换月。下厨几次、最常做什么在右上角的「总结」里 -->
   <view class="card calendar">
     <view class="cal-head">
       <view wx:if="{{calOpen}}" class="cal-arrow hit" bindtap="onPrevMonth" hover-class="tap" hover-stay-time="100">‹</view>
       <view class="cal-title">{{cal.title}}</view>
       <view wx:if="{{calOpen}}" class="cal-arrow hit" bindtap="onNextMonth" hover-class="tap" hover-stay-time="100">›</view>
+      <view class="pill cal-sum" bindtap="onOpenStats" hover-class="tap" hover-stay-time="100"><image class="ic sm" src="/images/icons/stats.png" />总结</view>
     </view>
-    <view class="cal-summary">{{calSummary}}</view>
     <view class="cal-grid {{calAnim}}" bindtouchstart="onCalTouchStart" bindtouchend="onCalTouchEnd">
       <view class="cal-row cal-week">
         <text>一</text><text>二</text><text>三</text><text>四</text><text>五</text><text>六</text><text>日</text>
@@ -38,7 +38,6 @@
         </view>
       </view>
     </view>
-    <view wx:if="{{calOpen}}" class="cal-stats">一共下厨 {{stats.total}} 次 · 做过 {{stats.dishCount}} 道不同的菜 · 左右滑换月</view>
     <view class="cal-toggle" bindtap="onToggleCalendar" hover-class="tap" hover-stay-time="100">
       <text>{{calOpen ? '收起' : '展开整月'}}</text>
       <view class="cal-caret {{calOpen ? 'up' : ''}}"></view>

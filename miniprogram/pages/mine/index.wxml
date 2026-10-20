@@ -52,6 +52,11 @@
       <text wx:if="{{orderCount}}" class="setting-value">{{orderCount}} 单</text>
       <text class="arrow">›</text>
     </view>
+    <view class="setting-item" bindtap="onOpenStats" hover-class="tap-row" hover-stay-time="100">
+      <image class="ic lg" src="/images/icons/stats.png" />
+      <text class="setting-name">做饭总结</text>
+      <text class="arrow">›</text>
+    </view>
     <view class="setting-item" bindtap="onOpenCategories" hover-class="tap-row" hover-stay-time="100">
       <image class="ic lg" src="/images/icons/category.png" />
       <text class="setting-name">分类管理</text>

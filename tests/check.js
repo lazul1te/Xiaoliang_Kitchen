@@ -840,6 +840,63 @@ async function smoke() {
   assert.deepStrictEqual([n.name, n.tags, n.ingredients.length, n.ingredients[0].type, n.steps.length, n.steps[0].timer, n.difficulty, n.status], ["汤", ["a", "b"], 1, "main", 1, 30, 5, "wish"]);
   ok("utils/dish formatters & normalizeDish");
 
+  // 做饭总结的统计（utils/stats.js）：按月、按年、全部
+  {
+    const { summarize, shiftRange, canShift } = require(path.join(root, "utils/stats"));
+    const at = (date) => new Date(`${date.replace(/-/g, "/")} 12:00`).getTime();
+    const L = (dishId, date, extra) => Object.assign({ dishId, dishName: "", cookedAt: at(date), rating: 0, cook: "" }, extra);
+    const statDishes = [{ _id: "a", name: "番茄炒蛋" }, { _id: "b", name: "可乐鸡翅" }, { _id: "c", name: "红烧肉" }];
+    const statLogs = [
+      L("c", "2026-06-10", { rating: 4, cook: "小亮" }),
+      L("a", "2026-09-26", { rating: 5, cook: "小亮" }),
+      L("a", "2026-09-27", { rating: 4, cook: "小鱼" }),
+      L("b", "2026-09-27", { cook: "小亮" }),
+      L("x", "2026-09-29", { dishName: "鲫鱼汤" }), // 这道菜后来删掉了
+      L("b", "2026-10-02", { rating: 3 }),
+    ];
+    const statNow = at("2026-10-20");
+    const sep = summarize(statLogs, statDishes, { kind: "month", year: 2026, month: 8 }, statNow);
+    assert.deepStrictEqual([sep.title, sep.count, sep.dishCount, sep.days], ["2026年9月", 4, 3, 3], "下厨几次、几道不同的菜、几天在做饭");
+    assert.deepStrictEqual(
+      sep.top.map((t) => `${t.name}×${t.count}|${t.pct}${t.gone ? "|删掉了" : ""}`),
+      ["番茄炒蛋×2|100", "鲫鱼汤×1|50|删掉了", "可乐鸡翅×1|50"],
+      "最常做：次数一样的，最近做过的在前；删掉的菜用记录里的名字"
+    );
+    assert.deepStrictEqual(sep.cooks.map((c) => `${c.name} ${c.count} ${c.pct}% ${c.color}`), ["小亮 2 67% #ffb21e", "小鱼 1 33% #a0693f"]);
+    assert.deepStrictEqual(sep.best.map((b) => `${b.name} ${b.stars} ${b.avgText} ${b.rated}`), ["番茄炒蛋 ★★★★★ 4.5 2"], "没打分的不算");
+    assert.deepStrictEqual(sep.firstTimes.map((f) => f.name), ["番茄炒蛋", "可乐鸡翅", "鲫鱼汤"]);
+    assert.deepStrictEqual([sep.chart, sep.stale], [[], []], "按月不画每个月的条（日历上有），也不提好久没做的");
+    const oct = summarize(statLogs, statDishes, { kind: "month", year: 2026, month: 9 }, statNow);
+    assert.deepStrictEqual([oct.count, oct.firstTimes, oct.cooks], [1, [], []], "以前做过的不算第一次做；没写掌勺就不显示");
+    const y2026 = summarize(statLogs, statDishes, { kind: "year", year: 2026, month: 9 }, statNow);
+    assert.deepStrictEqual([y2026.title, y2026.count, y2026.dishCount, y2026.days], ["2026年", 6, 4, 5]);
+    assert.deepStrictEqual(
+      y2026.chart.map((c) => `${c.label}:${c.count}${c.count ? "/" + c.pct : ""}${c.current ? "*" : ""}`).join(" "),
+      "1月:0 2月:0 3月:0 4月:0 5月:0 6月:1/25 7月:0 8月:0 9月:4/100 10月:1/25* 11月:0 12月:0",
+      "按年：12 个月的条，这个月标出来"
+    );
+    const all = summarize(statLogs, statDishes, { kind: "all", year: 2026, month: 9 }, statNow);
+    assert.deepStrictEqual([all.title, all.count, all.firstTimes, all.chart[0].key, all.chart[11].key], ["全部", 6, [], "2025-11", "2026-10"], "全部：最近 12 个月");
+    assert.deepStrictEqual(all.stale.map((d) => `${d.name} ${d.days} ${d.text}`), ["红烧肉 132 上次是 4 个月前"], "好久没做了：30 天以上，删掉的菜不提");
+    assert.deepStrictEqual(summarize([], statDishes, { kind: "year", year: 2026, month: 0 }, statNow).chart, [], "一条都没有就不画");
+    assert.deepStrictEqual([shiftRange({ kind: "month", year: 2026, month: 0 }, -1), shiftRange({ kind: "year", year: 2026, month: 3 }, 1)], [
+      { kind: "month", year: 2025, month: 11 },
+      { kind: "year", year: 2027, month: 3 },
+    ]);
+    assert.deepStrictEqual(
+      [
+        canShift({ kind: "month", year: 2026, month: 8 }, -1, statLogs, statNow),
+        canShift({ kind: "month", year: 2026, month: 5 }, -1, statLogs, statNow),
+        canShift({ kind: "month", year: 2026, month: 8 }, 1, statLogs, statNow),
+        canShift({ kind: "month", year: 2026, month: 9 }, 1, statLogs, statNow),
+        canShift({ kind: "all", year: 2026, month: 9 }, -1, statLogs, statNow),
+      ],
+      [true, false, true, false, false],
+      "比最早的记录还早、还没到的月份不能翻"
+    );
+  }
+  ok("做饭总结的统计：按月、按年、全部");
+
   // 买菜清单合并：番茄炒蛋 2 份 + 蛋炒饭 1 份
   const samplesData = require(path.join(root, "data/samples"));
   const { buildShoppingList, parseAmount } = require(path.join(root, "utils/shopping"));
@@ -1394,7 +1451,16 @@ async function smoke() {
   const logsPage = newPage("pages/logs/index");
   logsPage.onShow();
   await flush();
-  assert.deepStrictEqual(logsPage.data.stats, { thisMonth: 1, total: 2, dishCount: 1 });
+  {
+    const { summarize } = require(path.join(root, "utils/stats"));
+    const thisMonth = { kind: "month", year: new Date(Date.now()).getFullYear(), month: new Date(Date.now()).getMonth() };
+    const [statLogs, statDishes] = [await svc("log").listLogs(), await svc("dish").listDishes()];
+    assert.deepStrictEqual(
+      [summarize(statLogs, statDishes, thisMonth, Date.now()).count, summarize(statLogs, statDishes, { kind: "all" }, Date.now()).count, summarize(statLogs, statDishes, { kind: "all" }, Date.now()).dishCount],
+      [1, 2, 1],
+      "这个月 1 次，一共 2 次，1 道菜"
+    );
+  }
   assert.strictEqual(logsPage.data.months.length, 2, "按月份分组");
   assert.deepStrictEqual(
     [logsPage.data.months[0].days[0].logs[0].dishName, logsPage.data.months[0].days[0].logs[0].cook],
@@ -1528,7 +1594,7 @@ async function smoke() {
   pLogs.onShow();
   await flush();
   assert.deepStrictEqual(
-    [pLogs.data.stats.total, pLogs.data.months[0].days[0].logs[0].cook],
+    [pLogs.data.months.reduce((n, m) => n + m.count, 0), pLogs.data.months[0].days[0].logs[0].cook],
     [1, "小亮"],
     "对方也看得到我的做菜记录"
   );
@@ -1955,12 +2021,12 @@ async function smoke() {
     calPage.onCalTouchEnd({ changedTouches: [{ clientX: 200 + dx, clientY: 300 + dy }] });
   };
   swipe(-120, 10);
-  assert.deepStrictEqual([calPage.data.cal.title, calPage.data.calAnim], ["2026年11月", "next1"], "往左滑看下个月");
+  assert.deepStrictEqual([calPage.data.cal.title, calPage.data.calAnim], ["2026年11月", "slide-next1"], "往左滑看下个月");
   swipe(-30, 0);
   swipe(-80, 90);
   assert.strictEqual(calPage.data.cal.title, "2026年11月", "滑得短、斜着滑都不算");
   swipe(120, -10);
-  assert.deepStrictEqual([calPage.data.cal.title, calPage.data.calAnim], ["2026年10月", "prev2"], "往右滑看上个月");
+  assert.deepStrictEqual([calPage.data.cal.title, calPage.data.calAnim], ["2026年10月", "slide-prev2"], "往右滑看上个月");
   await calPage.onTapDay(ev({ date: "2026-10-02", count: 3, future: false }));
   assert.deepStrictEqual([calPage.data.selected, calPage.data.dayLogs.length], ["2026-10-02", 3]);
   assert.ok(/做了 3 道菜/.test(calPage.data.dayTitle), calPage.data.dayTitle);
@@ -1971,10 +2037,42 @@ async function smoke() {
     [calPage.data.cal.title, day("2026-09-26").count, day("2026-09-27").count, day("2026-09-29").count],
     ["2026年9月", 1, 1, 1]
   );
-  assert.strictEqual(calPage.data.calSummary, "这个月下厨 3 次 · 做了 2 道菜 · 最常做「经典小梁汤面」", "本月小结");
-  calPage.onPrevMonth();
-  assert.strictEqual(calPage.data.calSummary, "这个月还没下厨");
-  calPage.onNextMonth();
+  // 做饭总结：日历右上角「总结」进来，先看日历上的这个月
+  calPage.onOpenStats();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/stats/index?month=2026-09"]);
+  const statsPage = newPage("pages/stats/index");
+  statsPage.onLoad({ month: "2026-09" });
+  statsPage.onShow();
+  await flush();
+  const sum9 = statsPage.data.s;
+  assert.deepStrictEqual(
+    [statsPage.data.kind, sum9.title, sum9.count, sum9.dishCount, sum9.top[0].name, sum9.top[0].count],
+    ["month", "2026年9月", 3, 2, "经典小梁汤面", 2],
+    "下厨几次、最常做的菜从日历挪到了做饭总结"
+  );
+  assert.strictEqual(statsPage.data.canNext, true);
+  statsPage.onNext();
+  assert.deepStrictEqual([statsPage.data.s.title, statsPage.data.anim], ["2026年10月", "slide-next1"], "往后翻一个月，从右边滑进来");
+  statsPage.onPickKind(ev({ kind: "year" }));
+  assert.deepStrictEqual([statsPage.data.kind, statsPage.data.s.title, statsPage.data.s.chart.length, statsPage.data.anim], ["year", "2026年", 12, "unfold"], "按年：每个月一根条");
+  statsPage.onPickKind(ev({ kind: "all" }));
+  assert.deepStrictEqual([statsPage.data.s.title, statsPage.data.canPrev, statsPage.data.canNext], ["全部", false, false]);
+  statsPage.onPickKind(ev({ kind: "month" }));
+  assert.strictEqual(statsPage.data.s.title, "2026年10月", "切回按月：还是刚才看的那个月");
+  statsPage.onOpenDish(ev({ id: idOf("经典小梁汤面"), gone: false }));
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", `/pages/dish-detail/index?id=${idOf("经典小梁汤面")}`]);
+  statsPage.onOpenDish(ev({ id: "gone", gone: true }));
+  assert.deepStrictEqual(lastCall("toast"), ["toast", "这道菜已经删掉了"]);
+  const emptyStats = newPage("pages/stats/index");
+  emptyStats.onLoad({ month: "2026-08" });
+  emptyStats.onShow();
+  await flush();
+  assert.deepStrictEqual([emptyStats.data.s.count, emptyStats.data.emptyText, emptyStats.data.current], [0, "2026年8月没有做菜记录", false]);
+  const nowStats = newPage("pages/stats/index");
+  nowStats.onLoad({});
+  nowStats.onShow();
+  await flush();
+  assert.deepStrictEqual([nowStats.data.s.title, nowStats.data.canNext], [`${new Date(Date.now()).getFullYear()}年${new Date(Date.now()).getMonth() + 1}月`, false], "从「我的」进来看这个月，不能往后翻");
   await calPage.onTapDay(ev({ date: "2026-09-27", count: 1, future: false }));
   calPage.onToggleCalendar();
   assert.deepStrictEqual(
@@ -2813,6 +2911,8 @@ async function smoke() {
   assert.strictEqual(mineO.data.orderCount, 3, "开过饭的 3 单");
   mineO.onOpenOrders();
   assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/orders/index"]);
+  mineO.onOpenStats();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/stats/index"], "「我的」里进做饭总结");
   // 再下一单（菜篮里还剩莴笋炒肉）
   await placeOrder();
   const ordersP = newPage("pages/orders/index");

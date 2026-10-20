@@ -1,5 +1,5 @@
 // 记录：上面是做饭日历（哪天做了几道菜一眼就能看到），下面是做菜记录。
-// 日历默认收起，只显示一周；点「展开整月」看整月，展开时左右滑换月。
+// 日历默认收起，只显示一周；点「展开整月」看整月，展开时左右滑换月。右上角「总结」进做饭总结（pages/stats）。
 // 点日历上的某一天，只看那天的记录；点没做饭的日子可以补记一条。
 // 开饭时一起记的菜合成一张「一顿饭」的卡片：整桌照片、每道菜的分数，可以再来一单、分享这顿饭
 const dishService = require("../../services/dish");
@@ -10,7 +10,7 @@ const planService = require("../../services/plan");
 const photoService = require("../../services/photo");
 const ui = require("../../utils/ui");
 const ticketUtil = require("../../utils/ticket");
-const { groupByMonth, logStats, buildMonth, dateValue, dayText, toLogCard, timeOf } = require("../../utils/log");
+const { groupByMonth, buildMonth, dateValue, dayText, toLogCard, timeOf } = require("../../utils/log");
 const { entriesOf, mealTicket } = require("../../utils/meal");
 
 const SWIPE_PX = 50; // 日历上横着滑这么远才算换月
@@ -18,17 +18,15 @@ const STAMP_HIT_MS = 650; // 「已开饭」的章落下来的那一下（app.wx
 
 Page({
   data: {
-    cal: null, // { title, weeks, monthCount, dishCount, topDishId, topCount }
+    cal: null, // { title, weeks }
     calOpen: false, // 日历展开了没有：收起时只显示一周
     weeks: [], // 日历上显示的几周：展开是整月，收起是选中的那天（没选就是今天）那一周
     calAnim: "", // 换月、展开时日历的动画
-    calSummary: "", // 本月小结：下厨几次、几道菜、最常做哪道
     selected: "", // 选中的日期 "2026-10-02"，空表示看全部
     dayTitle: "",
     dayLogs: [], // 选中那天的记录（卡片）
     dayEntries: [], // 选中那天：同一顿饭的合成一张卡片（utils/meal.js 的 entriesOf）
     months: [], // 全部记录：[{ key, title, count, days: [{ key, title, logs }] }]
-    stats: { thisMonth: 0, total: 0, dishCount: 0 },
     loaded: false,
   },
 
@@ -100,7 +98,7 @@ Page({
         day.entries = entriesOf(day.logs, this.meals);
       })
     );
-    this.setData({ months, stats: logStats(logs), loaded: true });
+    this.setData({ months, loaded: true });
     this.renderCalendar();
   },
 
@@ -108,7 +106,6 @@ Page({
     const selected = this.data.selected;
     const dayLogs = selected ? this.logs.filter((l) => dateValue(l.cookedAt) === selected) : [];
     const cal = buildMonth(this.calYear, this.calMonth, this.logs);
-    const top = cal.topDishId ? this.names[cal.topDishId] : "";
     const cards = dayLogs.map((l) => toLogCard(l, this.names, this.meals));
     const dayEntries = entriesOf(cards, this.meals);
     dayEntries.forEach((entry) => {
@@ -117,9 +114,6 @@ Page({
     this.setData({
       cal,
       weeks: this.data.calOpen ? cal.weeks : [cal.weeks[this.focusWeek(cal)]],
-      calSummary: cal.monthCount
-        ? `这个月下厨 ${cal.monthCount} 次 · 做了 ${cal.dishCount} 道菜` + (top ? ` · 最常做「${top}」` : "")
-        : "这个月还没下厨",
       dayLogs: cards,
       dayEntries,
       dayTitle: selected ? `${dayText(timeOf(selected))} · 做了 ${dayLogs.length} 道菜` : "",
@@ -143,7 +137,7 @@ Page({
       this.calYear = d.getFullYear();
       this.calMonth = d.getMonth();
     }
-    this.setData({ calOpen, calAnim: calOpen ? "unfold" : "" });
+    this.setData({ calOpen, calAnim: calOpen ? "unfold" : "" }); // 动画在 app.wxss
     this.renderCalendar();
   },
 
@@ -161,8 +155,14 @@ Page({
     this.calMonth = d.getMonth();
     // 新的一个月从右边（下个月）或者左边（上个月）滑进来；1、2 轮流换，连着换月也每次都有动画
     this.flip = !this.flip;
-    this.setData({ selected: "", calAnim: (delta > 0 ? "next" : "prev") + (this.flip ? "1" : "2") });
+    this.setData({ selected: "", calAnim: (delta > 0 ? "slide-next" : "slide-prev") + (this.flip ? "1" : "2") });
     this.renderCalendar();
+  },
+
+  // 做饭总结：先看日历上正在看的这个月
+  onOpenStats() {
+    const month = `${this.calYear}-${this.calMonth < 9 ? "0" : ""}${this.calMonth + 1}`;
+    wx.navigateTo({ url: `/pages/stats/index?month=${month}` });
   },
 
   onCalTouchStart(e) {

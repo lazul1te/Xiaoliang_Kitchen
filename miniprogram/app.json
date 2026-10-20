@@ -12,6 +12,7 @@
     "pages/checkout/index",
     "pages/meal/index",
     "pages/orders/index",
+    "pages/stats/index",
     "pages/export/index",
     "pages/import/index",
     "pages/book/index",

@@ -4,14 +4,15 @@
 
 /* ---------- 做饭日历 ---------- */
 
+/* 左边：几月（展开时两边有箭头）；右边：总结 */
 .cal-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  margin-bottom: 12rpx;
 }
 
 .cal-arrow {
-  width: 72rpx;
+  width: 56rpx;
   text-align: center;
   font-size: 44rpx;
   line-height: 1;
@@ -19,18 +20,14 @@
 }
 
 .cal-title {
-  flex: 1;
   font-size: 30rpx;
   font-weight: 700;
-  text-align: center;
 }
 
-/* 本月小结 */
-.cal-summary {
-  margin: 4rpx 0 16rpx;
-  text-align: center;
-  font-size: var(--fs-small);
-  color: var(--wood);
+.cal-sum {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 .cal-row {
@@ -96,13 +93,6 @@
   color: var(--pan);
 }
 
-.cal-stats {
-  margin-top: 12rpx;
-  text-align: center;
-  font-size: 22rpx;
-  color: var(--text-3);
-}
-
 /* 展开整月 / 收起：下面一行字 + 一个会转的小箭头 */
 .cal-toggle {
   display: flex;
@@ -127,62 +117,6 @@
 .cal-caret.up {
   margin-top: 6rpx;
   transform: rotate(-135deg);
-}
-
-/* 展开：整月淡出来；换月：新的一个月从右边（下个月）、左边（上个月）滑进来 */
-.cal-grid.unfold {
-  animation: cal-unfold 0.22s ease-out;
-}
-
-.cal-grid.next1 {
-  animation: cal-next-1 0.24s ease-out;
-}
-
-.cal-grid.next2 {
-  animation: cal-next-2 0.24s ease-out;
-}
-
-.cal-grid.prev1 {
-  animation: cal-prev-1 0.24s ease-out;
-}
-
-.cal-grid.prev2 {
-  animation: cal-prev-2 0.24s ease-out;
-}
-
-@keyframes cal-unfold {
-  from {
-    opacity: 0;
-    transform: translateY(-16rpx);
-  }
-}
-
-@keyframes cal-next-1 {
-  from {
-    opacity: 0;
-    transform: translateX(60rpx);
-  }
-}
-
-@keyframes cal-next-2 {
-  from {
-    opacity: 0;
-    transform: translateX(60rpx);
-  }
-}
-
-@keyframes cal-prev-1 {
-  from {
-    opacity: 0;
-    transform: translateX(-60rpx);
-  }
-}
-
-@keyframes cal-prev-2 {
-  from {
-    opacity: 0;
-    transform: translateX(-60rpx);
-  }
 }
 
 /* 选中某一天 */
