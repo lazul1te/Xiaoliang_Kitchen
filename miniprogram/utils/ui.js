@@ -20,6 +20,7 @@ function alert(title, content) {
 }
 
 // 点「确定」返回 true，取消返回 false。danger: 确定按钮用红色（删除之类的操作）
+// confirmText、cancelText 最多 4 个字：多了微信直接不弹（走 fail），看起来就是点了没反应
 function confirm({ title, content, confirmText, cancelText, danger }) {
   return new Promise((resolve) => {
     wx.showModal({
@@ -29,7 +30,10 @@ function confirm({ title, content, confirmText, cancelText, danger }) {
       cancelText: cancelText || "取消",
       confirmColor: danger ? DANGER : PAN,
       success: (res) => resolve(!!res.confirm),
-      fail: () => resolve(false),
+      fail: (err) => {
+        console.error(err); // 弹不出来是代码写错了，开发者工具的控制台里看得到原因
+        resolve(false);
+      },
     });
   });
 }

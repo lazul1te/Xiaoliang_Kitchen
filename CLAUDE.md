@@ -86,7 +86,7 @@
   - 点菜单上的日子过了还没开饭，「点菜单」页会问「做了吗」，按那天记（`/pages/meal/index?date=`）。
   - 导出带上 `meals`，导入时按 `createdAt` 去重，记录的 `mealId` 换成新的那一顿。
 - 买菜清单的合并规则在 `utils/shopping.js`：同名原料合在一起，数字用量 × 份数相加，单位不同或「适量」原样列出；再对比库存（名字去掉括号说明后对）：库存里有的放「家里有」，用完了的放「要买的」，库存里没记录的调料单独一组。
-- 弹窗、提示用 `utils/ui.js`（Promise 形式，可以 await）。
+- 弹窗、提示用 `utils/ui.js`（Promise 形式，可以 await）。弹窗按钮的字（`confirmText`、`cancelText`）最多 4 个，多了微信不弹、点了没反应，测试会查。
 - Tab 图标、空页面插画和头像的源文件在 `design/`（SVG），PNG 放在 `miniprogram/images/`，都用 `npm run icons` 导出。
 - 云开发环境 ID 写在 `miniprogram/config.js`。
 - 开发者工具的问题先看它在 Windows 上的日志：`C:\Users\<用户>\AppData\Local\微信开发者工具\User Data\<id>\WeappLog\logs`（比如导航栏图标裂图，是工具自己的 403，重启就好）。

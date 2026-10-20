@@ -159,7 +159,7 @@ Page({
         ? {
             title: "删掉这本？",
             content: `你是「${book.name}」里最后一个人，退出以后这本连同里面的菜谱、记录、照片都会删掉，找不回来。想留一份的话，先切到这本，在「我的 → 备份与导入」里导出。`,
-            confirmText: "删掉并退出",
+            confirmText: "删掉",
             cancelText: "先不了",
             danger: true,
           }

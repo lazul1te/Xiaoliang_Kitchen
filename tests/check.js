@@ -273,6 +273,8 @@ global.wx = {
     if (o && o.complete) o.complete();
   },
   showModal: (o) => {
+    // 跟真的一样：按钮的字超过 4 个，微信不弹窗
+    ["confirmText", "cancelText"].forEach((k) => assert.ok(!o[k] || o[k].length <= 4, `showModal 的 ${k}「${o[k]}」超过 4 个字，真机上弹不出来`));
     const answer = modalAnswers.length ? modalAnswers.shift() : { confirm: true };
     calls.push(["modal", o.title, o.content || ""]);
     const res = { confirm: !!answer.confirm, cancel: !answer.confirm, content: answer.content || "" };
@@ -806,6 +808,23 @@ function staticChecks() {
     }
   }
   ok("event handlers exist");
+
+  // 弹窗按钮的字最多 4 个，多了微信不弹窗、点了没反应（「删掉并退出」出过这个事）。没跑到的弹窗也查一遍
+  const jsFilesIn = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
+      const p = path.join(dir, d.name);
+      if (d.isDirectory()) return jsFilesIn(p);
+      return d.name.endsWith(".js") ? [p] : [];
+    });
+  let buttonTexts = 0;
+  for (const file of jsFilesIn(root)) {
+    for (const m of fs.readFileSync(file, "utf8").matchAll(/\b(confirmText|cancelText):\s*(["'`])(.*?)\2/g)) {
+      buttonTexts++;
+      if (m[3].length > 4) fail(`${rel(file)}: ${m[1]}「${m[3]}」超过 4 个字，真机上弹不出来`);
+    }
+  }
+  if (!buttonTexts) fail("没找到弹窗按钮的字，检查的写法要跟着改");
+  ok(`弹窗按钮的字都不超过 4 个（${buttonTexts} 处）`);
 
   // WXSS：括号配对，用到的 CSS 变量都在 app.wxss 里定义过
   const wxssFiles = [path.join(root, "app.wxss")]
