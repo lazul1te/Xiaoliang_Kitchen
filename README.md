@@ -252,6 +252,10 @@ imports/               自己生成的导入文件（不进 git）
 
 欢迎提 Issue 和 Pull Request。提交前跑一下 `npm test`，代码风格照 `CLAUDE.md` 里的约定。
 
+## 友情链接
+
+- [LINUX DO](https://linux.do/)：新的理想型社区
+
 ## 许可证
 
 [MIT](LICENSE)
