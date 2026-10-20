@@ -88,5 +88,6 @@
 - 买菜清单的合并规则在 `utils/shopping.js`：同名原料合在一起，数字用量 × 份数相加，单位不同或「适量」原样列出；再对比库存（名字去掉括号说明后对）：库存里有的放「家里有」，用完了的放「要买的」，库存里没记录的调料单独一组。
 - 弹窗、提示用 `utils/ui.js`（Promise 形式，可以 await）。弹窗按钮的字（`confirmText`、`cancelText`）最多 4 个，多了微信不弹、点了没反应，测试会查。
 - Tab 图标、空页面插画和头像的源文件在 `design/`（SVG），PNG 放在 `miniprogram/images/`，都用 `npm run icons` 导出。
+- 仓库封面 `docs/cover.png`（1280×640，README 顶部和 GitHub 社交预览图）由 `design/cover.html` 导出：浏览器无界面模式按 2 倍截图再缩小，命令写在文件开头。换了 README 截图以后跟着重新导出。
 - 云开发环境 ID 写在 `miniprogram/config.js`。
 - 开发者工具的问题先看它在 Windows 上的日志：`C:\Users\<用户>\AppData\Local\微信开发者工具\User Data\<id>\WeappLog\logs`（比如导航栏图标裂图，是工具自己的 403，重启就好）。

@@ -1,0 +1,54 @@
+<!doctype html>
+<!--
+  仓库封面（README 顶部、GitHub 社交预览图）：1280×640，导出成 docs/cover.png。
+  截图换了以后重新导出：用 Edge 或 Chrome 无界面模式按 2 倍截图，再缩成 1280×640，例如
+    msedge --headless=new --hide-scrollbars --force-device-scale-factor=2 --window-size=1280,640 --screenshot=cover@2x.png file:///D:/project/Xiaoliang_Kitchen/design/cover.html
+  颜色见 design/brand.md
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>拿手菜小本本 封面</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    position: relative;
+    font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    color: #3B3B42;
+    background: linear-gradient(135deg, #FFF8EE 0%, #FFEFD6 55%, #FFE2B8 100%);
+  }
+  /* 手机后面一团淡淡的蛋黄色 */
+  .glow {
+    position: absolute; left: 640px; top: 40px; width: 620px; height: 620px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 178, 30, 0.28) 0%, rgba(255, 178, 30, 0) 68%);
+  }
+  .text { position: absolute; left: 96px; top: 150px; width: 520px; }
+  .logo { width: 104px; height: 104px; border-radius: 26px; box-shadow: 0 10px 24px rgba(160, 105, 63, 0.22); }
+  h1 { margin-top: 34px; font-size: 74px; font-weight: 700; letter-spacing: 4px; line-height: 1.1; }
+  .slogan { margin-top: 20px; font-size: 32px; letter-spacing: 3px; color: #A0693F; }
+  .desc { margin-top: 30px; font-size: 22px; letter-spacing: 1px; color: rgba(59, 59, 66, 0.62); }
+  /* 手机：深色边框加圆角，像一台手机 */
+  .phone {
+    position: absolute; padding: 9px; border-radius: 34px; background: #2B2B31;
+    box-shadow: 0 24px 48px rgba(122, 74, 18, 0.28), 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+  .phone img { display: block; width: 100%; border-radius: 26px; }
+  .left { left: 676px; top: 128px; width: 228px; transform: rotate(-7deg); }
+  .right { left: 1000px; top: 128px; width: 228px; transform: rotate(7deg); }
+  .center { left: 820px; top: 62px; width: 262px; z-index: 2; }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="text">
+    <img class="logo" src="avatar/avatar-b-egg.svg" alt="">
+    <h1>拿手菜小本本</h1>
+    <p class="slogan">好好做饭，也好好记录</p>
+    <p class="desc">一家人一起记菜谱的微信小程序</p>
+  </div>
+  <div class="phone left"><img src="../docs/screenshots/basket.png" alt=""></div>
+  <div class="phone right"><img src="../docs/screenshots/logs.png" alt=""></div>
+  <div class="phone center"><img src="../docs/screenshots/menu.png" alt=""></div>
+</body>
+</html>

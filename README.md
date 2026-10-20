@@ -1,6 +1,6 @@
 # 拿手菜小本本
 
-> 好好做饭，也好好记录。
+![拿手菜小本本：好好做饭，也好好记录](docs/cover.png)
 
 一家人一起记菜谱的微信小程序。在菜单里挑菜、下单，跟点外卖差不多，点菜单上的菜会自动合成买菜清单。做菜时按步骤看，带计时。做完打卡，日历上能看到哪天做了什么。
 
@@ -241,8 +241,9 @@ cloudfunctions/
     └── lib/           books.js 本本和成员、data.js 本里的数据、photos.js 照片、legacy.js 旧数据变成家庭本本
 tests/                 自动测试（check.js）；fixtures/ 里是测试用的导入文件
 scripts/               build-icons.mjs：把 design/ 里的 SVG 导出成 PNG
-design/                头像、Tab 图标、界面小图标和空页面插画的源文件、品牌信息、菜品照片原图（不会打包进小程序）
+design/                头像、Tab 图标、界面小图标和空页面插画的源文件、仓库封面（cover.html）、品牌信息、菜品照片原图（不会打包进小程序）
 docs/
+├── cover.png          仓库封面（README 顶部、GitHub 社交预览图），由 design/cover.html 导出
 ├── 菜谱导入模板.json   自己写新菜用的导入模板
 └── screenshots/       README 里的截图
 imports/               自己生成的导入文件（不进 git）
