@@ -25,7 +25,7 @@ async function run(ctx, call) {
     }
     return { ok: true, data: await ACTIONS[action](ctx, call) };
   } catch (err) {
-    if (err && err.expected) return { ok: false, error: { code: err.code, message: err.message } };
+    if (err && err.expected) return { ok: false, error: { code: err.code, message: err.message, bookId: err.bookId || "" } };
     console.error(action, err);
     return { ok: false, error: { code: "SERVER", message: `云函数出错了：${errorText(err)}` } };
   }

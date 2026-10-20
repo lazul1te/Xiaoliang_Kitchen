@@ -37,6 +37,9 @@
   - 界面：菜单页左上角、「我的」页最上面是正在用的那本，点开是 `<book-sheet>`（`components/book-sheet`：切换、等本主同意的申请能撤回、新建、输入家庭码加入、打开小程序时进哪本）。`pages/book` 小本本设置（改名、我在这本里叫、家庭码和邀请卡片、本主同意或不同意申请、移出成员、退出），`pages/join` 申请加入（邀请卡片打开的就是它，`?code=`），`pages/book-new` 新建（可以把个人本本的菜复制过去，`book.copyDishes` 分批调）。
   - 邀请卡片：`utils/invite.js`，封面是 `utils/ticket.js` 的 `inviteImage`；用到的页面要放看不见的画布（`.ticket-canvas` 在 `app.wxss`）。
   - 通知（申请通过了、没通过、被移出了、那本删掉了）攒在 `book.js` 里，菜单页、「我的」页 `book.showNotices()` 弹出来；旧数据变成家庭本本后第一次打开，菜单页说一声（`takeWelcome`）。有人申请加入你是本主的本本时，「我的」Tab 上有小红点（每个 Tab 页 `onShow` 调 `book.updateDot()`）。
+  - 转发的卡片（菜、点菜单、菜单）路径带 `book=`，打开时 `book.openShared()` 切到那本（你也在那本里的话）。刚打开小程序时手动切过本本，`boot` 回来就不再按默认的切。
+  - 说法跟着本本变：家庭本本里说「家人」「大家」，个人本本里不说「两个人」「对方」（`book.isShared()`）。
+  - 菜可以复制到另一本（菜谱详情页底部；新建家庭本本时整本复制）：照片在云函数里复制一份到那本的文件夹，分类按名字对上，同名的菜不复制，做菜记录不复制。
   - 改了 `cloudfunctions/api` 要提醒用户在开发者工具里右键 `api`「上传并部署：云端安装依赖」。
 - 菜品数据存进去、读出来都过一遍 `utils/dish.js` 的 `normalizeDish()`，保证字段齐全。
 - 主题色用 `app.wxss` 里的 CSS 变量（`--yolk`、`--pan`、`--danger` 等），黄色底上一律用深色字。

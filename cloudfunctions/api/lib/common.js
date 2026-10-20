@@ -132,7 +132,11 @@ async function memberBook(ctx, bookId) {
   if (!bookId || typeof bookId !== "string") throw fail("BAD_INPUT", "没说是哪本小本本");
   if (!ctx.bookTasks[bookId]) ctx.bookTasks[bookId] = findOne("books", bookId);
   const book = await ctx.bookTasks[bookId];
-  if (!book || !book.members || !book.members[ctx.openid]) throw fail("NOT_MEMBER", "你已经不在这本小本本里了");
+  if (!book || !book.members || !book.members[ctx.openid]) {
+    const e = fail("NOT_MEMBER", "你已经不在这本小本本里了");
+    e.bookId = bookId; // 是哪本（复制菜时可能是要复制过去的那本）
+    throw e;
+  }
   return book;
 }
 

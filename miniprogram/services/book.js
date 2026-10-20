@@ -67,12 +67,15 @@ function apply(res) {
   save();
 }
 
-// 正在用的这本已经不在了（被移出了、这本删掉了）：回到个人本本
+// 已经不在某本里了（被移出了、这本删掉了、在别的手机上退出了）：从列表里拿掉；是正在用的那本，回到个人本本
 function lost(id) {
-  if (!id || id !== currentId) return;
+  if (!id) return;
+  if (info.books.some((b) => b._id === id)) {
+    info.books = info.books.filter((b) => b._id !== id);
+    save();
+  }
+  if (id !== currentId) return;
   addNotice({ type: "lost", key: `lost-${id}`, bookId: id, name: names[id] || "" });
-  info.books = info.books.filter((b) => b._id !== id);
-  save();
   setCurrent(info.me.personalBookId);
 }
 

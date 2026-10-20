@@ -44,6 +44,13 @@ Page({
     try {
       await dishService.refresh();
     } catch (err) {
+      // 正在用的这本已经不在了（被移出了、删掉了）：已经回到个人本本，重新读一遍，再说一声
+      if (err.code === "NOT_MEMBER" && !this.lostReload) {
+        this.lostReload = true;
+        await this.reload();
+        this.lostReload = false;
+        return;
+      }
       if (this.data.status === "ready") ui.toast(err.code === "NO_API" ? "云函数 api 还没部署，先显示上次的菜谱" : "网络不太好，先显示上次的菜谱");
       return;
     }
@@ -100,6 +107,7 @@ Page({
     }
     await this.loadData();
     this.setData({ refreshing: false });
+    this.showBookNews();
   },
 
   async loadData() {

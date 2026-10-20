@@ -2909,6 +2909,30 @@ async function smoke() {
   assert.deepStrictEqual([myMine.data.footerText, myMine.data.book.family], ["「我的小本本」只有你能看", false]);
   ok("一道菜复制到另一本（照片、分类一起；已经有了不重复）；点家人发来的卡片会切到那本；个人本本里的说法不说「两个人」「对方」");
 
+  // 复制到的那本已经不在了（在别的手机上退出了）：说清楚，正在用的这本不受影响
+  launchApp("me");
+  svc("book").switchTo(testBookId);
+  await svc("book").refresh();
+  const leftElsewhere = await callAs("me", { action: "leaveBook", bookId: extraBook });
+  assert.ok(leftElsewhere.ok && leftElsewhere.data.deleted, "在别的手机上退出了「爸妈家」（最后一个人，这本删掉了）");
+  const detailL = newPage("pages/dish-detail/index");
+  detailL.onLoad({ id: famDish._id });
+  await flush();
+  sheetAnswers.push(1);
+  await detailL.onCopyToBook();
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["没复制成", "你已经不在这本小本本里了"]);
+  assert.strictEqual(svc("book").currentId(), testBookId, "正在用的这本没受影响");
+  assert.ok(!svc("book").has(extraBook), "不在的那本从列表里拿掉了");
+  // 对方被移出了「我们家的小本本」：再打开小程序时进自己的本本，弹窗说一声
+  await callAs("me", { action: "removeMember", bookId: testBookId, memberId: memberKeyOf(testBookId, "partner") });
+  launchApp("partner");
+  const herMenuL = newPage("pages/menu/index");
+  await herMenuL.onLoad();
+  await flush();
+  assert.deepStrictEqual([svc("book").currentId(), herMenuL.data.book.shortName], [cloudDB.users.find((u) => u._id === "partner").personalBookId, "我的"]);
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["不在这本里了", "「我们家的小本本」的本主把你移出了这本"]);
+  ok("复制到的那本已经不在了：说清楚，不影响正在用的这本；被移出以后再打开，进自己的本本并说一声");
+
   // ======== 旧数据变成家庭本本：以前大家共用一份数据（记录上没有 bookId），新版本第一次打开时自动变成「我们家的小本本」 ========
   Object.keys(cloudDB).forEach((k) => delete cloudDB[k]);
   Object.keys(cloudFiles).forEach((k) => delete cloudFiles[k]);

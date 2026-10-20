@@ -53,7 +53,8 @@ async function send(batch) {
     }
     const error = (r && r.error) || {};
     const e = cloud.friendly(error.message || "云函数没有返回结果，稍后再试", "", error.code || "SERVER");
-    if (e.code === "NOT_MEMBER" && b.call.bookId) notMemberHooks.forEach((fn) => fn(b.call.bookId));
+    const lostBook = error.bookId || b.call.bookId; // 不在哪本里了
+    if (e.code === "NOT_MEMBER" && lostBook) notMemberHooks.forEach((fn) => fn(lostBook));
     b.reject(e);
   });
 }
