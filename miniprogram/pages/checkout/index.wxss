@@ -1,0 +1,147 @@
+.checkout {
+  padding: 20rpx 24rpx calc(160rpx + env(safe-area-inset-bottom));
+}
+
+.checkout .card {
+  margin: 0 0 20rpx;
+}
+
+.edit-tip {
+  margin-bottom: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  background: var(--apricot);
+  font-size: var(--fs-sub);
+  color: var(--wood);
+}
+
+.c-label {
+  font-size: var(--fs-sub);
+  font-weight: 600;
+}
+
+.c-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4rpx;
+}
+
+.c-title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.c-link {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--wood);
+}
+
+/* 点的菜（只能看） */
+.c-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.c-row:last-child {
+  border-bottom: none;
+}
+
+.c-thumb {
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 14rpx;
+}
+
+.c-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--apricot);
+  color: var(--wood);
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.c-info {
+  flex: 1;
+  min-width: 0;
+  margin: 0 16rpx 0 20rpx;
+}
+
+.c-name {
+  overflow: hidden;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.c-meta {
+  font-size: var(--fs-tiny);
+  color: var(--text-3);
+}
+
+.c-qty {
+  flex-shrink: 0;
+  font-family: Menlo, Consolas, monospace;
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+
+.c-input {
+  height: 72rpx;
+  margin-top: 12rpx;
+  padding: 0 20rpx;
+  border-radius: 14rpx;
+  background: var(--cream);
+  font-size: var(--fs-sub);
+}
+
+.c-placeholder {
+  color: var(--text-3);
+}
+
+.c-person + .c-person {
+  margin-top: 12rpx;
+}
+
+.cancel-row {
+  padding: 12rpx 0 24rpx;
+  text-align: center;
+}
+
+.cancel-order {
+  font-size: var(--fs-sub);
+  color: var(--danger);
+}
+
+/* 底部：确认下单 */
+.c-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(59, 59, 66, 0.06);
+}
+
+.c-bar-text {
+  flex: 1;
+  min-width: 0;
+  margin-right: 20rpx;
+  font-size: var(--fs-small);
+  color: var(--text-2);
+}
+
+.c-btn {
+  flex-shrink: 0;
+  padding: 0 56rpx;
+}

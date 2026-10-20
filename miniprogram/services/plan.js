@@ -1,4 +1,4 @@
-// 菜篮（点了哪些菜、各几份）、点菜单和买菜清单的勾选：这本小本本里的人共用，存在 plans 集合里这本的 current 那条。
+// 菜篮（点了哪些菜、各几份；在菜单页底部看、加减）、点菜单和买菜清单的勾选：这本小本本里的人共用，存在 plans 集合里这本的 current 那条。
 //   items     { 菜品id: 份数 }
 //   checked   { 清单项key: true }            买菜清单里已经买到的
 //   extras    { key: { name, createdAt } }   自己加的要买的东西（比如：牛奶）
@@ -11,7 +11,7 @@ const store = require("./store");
 const { newId } = require("../utils/id");
 const { normalizeOrder } = require("../utils/order");
 
-const BASKET_TAB_INDEX = 1; // 「菜篮」是第 2 个 Tab，角标显示在它上面
+const ORDER_TAB_INDEX = 1; // 「点菜单」是第 2 个 Tab：下了单，角标显示这单几份
 
 const clone = (data) => JSON.parse(JSON.stringify(data));
 
@@ -199,16 +199,7 @@ function updateOrder(info) {
   return clone(order);
 }
 
-// 从菜谱详情点「开始做」、还没下单：先去菜篮下单，下好单就开始做这道菜（菜篮页拿走一次）
-let startAfter = "";
-function startAfterOrder(dishId) {
-  startAfter = dishId;
-}
-function takeStartAfterOrder() {
-  const id = startAfter;
-  startAfter = "";
-  return id;
-}
+
 
 // 开饭了：做了的菜从菜篮拿掉，点菜单收起来；没做的留在菜篮里下次做。
 // 菜篮空了，买菜清单的勾选也清掉，自己加的东西只留下还没买的
@@ -290,18 +281,19 @@ function removeExtra(key) {
   );
 }
 
-// 刷新「菜篮」Tab 上的数字角标。
+// 刷新「点菜单」Tab 上的数字角标：下了单才显示（这单几份）。还没下单时，点了几份写在菜单页底部的点菜栏上。
 // 只有当前在 Tab 页时才会生效，在详情页调用会静默失败，所以每个 Tab 页的 onShow 里都会再调一次。
 function updateBadge(value) {
-  const count = getCount((value || doc.current()).items);
+  const p = value || doc.current();
+  const count = p.order ? getCount(p.items) : 0;
   if (count > 0) {
     wx.setTabBarBadge({
-      index: BASKET_TAB_INDEX,
+      index: ORDER_TAB_INDEX,
       text: count > 99 ? "99+" : String(count),
       fail() {},
     });
   } else {
-    wx.removeTabBarBadge({ index: BASKET_TAB_INDEX, fail() {} });
+    wx.removeTabBarBadge({ index: ORDER_TAB_INDEX, fail() {} });
   }
 }
 
@@ -323,8 +315,6 @@ module.exports = {
   placeOrder,
   updateOrder,
   cancelOrder,
-  startAfterOrder,
-  takeStartAfterOrder,
   getPlan,
   toggleChecked,
   addExtra,

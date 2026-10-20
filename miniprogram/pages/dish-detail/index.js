@@ -99,7 +99,7 @@ Page({
 
   // 开始做：先下单再开始做。
   // 已经下了单：这道菜不在点菜单上就问一下要不要加菜，然后打开做菜页，直接到这道菜；
-  // 还没下单：放进菜篮，去菜篮下单，下好单直接开始做
+  // 还没下单：放进菜篮，去确认点菜单，下好单直接开始做
   async onStartCook() {
     const id = this.dishId;
     const order = planService.getOrder();
@@ -121,8 +121,7 @@ Page({
       planService.add(id);
       this.refreshQty();
     }
-    planService.startAfterOrder(id);
-    wx.switchTab({ url: "/pages/today/index" });
+    wx.navigateTo({ url: `/pages/checkout/index?start=${id}` });
   },
 
   // ---------- 做菜记录 ----------

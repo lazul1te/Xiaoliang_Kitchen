@@ -21,16 +21,16 @@ for (const file of readdirSync(design("icons")).filter((f) => f.endsWith(".svg")
   await svgToPng(design(`icons/${file}`), join(out, "icons", file.replace(".svg", ".png")), 64, 192, { compressionLevel: 9 });
 }
 
-// Tab 图标：每个有没选中 / 选中（-active）两张，导出 81px
+// Tab 图标：每个有没选中 / 选中（-active）两张，导出 81px（today 是「点菜单」）
 for (const name of ["menu", "today", "logs", "mine"]) {
   for (const suffix of ["", "-active"]) {
     await svgToPng(design(`tabbar/${name}${suffix}.svg`), join(out, "tabbar", `${name}${suffix}.png`), 81, 288);
   }
 }
 
-// 菜单底部点菜栏的菜篮（深色底上用）、菜篮页空状态的大图
+// 菜单底部点菜栏的菜篮（深色底上用）、「点菜单」页还没点菜时的大图
 await svgToPng(design("tabbar/basket-bar.svg"), join(out, "basket.png"), 96, 288);
-await svgToPng(design("tabbar/today-active.svg"), join(out, "basket-big.png"), 240, 600);
+await svgToPng(design("tabbar/basket-big.svg"), join(out, "basket-big.png"), 240, 600);
 
 // 「我的」页顶部的小头像
 await sharp(design("avatar/avatar-b-egg.png")).resize(200, 200).png().toFile(join(out, "logo.png"));

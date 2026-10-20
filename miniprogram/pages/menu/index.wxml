@@ -98,15 +98,41 @@
   </view>
 
   <!-- 底部点菜栏 -->
+  <!-- 底部点菜栏：点左边看菜篮（已点的菜，能加减、清空），右边去下单 -->
   <view class="basket-bar">
-    <view class="basket-info">
+    <view class="basket-info" bindtap="onOpenCart">
       <view class="basket-icon {{basketCount ? 'on' : ''}}">
         <image class="basket-img" src="/images/basket.png" />
         <view wx:if="{{basketCount}}" class="basket-num">{{basketCount}}</view>
       </view>
       <text class="basket-text">{{basketCount ? '已点 ' + basketCount + ' 份' : '还没点菜'}}</text>
     </view>
-    <view class="basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday">{{ordered ? '看点菜单' : '选好了'}}</view>
+    <view class="basket-go {{basketCount ? '' : 'disabled'}}" bindtap="onGoToday">{{ordered ? '看点菜单' : '去下单'}}</view>
+  </view>
+</view>
+
+<!-- 菜篮：已点的菜，能加减、清空。已经下了单的话，在这里加减就是给这单加菜、减菜 -->
+<view wx:if="{{showCart}}" class="sheet-mask" bindtap="onCloseCart">
+  <view class="sheet cart-sheet" catchtap="noop">
+    <view class="cart-head">
+      <text class="sheet-title">菜篮 · 已点 {{basketCount}} 份</text>
+      <text class="cart-clear hit" bindtap="onClearCart">清空</text>
+    </view>
+    <view wx:if="{{ordered}}" class="hint cart-hint">已经下单了：在这里加减，就是给这单加菜、减菜</view>
+    <scroll-view scroll-y class="cart-list">
+      <view wx:for="{{cartItems}}" wx:key="_id" class="cart-row">
+        <cloud-image wx:if="{{item.cover && !broken[item.cover]}}" class="cart-thumb" src="{{item.cover}}" mode="aspectFill"
+                     data-src="{{item.cover}}" binderror="onCoverError" />
+        <view wx:else class="cart-thumb cart-thumb-empty">{{item.initial}}</view>
+        <view class="cart-name">{{item.name}}<text wx:if="{{item.added}}" class="cart-added">加</text></view>
+        <view class="stepper">
+          <view class="stepper-btn minus" data-id="{{item._id}}" bindtap="onCartMinus">−</view>
+          <text class="stepper-num">{{item.qty}}</text>
+          <view class="stepper-btn plus" data-id="{{item._id}}" bindtap="onCartPlus">+</view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="btn-primary cart-go" bindtap="onGoToday">{{ordered ? '看点菜单' : '去下单'}}</view>
   </view>
 </view>
 

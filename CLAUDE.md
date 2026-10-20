@@ -55,28 +55,29 @@
 - 「我的」页只放常用的：想吃清单、库存是两个大方块；不常用的收进二级页（`pages/backup` 备份与导入）；「检查云开发」（`services/diagnose.js`）放在底部小字链接，菜单页读不到数据时也有入口。
 - 共用的菜品卡片是 WXML 模板 `templates/dish-card.wxml`，样式放在 `app.wxss`；用到它的页面要提供 `onOpenDish` / `onPlus` / `onMinus`。
 - `plans` 集合里每本小本本各有几条本里共用的记录，读写都走 `services/shared-doc.js`（先改本地再按顺序写云上，每次只改对应字段 `inc` / `set` / `remove`，不会互相覆盖；写到改的时候正在用的那本）。小程序里用 `current`、`pantry`、`wishes` 称呼，云函数换成这本的那条（`<本本id>-current`，旧数据那本还是 `current`），还没有就先建一条：
-  - `current` 菜篮（Tab 叫「菜篮」，页面路径还是 `pages/today`）、点菜单（`order`）和买菜清单的勾选 → `services/plan.js`。每个 Tab 页的 `onShow` 都调用 `planService.updateBadge()` 刷新角标
+  - `current` 菜篮（点了哪些菜，在菜单页底部的菜篮里看、加减）、点菜单（`order`）和买菜清单的勾选 → `services/plan.js`。「点菜单」Tab 的角标只在下了单时显示（这单几份）。每个 Tab 页的 `onShow` 都调用 `planService.updateBadge()` 刷新角标
   - `pantry` 家里的库存 → `services/pantry.js`
   - `wishes` 想吃清单 → `services/wish.js`；「开始学」进 `dish-edit?wish=key`，存好后从清单里拿掉，照片沿用
 - 云开发报错统一用 `cloud.explain(err)` 翻成人话；云函数返回的报错已经是人话，带着 `code`（`NO_API` 没部署、`NOT_MEMBER` 不在这本里了、`COLLECTION_MISSING`、`NETWORK`……）。
 - 做菜记录在 `services/log.js`（集合 `cook_logs`，`store.js` 一起同步；集合没建时当作没有记录）。菜的 `cookCount` / `lastCookedAt` 由 `store.js` 按记录现算（用户反馈过次数和记录对不上），云上菜品记录里的这两个字段不再用。打卡照片要当菜的封面时另外传一份，删记录不会删掉封面。
-- 先下单再开始做：没有点菜单不能做菜、不能开饭（`pages/cook`、`pages/meal` 打开时会拦，菜篮页下单以后才有「开始做菜」「开饭」）。
-  - 菜谱详情点「开始做」：已经下了单，这道菜不在单上就问要不要加菜，然后打开做菜页的这道菜（`cook?from=basket&dish=`）；还没下单，放进菜篮、`plan.startAfterOrder(id)`，去菜篮下单（按钮写「下单，开始做」），下好单直接打开这道菜。
+- 点菜照外卖的逻辑：菜单页点 + 放进菜篮；底部点菜栏左边点开菜篮（已点的菜，能加减、清空），右边「去下单」进「确认点菜单」（`pages/checkout`：哪天、哪一顿、口味、备注、谁点的谁掌勺；点的菜只能看，要改回菜单），「确认下单」以后到「点菜单」Tab（`pages/today`）。
+- 先下单再开始做：没有点菜单不能做菜、不能开饭（`pages/cook`、`pages/meal` 打开时会拦，「点菜单」页下了单才有「开始做菜」「开饭」）。
+  - 菜谱详情点「开始做」：已经下了单，这道菜不在单上就问要不要加菜，然后打开做菜页的这道菜（`cook?from=basket&dish=`）；还没下单，放进菜篮，去确认点菜单（`checkout?start=菜品id`，按钮写「确认下单，开始做」），下好单直接打开这道菜。
 - 做菜 `pages/cook`（`?from=basket`，做的是点菜单上的菜）：计时器按结束时间算（切到后台再回来也准），到点震动 + `utils/sound.js` 的提示音 + 弹窗。提示音以 base64 写在代码里，因为单独的音频文件可能被「过滤无依赖文件」漏掉。
   - 上面按菜切换（第一个是备菜），计时器的 key 是「菜品id:第几步」，切菜不停。备菜页的先后、要提前做的步骤（腌、泡……计时 10 分钟以上）、按份数算好的用量在 `utils/cook.js`。
-  - 做菜的进度只存在手机上（`services/cook-session.js`，每本各一份），菜篮页有「继续做菜」；开饭页记好以后、撤单以后清掉。烹饪页的 `onHide` / `onUnload` 不能再存进度（开饭页先清掉进度，再 `switchTab` 关掉烹饪页）。
+  - 做菜的进度只存在手机上（`services/cook-session.js`，每本各一份），「点菜单」页有「继续做菜」；开饭页记好以后、撤单以后清掉。烹饪页的 `onHide` / `onUnload` 不能再存进度（开饭页先清掉进度，再 `switchTab` 关掉烹饪页）。
 - 数据导入 `services/import.js` 读的是导出的同一种格式（`app: "nashoucai-xiaobenben"`、`format: 1`，`photos` 里是 base64），按菜名跳过已有的菜，分类按名字对上；做菜记录按「同一道菜 + 同一分钟」去重（次数按记录现算，不用改菜）。也认手写的导入模板 `docs/菜谱导入模板.json`（顶层有 `菜谱` 数组，中文字段，`fromTemplate` 转成同一种格式）；改模板的字段要同步改 `fromTemplate` 和测试。要批量加菜，就生成这种文件放到 `imports/`（不进 git），在「我的 → 备份与导入 → 从文件导入」里选；照片原图处理好放 `design/dishes/`。
-- 点菜单：菜篮页下单前是「确认点菜单」（哪天、哪一顿、口味、谁点的、谁掌勺），下单以后最上面是点菜单（发给 TA、存成图片、加菜、改一改）。
+- 点菜单：「点菜单」Tab（页面路径还是 `pages/today`）下单以后最上面是点菜单（发给 TA、存成图片、加菜、改一改），下面是买菜清单；还没下单时只列菜篮里的菜（只能看）和「去下单」。
   - 点菜单存在 `current` 的 `order` 里（格式见 `utils/order.js` 的 `normalizeOrder`），`items` 是下单时点的菜，之后再点的显示「加」；菜篮空了点菜单也一起去掉。
   - 编号按开过饭的数：下一单 = 这本里 `meals` 的最大 `no` + 1（`plan.placeOrder` 先同步一下）。撤单不占号、不留记录，开饭了这个号才算用掉。菜单页不显示编号。
-  - 「改一改」（`plan.updateOrder`）用同一个确认页改哪天、哪一顿、口味、备注、名字，编号和下单时点的菜不变；撤单放在改一改页最下面（点菜单过期了的提醒里也能撤）。
-  - 「点菜单记录」`pages/orders`（菜篮页最上面、「我的」页进）：进行中的那单在最上面，下面是开过饭的（`no > 0` 的 `meals`，按吃的日子新的在前、按月分组），卡片跟记录页一样用 `templates/meal-card.wxml`（样式在 `app.wxss`），能再来一单（`meal.reorder`）、分享这顿饭、在记录里看（`meal.setFocusDate`）。
+  - 「改一改」（`checkout?edit=1`，`plan.updateOrder`）用同一个确认页改哪天、哪一顿、口味、备注、名字，编号和下单时点的菜不变；撤单放在改一改页最下面（点菜单过期了的提醒里也能撤）。
+  - 「点菜单记录」`pages/orders`（「点菜单」页最上面、「我的」页进）：进行中的那单在最上面，下面是开过饭的（`no > 0` 的 `meals`，按吃的日子新的在前、按月分组），卡片跟记录页一样用 `templates/meal-card.wxml`（样式在 `app.wxss`），能再来一单（`meal.reorder`）、分享这顿饭、在记录里看（`meal.setFocusDate`）。
   - 「存成图片」「发给 TA」的卡片封面用 `utils/ticket.js` 画在页面里看不见的 `<canvas type="2d" id="ticket-canvas">` 上；存成图片、分享这顿饭都用 `ticket.shareTicket`（`wx.showShareImageMenu`），这顿饭的小票内容是 `utils/meal.js` 的 `mealTicket`；卡片封面在 `onShareAppMessage` 前先画好（5:4）。
 - 开饭（`pages/meal`、`services/meal.js`，要先下单）：一顿饭一条 `meals` 记录（格式见 `utils/meal.js`，`no` 是点菜单编号，以前没下单就开饭的是 0），每道做了的菜在 `cook_logs` 里各记一条，带 `mealId`；整桌照片只存在 `meals` 上（放在云存储 `logs/`），记录自己没照片时显示整桌照片。
   - 先存记录、最后存这一顿，`_id` 都是开饭页打开时定好的（`meal…`、`meal…-1`），重试时已经存上的跳过，不会多记。
   - 做了的菜从菜篮拿掉、点菜单收起来（`plan.finishMeal`）；菜篮空了，勾选清空，自己加的只留没买的。
   - 记录页同一顿的合成一张卡片（`entriesOf`），能「再来一单」（`meal.reorder`）、「分享这顿饭」（小票盖「已开饭」）。一顿的记录删光了，这一顿和照片也删掉（`meal.removeIfEmpty`）。
-  - 点菜单上的日子过了还没开饭，菜篮页会问「做了吗」，按那天记（`/pages/meal/index?date=`）。
+  - 点菜单上的日子过了还没开饭，「点菜单」页会问「做了吗」，按那天记（`/pages/meal/index?date=`）。
   - 导出带上 `meals`，导入时按 `createdAt` 去重，记录的 `mealId` 换成新的那一顿。
 - 买菜清单的合并规则在 `utils/shopping.js`：同名原料合在一起，数字用量 × 份数相加，单位不同或「适量」原样列出；再对比库存（名字去掉括号说明后对）：库存里有的放「家里有」，用完了的放「要买的」，库存里没记录的调料单独一组。
 - 弹窗、提示用 `utils/ui.js`（Promise 形式，可以 await）。

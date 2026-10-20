@@ -127,7 +127,9 @@ Page({
       ui.toast("这顿的菜都已经删掉了");
       return;
     }
-    wx.switchTab({ url: "/pages/today/index", success: () => ui.toast("放进菜篮了") });
+    // 已经下了单：就是给这单加菜；还没下单：去确认点菜单
+    if (planService.getOrder()) wx.switchTab({ url: "/pages/today/index", success: () => ui.toast("加进点菜单了") });
+    else wx.navigateTo({ url: "/pages/checkout/index", success: () => ui.toast("放进菜篮了") });
   },
 
   // 分享这顿饭：盖着「已开饭」的小票，最上面是整桌照片

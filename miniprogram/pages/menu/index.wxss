@@ -316,3 +316,70 @@
   background: #55555d;
   color: #8e8e96;
 }
+
+/* ---------- 菜篮（底部弹出来） ---------- */
+
+.cart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.cart-clear {
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+
+.cart-hint {
+  margin-bottom: 8rpx;
+}
+
+.cart-list {
+  max-height: 55vh;
+}
+
+.cart-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.cart-thumb {
+  flex-shrink: 0;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 14rpx;
+}
+
+.cart-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--apricot);
+  color: var(--wood);
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.cart-name {
+  flex: 1;
+  min-width: 0;
+  margin: 0 16rpx 0 20rpx;
+  overflow: hidden;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cart-added {
+  margin-left: 8rpx;
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  color: var(--wood);
+}
+
+.cart-go {
+  margin-top: 24rpx;
+}

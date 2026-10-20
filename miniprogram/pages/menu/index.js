@@ -25,6 +25,8 @@ Page({
     basketCount: 0,
     basketByCat: {}, // 每个分类点了几份，显示在左侧分类上
     ordered: false, // 已经下了单（这时再点 + 就是加菜）
+    showCart: false, // 菜篮（点底部点菜栏左边弹出来）
+    cartItems: [], // 菜篮里的菜 [{ _id, name, cover, initial, qty, added }]
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
     book: { initial: "", shortName: "", family: false }, // 左上角：正在用的小本本
     showBooks: false, // 切换小本本的面板
@@ -283,6 +285,57 @@ Page({
     this.applyBasket(planService.remove(e.currentTarget.dataset.id));
   },
 
+  // ---------- 菜篮（底部点菜栏左边） ----------
+
+  // 菜篮里的菜，按菜单里的顺序；下单以后又点的标「加」
+  cartItemsOf(basket) {
+    const order = planService.getOrder();
+    return (this.allDishes || [])
+      .filter((d) => basket[d._id])
+      .map((d) => ({
+        _id: d._id,
+        name: d.name,
+        cover: d.coverThumb || d.cover,
+        initial: d.name.slice(0, 1),
+        qty: basket[d._id],
+        added: !!order && basket[d._id] > (order.items[d._id] || 0),
+      }));
+  },
+
+  onOpenCart() {
+    if (!this.data.basketCount) {
+      ui.toast("还没点菜，点菜名旁边的 +");
+      return;
+    }
+    this.setData({ showCart: true, cartItems: this.cartItemsOf(this.data.basket) });
+  },
+
+  onCloseCart() {
+    this.setData({ showCart: false });
+  },
+
+  noop() {},
+
+  onCartPlus(e) {
+    this.applyBasket(planService.add(e.currentTarget.dataset.id));
+  },
+
+  onCartMinus(e) {
+    this.applyBasket(planService.remove(e.currentTarget.dataset.id));
+  },
+
+  async onClearCart() {
+    const ordered = !!planService.getOrder();
+    const ok = await ui.confirm({
+      title: "清空菜篮？",
+      content: `点的菜都拿掉${ordered ? "，点菜单也撤掉" : ""}，买菜清单的勾选也清掉。${bookService.isShared() ? "这本里大家的都会清空。" : ""}库存不受影响。`,
+      confirmText: "清空",
+      danger: true,
+    });
+    if (!ok) return;
+    this.applyBasket(planService.clear());
+  },
+
   applyBasket(basket) {
     const basketByCat = {};
     (this.allDishes || []).forEach((d) => {
@@ -290,12 +343,18 @@ Page({
         basketByCat[d.categoryId] = (basketByCat[d.categoryId] || 0) + basket[d._id];
       }
     });
-    this.setData({ basket, basketCount: planService.getCount(basket), basketByCat, ordered: !!planService.getOrder() });
+    const basketCount = planService.getCount(basket);
+    this.setData({ basket, basketCount, basketByCat, ordered: !!planService.getOrder() });
+    // 菜篮开着：跟着变；都拿掉了就收起来
+    if (this.data.showCart) this.setData(basketCount ? { cartItems: this.cartItemsOf(basket) } : { showCart: false });
   },
 
+  // 去下单（确认点菜单）；已经下了单就去看点菜单
   onGoToday() {
     if (!this.data.basketCount) return;
-    wx.switchTab({ url: "/pages/today/index" });
+    this.setData({ showCart: false });
+    if (this.data.ordered) wx.switchTab({ url: "/pages/today/index" });
+    else wx.navigateTo({ url: "/pages/checkout/index" });
   },
 
   // ---------- 跳转 ----------

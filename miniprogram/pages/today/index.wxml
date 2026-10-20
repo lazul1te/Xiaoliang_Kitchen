@@ -1,4 +1,4 @@
-<!-- 菜篮里的一道菜：缩略图、名字、用时、份数 -->
+<!-- 菜篮里的一道菜（只能看，加减在菜单页底部的菜篮里）：缩略图、名字、用时、份数 -->
 <template name="orderRow">
   <view class="o-row" data-id="{{_id}}" bindtap="onOpenDish">
     <cloud-image wx:if="{{cover && !broken}}" class="o-thumb" src="{{cover}}" mode="aspectFill"
@@ -8,11 +8,7 @@
       <view class="o-name">{{name}}</view>
       <view wx:if="{{meta}}" class="o-meta">{{meta}}</view>
     </view>
-    <view class="stepper">
-      <view class="stepper-btn minus" data-id="{{_id}}" catchtap="onMinus">−</view>
-      <text class="stepper-num">{{qty}}</text>
-      <view class="stepper-btn plus" data-id="{{_id}}" catchtap="onPlus">+</view>
-    </view>
+    <text class="o-qty">×{{qty}}</text>
   </view>
 </template>
 
@@ -36,15 +32,15 @@
 
 <view wx:if="{{stage === 'empty'}}" class="empty">
   <image class="empty-img" src="/images/basket-big.png" />
-  <view class="empty-title">菜篮还是空的</view>
-  <view class="empty-desc">{{shared ? '去菜单里挑几道想做的菜，家人点的也会放进来' : '去菜单里挑几道想做的菜'}}</view>
+  <view class="empty-title">还没点菜</view>
+  <view class="empty-desc">{{shared ? '去菜单里挑几道想做的菜，家人点的也会放进菜篮' : '去菜单里挑几道想做的菜'}}</view>
   <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
   <view class="empty-orders" bindtap="onOpenOrders">以前的点菜单 ›</view>
 </view>
 
 <view wx:else class="today {{(stage === 'picking' && items.length) || stage === 'ordered' ? 'has-bar' : ''}}">
   <view class="top-row">
-    <text class="top-title">{{editing ? '改点菜单 ' + ticket.noText : (stage === 'ordered' ? '这顿的点菜单' : '确认点菜单')}}</text>
+    <text class="top-title">{{stage === 'ordered' ? '这顿的点菜单' : '还没下单'}}</text>
     <text class="top-link" bindtap="onOpenOrders">点菜单记录 ›</text>
   </view>
 
@@ -58,7 +54,7 @@
   </view>
 
   <!-- ========== 下单以后：点菜单 ========== -->
-  <block wx:if="{{stage === 'ordered' && !editing}}">
+  <block wx:if="{{stage === 'ordered'}}">
     <!-- 点菜单上的日子过了还没开饭：问一下做了没有 -->
     <view wx:if="{{overdue}}" class="banner">
       <text class="banner-text">{{overdue}}</text>
@@ -90,64 +86,17 @@
     </view>
   </block>
 
-  <!-- ========== 下单前：确认点菜单；下单以后「改一改」也是这一页 ========== -->
-  <block wx:elif="{{items.length}}">
-    <view class="card">
-      <view class="o-label">这顿是</view>
-      <view class="chips">
-        <view class="chip {{form.date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onPickDate">今天</view>
-        <view class="chip {{form.date === tomorrow ? 'on' : ''}}" data-date="{{tomorrow}}" bindtap="onPickDate">明天</view>
-        <picker mode="date" value="{{form.date}}" start="{{today}}" bindchange="onDateChange">
-          <view class="chip {{form.date !== today && form.date !== tomorrow ? 'on' : ''}}">{{form.date !== today && form.date !== tomorrow ? dateLabel : '其他日子'}}</view>
-        </picker>
-      </view>
-      <view class="chips">
-        <view wx:for="{{meals}}" wx:key="*this" class="chip {{form.meal === item ? 'on' : ''}}" data-meal="{{item}}" bindtap="onPickMeal">{{item}}</view>
-      </view>
+  <!-- ========== 点了菜，还没下单 ========== -->
+  <view wx:elif="{{items.length}}" class="card">
+    <view class="o-head">
+      <text class="o-title">菜篮里 {{items.length}} 道 · {{count}} 份</text>
+      <text class="o-link hit" bindtap="onGoMenu">回菜单改 ›</text>
     </view>
-
-    <view class="card">
-      <view class="o-head">
-        <text class="o-title">已点 {{items.length}} 道 · {{count}} 份</text>
-        <text class="o-link hit" bindtap="onAddMore">＋ 加菜</text>
-      </view>
-      <block wx:for="{{items}}" wx:key="_id">
-        <template is="orderRow" data="{{...item, broken: broken[item.cover]}}" />
-      </block>
-    </view>
-
-    <view class="card">
-      <view class="o-label">口味备注</view>
-      <view class="chips">
-        <view wx:for="{{flavorChips}}" wx:key="name" class="chip {{item.on ? 'on' : ''}}" data-name="{{item.name}}" bindtap="onToggleFlavor">{{item.name}}</view>
-        <view class="chip add" bindtap="onAddFlavor">＋</view>
-      </view>
-      <input class="o-input" value="{{form.note}}" placeholder="还想说点什么…" placeholder-class="o-placeholder"
-             maxlength="40" bindinput="onNoteInput" />
-    </view>
-
-    <view class="card o-people">
-      <view class="o-person">
-        <view class="o-label">谁点的</view>
-        <view class="chips">
-          <view wx:for="{{names}}" wx:key="*this" class="chip {{form.orderedBy === item ? 'on' : ''}}"
-                data-field="orderedBy" data-name="{{item}}" bindtap="onPickName">{{item}}</view>
-          <view class="chip add" data-field="orderedBy" bindtap="onAddName">{{names.length ? '＋' : '＋ 写名字'}}</view>
-        </view>
-      </view>
-      <view class="o-person">
-        <view class="o-label">谁掌勺</view>
-        <view class="chips">
-          <view wx:for="{{names}}" wx:key="*this" class="chip {{form.cook === item ? 'on' : ''}}"
-                data-field="cook" data-name="{{item}}" bindtap="onPickName">{{item}}</view>
-          <view class="chip add" data-field="cook" bindtap="onAddName">{{names.length ? '＋' : '＋ 写名字'}}</view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 改一改的时候：撤单放在最下面，不容易点错 -->
-    <view wx:if="{{editing}}" class="cancel-row"><text class="cancel-order hit" bindtap="onCancelOrder">撤掉这张点菜单</text></view>
-  </block>
+    <block wx:for="{{items}}" wx:key="_id">
+      <template is="orderRow" data="{{...item, broken: broken[item.cover]}}" />
+    </block>
+    <view class="o-tip">选好了就去下单：定哪一顿、口味，谁点的、谁掌勺</view>
+  </view>
 
   <!-- 只剩自己加的要买的东西，还没点菜 -->
   <view wx:else class="card o-nodish">
@@ -212,23 +161,16 @@
     </view>
   </view>
 
-  <view class="clear-row"><text class="clear hit" bindtap="onClear">清空菜篮</text></view>
 </view>
 
-<!-- 下单前：底部的下单栏（从菜谱详情点「开始做」过来的，下好单直接开始做） -->
+<!-- 还没下单：去下单（确认点菜单） -->
 <view wx:if="{{stage === 'picking' && items.length}}" class="order-bar">
   <text class="order-bar-text">{{slowText || '共 ' + count + ' 份'}}</text>
-  <view class="btn-primary order-btn" bindtap="onPlaceOrder">{{startAfter ? '下单，开始做' : '下单'}}</view>
-</view>
-
-<!-- 改一改 -->
-<view wx:if="{{stage === 'ordered' && editing}}" class="order-bar">
-  <text class="order-bar-link" bindtap="onCancelEdit">不改了</text>
-  <view class="btn-primary order-btn" bindtap="onSaveOrder">改好了</view>
+  <view class="btn-primary order-btn" bindtap="onGoCheckout">去下单</view>
 </view>
 
 <!-- 下单以后：买齐了就开始做（几道菜一起做），做好了开饭 -->
-<view wx:if="{{stage === 'ordered' && !editing}}" class="order-bar">
+<view wx:if="{{stage === 'ordered'}}" class="order-bar">
   <text class="order-bar-link" bindtap="onFinishMeal">做好了，开饭</text>
   <view class="btn-primary order-btn" bindtap="onStartCook">{{cooking ? '继续做菜' : '开始做菜（' + items.length + ' 道）'}}</view>
 </view>

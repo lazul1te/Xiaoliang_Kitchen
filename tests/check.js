@@ -248,7 +248,10 @@ global.wx = {
   showToast: (o) => calls.push(["toast", o.title]),
   showLoading: (o) => calls.push(["loading", o.title]),
   hideLoading: () => calls.push(["hideLoading"]),
-  navigateTo: (o) => calls.push(["navigateTo", o.url]),
+  navigateTo: (o) => {
+    calls.push(["navigateTo", o.url]);
+    if (o.success) o.success();
+  },
   redirectTo: (o) => {
     calls.push(["redirectTo", o.url]);
     if (o.success) o.success();
@@ -496,6 +499,20 @@ global.wx.cloud.callFunction = async ({ name, data }) => {
   serverUser = caller;
   return { result: clone(await require(apiFunctionFile).main(clone(data), {})) };
 };
+// 确认点菜单页（pages/checkout）：opts 是页面参数（edit=1 改一改、start=菜品id 下好单直接开始做）
+async function openCheckout(opts) {
+  const page = newPage("pages/checkout/index");
+  await page.onLoad(opts || {});
+  return page;
+}
+// 去下单：照默认的填，setup(page) 里可以先改几样，再「确认下单」
+async function placeOrder(setup) {
+  const page = await openCheckout({});
+  if (setup) await setup(page);
+  await page.onSubmit();
+  await flush();
+  return page;
+}
 // 成员、申请人在小程序里的 id（跟云函数里一样算）
 const memberKeyOf = (bookId, openid) => require("crypto").createHash("sha256").update(`${bookId}:${openid}`).digest("hex").slice(0, 12);
 // 直接调云函数（不经过手机上的代码）：模拟几台手机同时调用
@@ -895,13 +912,21 @@ async function smoke() {
   menu.onPlus(ev({ id: idOf("可乐鸡翅") }));
   assert.strictEqual(menu.data.basketCount, 3);
   assert.deepStrictEqual(menu.data.basketByCat, { [catOf("家常菜")]: 2, [catOf("硬菜")]: 1 });
-  assert.deepStrictEqual(lastCall("badge"), ["badge", "3"]);
+  assert.deepStrictEqual(lastCall("badge"), ["badge", null], "还没下单，「点菜单」Tab 上不显示数字（点了几份写在点菜栏上）");
   await flush();
-  assert.deepStrictEqual(planItems(), { [idOf("番茄炒蛋")]: 2, [idOf("可乐鸡翅")]: 1 }, "今日菜单存到云上");
+  assert.deepStrictEqual(planItems(), { [idOf("番茄炒蛋")]: 2, [idOf("可乐鸡翅")]: 1 }, "菜篮存到云上");
   menu.onMinus(ev({ id: idOf("番茄炒蛋") }));
   assert.strictEqual(menu.data.basketCount, 2);
   await flush();
   assert.deepStrictEqual(planItems(), { [idOf("番茄炒蛋")]: 1, [idOf("可乐鸡翅")]: 1 });
+  // 菜篮：点底部点菜栏左边弹出来，看已点的、加减
+  menu.onOpenCart();
+  assert.deepStrictEqual([menu.data.showCart, menu.data.cartItems.map((i) => `${i.name}×${i.qty}`)], [true, ["番茄炒蛋×1", "可乐鸡翅×1"]]);
+  menu.onCartPlus(ev({ id: idOf("可乐鸡翅") }));
+  assert.deepStrictEqual([menu.data.basketCount, menu.data.cartItems[1].qty], [3, 2], "在菜篮里加一份");
+  menu.onCartMinus(ev({ id: idOf("可乐鸡翅") }));
+  menu.onCloseCart();
+  assert.deepStrictEqual([menu.data.showCart, menu.data.basketCount], [false, 2]);
   menu.onSearchInput({ detail: { value: "鸡蛋" } });
   const eggDishes = menu.data.searchResults.map((d) => d.name);
   assert.deepStrictEqual(eggDishes, ["番茄炒蛋", "紫菜蛋花汤", "蛋炒饭"]);
@@ -1151,14 +1176,18 @@ async function smoke() {
   assert.deepStrictEqual(Object.keys(planItems()), [idOf("番茄炒蛋")], "删掉的示例菜从今日菜单拿掉");
   ok("mine：统计、删除示例菜（改过的留着）");
 
-  // ---- 今日：点的菜 + 买菜清单 ----
+  // ---- 点菜单页，还没下单：菜篮里的菜只能看（加减在菜单页底部的菜篮里）+ 买菜清单 ----
   const today = newPage("pages/today/index");
   today.onShow();
   await flush();
-  assert.deepStrictEqual(today.data.items.map((i) => i.name), ["番茄炒蛋"]);
+  assert.deepStrictEqual([today.data.stage, today.data.items.map((i) => `${i.name}×${i.qty}`)], ["picking", ["番茄炒蛋×1"]]);
   assert.deepStrictEqual(show(today.data.shopping.buy), ["鸡蛋 3个", "番茄 2个", "葱 1根"]);
-  await today.onPlus(ev({ id: idOf("番茄炒蛋") }));
+  today.onGoCheckout();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/checkout/index"], "「去下单」去确认点菜单");
+  menu.onOpenCart();
+  menu.onCartPlus(ev({ id: idOf("番茄炒蛋") }));
   await flush();
+  await today.refresh();
   assert.strictEqual(today.data.count, 2);
   assert.deepStrictEqual(show(today.data.shopping.buy), ["鸡蛋 6个", "番茄 4个", "葱 2根"], "份数变了，用量跟着变");
   const eggKey = today.data.shopping.buy[0].key;
@@ -1183,13 +1212,16 @@ async function smoke() {
   today.onRemoveExtra(ev({ key: today.data.shopping.extras[0].key }));
   await flush();
   assert.deepStrictEqual([planDoc().checked, planDoc().extras], [{}, {}]);
+  // 清空：在菜单页底部的菜篮里
   modalAnswers.push({ confirm: true });
-  await today.onClear();
+  await menu.onClearCart();
   await flush();
-  assert.strictEqual(today.data.hasPlan, false);
-  assert.deepStrictEqual(planItems(), {});
+  assert.ok(/^点的菜都拿掉，买菜清单的勾选也清掉。这本里大家的都会清空。库存不受影响。$/.test(lastCall("modal")[2]), lastCall("modal")[2]);
+  assert.deepStrictEqual([menu.data.showCart, menu.data.basketCount, planItems()], [false, 0, {}], "清空了就收起来");
+  await today.refresh();
+  assert.strictEqual(today.data.stage, "empty");
   newPage("pages/logs/index").onShow();
-  ok("today：份数变了用量跟着变、勾选、自己加的、清空，都存到云上");
+  ok("点菜单页（还没下单）：菜篮里的菜只能看、去下单；在菜单页的菜篮里加减份数，用量跟着变；勾选、自己加的、清空，都存到云上");
 
   // ======== 做菜：先下单再开始做 ========
   const tomatoId = idOf("番茄炒蛋");
@@ -1198,24 +1230,22 @@ async function smoke() {
   det2.onLoad({ id: tomatoId });
   await flush();
   pageStack.push(det2);
-  // 还没下单：从菜谱点「开始做」，先把这道菜放进菜篮，去菜篮下单
+  // 还没下单：从菜谱点「开始做」，先把这道菜放进菜篮，去确认点菜单
   await det2.onStartCook();
-  assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/today/index"]);
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", `/pages/checkout/index?start=${tomatoId}`]);
   assert.strictEqual(det2.data.qty, 1, "放进菜篮了");
-  const basketS = newPage("pages/today/index");
-  basketS.onLoad({});
-  basketS.onShow();
   await flush();
-  assert.deepStrictEqual([basketS.data.stage, basketS.data.startAfter], ["picking", tomatoId], "下单按钮写着「下单，开始做」");
-  assert.ok(calls.slice(-30).some((c) => c[0] === "toast" && c[1] === "先下单，下好单就开始做"));
+  const coS = await openCheckout({ start: tomatoId });
+  assert.deepStrictEqual([coS.data.starting, coS.data.items.map((i) => `${i.name}×${i.qty}`)], [true, ["番茄炒蛋×1"]], "按钮写着「确认下单，开始做」");
   // 没下单不能开始做
   const cook0 = newPage("pages/cook/index");
   await cook0.onLoad({ from: "basket" });
-  assert.deepStrictEqual([cook0.data.notFound, cook0.data.emptyText, cook0.data.emptyDesc], [true, "还没下单", "先在菜篮里下单，再开始做"]);
+  assert.deepStrictEqual([cook0.data.notFound, cook0.data.emptyText, cook0.data.emptyDesc], [true, "还没下单", "先下单，再开始做"]);
+  cook0.onGoCheckout();
+  assert.deepStrictEqual(lastCall("redirectTo"), ["redirectTo", "/pages/checkout/index"]);
   // 下好单直接开始做这道菜
-  await basketS.onPlaceOrder();
-  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", `/pages/cook/index?from=basket&dish=${tomatoId}`]);
-  assert.strictEqual(basketS.data.startAfter, "");
+  await coS.onSubmit();
+  assert.deepStrictEqual(lastCall("redirectTo"), ["redirectTo", `/pages/cook/index?from=basket&dish=${tomatoId}`]);
   await flush();
   assert.strictEqual(planDoc().order.no, 1, "这本的第一单");
   const cook = newPage("pages/cook/index");
@@ -1259,19 +1289,24 @@ async function smoke() {
   cook.onUnload();
   assert.deepStrictEqual(lastCall("keepScreenOn"), ["keepScreenOn", false]);
   // 改了主意：点菜单上「改一改」，最下面撤单。点的菜还在菜篮里，做菜的进度清掉；再下单还是 No.001（撤单不占号）
+  const basketS = newPage("pages/today/index");
   basketS.onShow();
   await flush();
   assert.deepStrictEqual([basketS.data.stage, basketS.data.cooking], ["ordered", { done: 0, total: 1 }]);
+  assert.deepStrictEqual(lastCall("badge"), ["badge", "1"], "下了单，「点菜单」Tab 上显示这单几份");
   basketS.onEditOrder();
-  assert.deepStrictEqual([basketS.data.editing, basketS.data.form.meal], [true, planDoc().order.meal], "改一改：原来填的都在");
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/checkout/index?edit=1"]);
+  const coE = await openCheckout({ edit: "1" });
+  assert.deepStrictEqual([coE.data.editing, coE.data.orderNo, coE.data.form.meal], [true, "No.001", planDoc().order.meal], "改一改：原来填的都在");
   modalAnswers.push({ confirm: true });
-  await basketS.onCancelOrder();
+  await coE.onCancelOrder();
   await flush();
   assert.ok(/编号还是这个。一起做的进度会清掉。$/.test(lastCall("modal")[2]), lastCall("modal")[2]);
-  assert.deepStrictEqual([!!planDoc().order, planItems(), basketS.data.stage, basketS.data.editing], [false, { [tomatoId]: 1 }, "picking", false]);
+  assert.deepStrictEqual([!!planDoc().order, planItems(), lastCall("navigateBack")], [false, { [tomatoId]: 1 }, ["navigateBack", 1]]);
   assert.strictEqual(cacheOf("cook_session"), undefined, "做菜的进度清掉了");
-  await basketS.onPlaceOrder();
-  await flush();
+  await basketS.refresh();
+  assert.strictEqual(basketS.data.stage, "picking");
+  await placeOrder();
   assert.strictEqual(planDoc().order.no, 1, "撤单不占号，再下单还是 No.001");
   // 已经下了单：从菜谱点另一道菜的「开始做」，问一下要不要加菜，加了直接打开那道菜
   const sideId = (await svc("dish").saveDish({ name: "清炒菠菜", categoryId: catOf("家常菜") }))._id;
@@ -2328,35 +2363,42 @@ async function smoke() {
   [LUROU, WINGS, WINGS, LETTUCE].forEach((id) => menuO.onPlus(ev({ id })));
   await flush();
   assert.deepStrictEqual([menuO.data.basketCount, menuO.data.ordered], [4, false]);
-  const basketO = newPage("pages/today/index");
-  basketO.onLoad();
-  basketO.onShow();
-  await flush();
-  assert.strictEqual(basketO.data.stage, "picking");
-  assert.deepStrictEqual(basketO.data.items.map((i) => `${i.name}×${i.qty}`).sort(), ["台式卤肉饭×1", "奥尔良鸡翅（空气炸锅版）×2", "莴笋炒肉×1"].sort());
-  assert.strictEqual(basketO.data.slowText, "最慢的台式卤肉饭要 90 分钟");
-  assert.deepStrictEqual([basketO.data.form.date, basketO.data.form.meal], [dateValue(Date.now()), mealByTime(Date.now())], "默认今天，按现在几点猜哪一顿");
-  assert.strictEqual(basketO.data.showShopping, false, "下单前买菜清单先收起来");
-  assert.strictEqual(basketO.data.form.cook, "小亮", "掌勺默认是这台手机上次写的");
-  assert.ok(basketO.data.names.includes("小亮"), "以前写过的名字点一下就行：" + basketO.data.names.join("、"));
-  basketO.onPickMeal(ev({ meal: "晚饭" }));
-  basketO.onPickDate(ev({ date: basketO.data.tomorrow }));
-  assert.ok(/^\d+月\d+日 周/.test(basketO.data.dateLabel), basketO.data.dateLabel);
-  basketO.onPickDate(ev({ date: basketO.data.today }));
-  basketO.onToggleFlavor(ev({ name: "少辣" }));
-  basketO.onToggleFlavor(ev({ name: "不要香菜" }));
-  basketO.onToggleFlavor(ev({ name: "少辣" })); // 再点一下取消
+  // 菜单页点「去下单」：确认点菜单页
+  menuO.onGoToday();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/checkout/index"]);
+  const co = await openCheckout({});
+  assert.deepStrictEqual(co.data.items.map((i) => `${i.name}×${i.qty}`).sort(), ["台式卤肉饭×1", "奥尔良鸡翅（空气炸锅版）×2", "莴笋炒肉×1"].sort(), "点的菜在这里只能看");
+  assert.strictEqual(co.data.slowText, "最慢的台式卤肉饭要 90 分钟");
+  assert.deepStrictEqual([co.data.form.date, co.data.form.meal], [dateValue(Date.now()), mealByTime(Date.now())], "默认今天，按现在几点猜哪一顿");
+  assert.strictEqual(co.data.form.cook, "小亮", "掌勺默认是这台手机上次写的");
+  assert.ok(co.data.names.includes("小亮"), "以前写过的名字点一下就行：" + co.data.names.join("、"));
+  const checkoutWxml = fs.readFileSync(path.join(root, "pages/checkout/index.wxml"), "utf8");
+  assert.ok(!/onPlus|onMinus|stepper/.test(checkoutWxml), "确认点菜单页上不能改点的菜");
+  co.onBackToMenu();
+  assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/menu/index"], "要改菜回菜单");
+  co.onPickMeal(ev({ meal: "晚饭" }));
+  co.onPickDate(ev({ date: co.data.tomorrow }));
+  assert.ok(/^\d+月\d+日 周/.test(co.data.dateLabel), co.data.dateLabel);
+  co.onPickDate(ev({ date: co.data.today }));
+  co.onToggleFlavor(ev({ name: "少辣" }));
+  co.onToggleFlavor(ev({ name: "不要香菜" }));
+  co.onToggleFlavor(ev({ name: "少辣" })); // 再点一下取消
   modalAnswers.push({ confirm: true, content: "多放醋" });
-  await basketO.onAddFlavor();
-  assert.deepStrictEqual(basketO.data.form.flavors, ["不要香菜", "多放醋"]);
-  assert.ok(basketO.data.flavorChips.some((c) => c.name === "多放醋" && c.on), "自己加的口味也变成选项");
-  basketO.onNoteInput({ detail: { value: "鸡翅烤焦一点" } });
+  await co.onAddFlavor();
+  assert.deepStrictEqual(co.data.form.flavors, ["不要香菜", "多放醋"]);
+  assert.ok(co.data.flavorChips.some((c) => c.name === "多放醋" && c.on), "自己加的口味也变成选项");
+  co.onNoteInput({ detail: { value: "鸡翅烤焦一点" } });
   modalAnswers.push({ confirm: true, content: "小鱼" });
-  await basketO.onAddName(ev({ field: "orderedBy" }));
-  basketO.onPickName(ev({ field: "cook", name: "小亮" }));
-  assert.strictEqual(basketO.data.form.cook, "", "再点一下同一个名字就是不填");
-  basketO.onPickName(ev({ field: "cook", name: "小亮" }));
-  await basketO.onPlaceOrder();
+  await co.onAddName(ev({ field: "orderedBy" }));
+  co.onPickName(ev({ field: "cook", name: "小亮" }));
+  assert.strictEqual(co.data.form.cook, "", "再点一下同一个名字就是不填");
+  co.onPickName(ev({ field: "cook", name: "小亮" }));
+  await co.onSubmit();
+  await flush();
+  assert.deepStrictEqual([lastCall("switchTab"), lastCall("toast")], [["switchTab", "/pages/today/index"], ["toast", "下单啦"]], "下好单去「点菜单」");
+  const basketO = newPage("pages/today/index");
+  basketO.onLoad({});
+  basketO.onShow();
   await flush();
   const order1 = planDoc().order;
   assert.deepStrictEqual(
@@ -2366,9 +2408,7 @@ async function smoke() {
   assert.deepStrictEqual(order1.items, planItems(), "记下下单时点了哪些菜");
   assert.strictEqual(basketO.data.stage, "ordered");
   assert.deepStrictEqual([basketO.data.ticket.noText, basketO.data.ticket.peopleText], ["No.001", "点菜 小鱼 · 掌勺 小亮"]);
-  assert.deepStrictEqual([basketO.data.form.flavors, basketO.data.form.note], [[], ""], "下一单重新填口味和备注");
   assert.strictEqual(dev().dev_order_name, "小鱼", "记住这台手机的点菜人");
-  assert.deepStrictEqual(lastCall("toast"), ["toast", "下单啦"]);
   menuO.onShow();
   await flush();
   assert.deepStrictEqual([menuO.data.ordered, menuO.data.basketCount], [true, 4], "菜单页底部：「已点 4 份」「看点菜单」，不写编号");
@@ -2397,37 +2437,40 @@ async function smoke() {
   assert.strictEqual(share.path, `/pages/today/index?book=${testBookId}`, "对方点开时切到这本");
   assert.ok(/^今晚吃这些：.+等 4 道菜$/.test(share.title), share.title);
   assert.ok(share.imageUrl && files[share.imageUrl].includes("点菜单 No.001 · 晚饭"), "卡片封面先画好了");
-  // 改一改：改成午饭、换个掌勺；编号、下单时点的菜都不变；改完确认页回到下一单的默认内容
+  // 改一改：在确认点菜单页改成午饭、换个掌勺、少个口味；编号、下单时点的菜都不变。点的菜在这里也不能改
   basketO2.onEditOrder();
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/checkout/index?edit=1"]);
+  const coEdit = await openCheckout({ edit: "1" });
   assert.deepStrictEqual(
-    [basketO2.data.editing, basketO2.data.form.meal, basketO2.data.form.flavors, basketO2.data.form.note, basketO2.data.form.cook],
-    [true, "晚饭", ["不要香菜", "多放醋"], "鸡翅烤焦一点", "小亮"],
+    [coEdit.data.editing, coEdit.data.orderNo, coEdit.data.form.meal, coEdit.data.form.flavors, coEdit.data.form.note, coEdit.data.form.cook],
+    [true, "No.001", "晚饭", ["不要香菜", "多放醋"], "鸡翅烤焦一点", "小亮"],
     "原来填的都在"
   );
-  basketO2.onPickMeal(ev({ meal: "午饭" }));
-  basketO2.onPickName(ev({ field: "cook", name: "小鱼" }));
-  basketO2.onToggleFlavor(ev({ name: "多放醋" }));
-  await basketO2.onSaveOrder();
+  assert.deepStrictEqual(lastCall("title"), ["title", "改点菜单"]);
+  coEdit.onPickMeal(ev({ meal: "午饭" }));
+  coEdit.onPickName(ev({ field: "cook", name: "小鱼" }));
+  coEdit.onToggleFlavor(ev({ name: "多放醋" }));
+  await coEdit.onSubmit();
   await flush();
   const edited = planDoc().order;
   assert.deepStrictEqual([edited.no, edited.meal, edited.cook, edited.flavors, edited.items], [1, "午饭", "小鱼", ["不要香菜"], order1.items]);
-  assert.deepStrictEqual([basketO2.data.editing, basketO2.data.form.flavors, basketO2.data.ticket.meal], [false, [], "午饭"]);
+  assert.deepStrictEqual(lastCall("navigateBack"), ["navigateBack", 1]);
   assert.deepStrictEqual(lastCall("toast"), ["toast", "改好了"]);
-  // 改一改的时候不改了：什么都不变
-  basketO2.onEditOrder();
-  basketO2.onPickMeal(ev({ meal: "夜宵" }));
-  basketO2.onCancelEdit();
-  await flush();
-  assert.deepStrictEqual([basketO2.data.editing, planDoc().order.meal], [false, "午饭"]);
+  await basketO2.refresh();
+  assert.strictEqual(basketO2.data.ticket.meal, "午饭");
+  // 已经下了单，再从菜单点「去下单」：去看点菜单，不会再下一单
+  const coAgain = await openCheckout({});
+  assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/today/index"]);
+  assert.strictEqual(coAgain.data.ready, false);
   // 撤单（在「改一改」最下面）：点的菜还在；再下单还是这个编号（撤单不占号）
-  basketO2.onEditOrder();
+  const coCancel = await openCheckout({ edit: "1" });
   modalAnswers.push({ confirm: true });
-  await basketO2.onCancelOrder();
+  await coCancel.onCancelOrder();
   await flush();
   assert.ok(!planDoc().order, "撤单以后云上没有点菜单了");
-  assert.deepStrictEqual([basketO2.data.stage, basketO2.data.items.length, basketO2.data.editing], ["picking", 4, false]);
-  await basketO2.onPlaceOrder();
-  await flush();
+  await basketO2.refresh();
+  assert.deepStrictEqual([basketO2.data.stage, basketO2.data.items.length], ["picking", 4]);
+  await placeOrder();
   assert.strictEqual(planDoc().order.no, 1, "撤单不占号");
   // 一道一道打卡、拿出菜篮：菜篮空了，点菜单也就没了
   Object.keys(planItems()).forEach((id) => svc("plan").drop(id));
@@ -2449,9 +2492,8 @@ async function smoke() {
   basketM.onLoad();
   basketM.onShow();
   await flush();
-  basketM.onPickMeal(ev({ meal: "晚饭" }));
-  await basketM.onPlaceOrder();
-  await flush();
+  await placeOrder((co) => co.onPickMeal(ev({ meal: "晚饭" })));
+  await basketM.refresh();
   basketM.onToggleItem(ev({ key: basketM.data.shopping.buy[0].key })); // 买到了一样
   modalAnswers.push({ confirm: true, content: "牛奶" });
   await basketM.onAddExtra();
@@ -2532,15 +2574,14 @@ async function smoke() {
   logsM.onReorder(ev({ id: meal1._id }));
   await flush();
   assert.deepStrictEqual(planItems(), { [POTATO]: 1, [LUROU]: 1, [WINGS]: 2, [LETTUCE]: 1 });
-  assert.deepStrictEqual([lastCall("switchTab"), lastCall("toast")], [["switchTab", "/pages/today/index"], ["toast", "放进菜篮了"]]);
+  assert.deepStrictEqual([lastCall("navigateTo"), lastCall("toast")], [["navigateTo", "/pages/checkout/index"], ["toast", "放进菜篮了"]], "还没下单：放进菜篮，去确认点菜单");
   ok("开饭啦：一次记下这顿的菜（打分、掌勺、整桌照片）、没做的留在菜篮、集合没建时重试不多记；记录页按顿显示、分享这顿饭、再来一单");
 
   // ======== 忘了开饭：第二天问一下；菜都做了，菜篮和买菜清单一起清掉；一顿的记录删光了，这一顿也删掉 ========
   const basketL = newPage("pages/today/index");
   basketL.onShow();
   await flush();
-  await basketL.onPlaceOrder();
-  await flush();
+  await placeOrder();
   const yesterday = dateValue(Date.now() - 24 * 3600 * 1000);
   partnerWrites(() => {
     planDoc().order.date = yesterday; // 点菜单是昨天的
@@ -2603,8 +2644,8 @@ async function smoke() {
   await flush();
   basketC.onStartCook();
   assert.deepStrictEqual(lastCall("toast"), ["toast", "先下单，再开始做"], "没下单不能开始做");
-  await basketC.onPlaceOrder();
-  await flush();
+  await placeOrder();
+  await basketC.refresh();
   assert.strictEqual(planDoc().order.no, 10, "编号接着开过饭的最大编号往下数（导入的那顿是 No.009）");
   basketC.onStartCook();
   assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/cook/index?from=basket"]);
@@ -2694,7 +2735,7 @@ async function smoke() {
   // 没下单不能开饭
   const mealNoOrder = newPage("pages/meal/index");
   await mealNoOrder.onLoad({});
-  assert.deepStrictEqual(lastCall("modal").slice(1), ["还没下单", "先在菜篮里下单，做好了再来开饭"]);
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["还没下单", "先下单，做好了再来开饭"]);
   assert.deepStrictEqual(lastCall("navigateBack"), ["navigateBack", 1]);
   // 入口：菜篮页最上面、「我的」页（basketC 是上次打开小程序时的页面，换一个新的）
   const basketF = newPage("pages/today/index");
@@ -2708,8 +2749,7 @@ async function smoke() {
   mineO.onOpenOrders();
   assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", "/pages/orders/index"]);
   // 再下一单（菜篮里还剩莴笋炒肉）
-  await basketF.onPlaceOrder();
-  await flush();
+  await placeOrder();
   const ordersP = newPage("pages/orders/index");
   ordersP.onShow();
   await flush();
@@ -2729,7 +2769,7 @@ async function smoke() {
   await ordersP.onReorder(ev({ id: orderCards[1]._id }));
   await flush();
   assert.deepStrictEqual([planItems()[LUROU], planItems()[WINGS], planItems()[LETTUCE]], [1, 2, 2]);
-  assert.deepStrictEqual([lastCall("switchTab"), lastCall("toast")], [["switchTab", "/pages/today/index"], ["toast", "放进菜篮了"]]);
+  assert.deepStrictEqual([lastCall("switchTab"), lastCall("toast")], [["switchTab", "/pages/today/index"], ["toast", "加进点菜单了"]], "已经下了单，就是给这单加菜");
   // 在记录里看：记录页打开就选中那天
   ordersP.onOpenDay(ev({ date: orderCards[1].date }));
   assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/logs/index"]);
@@ -2743,8 +2783,9 @@ async function smoke() {
   basketE.onShow();
   await flush();
   basketE.onEditOrder();
+  const coE2 = await openCheckout({ edit: "1" });
   modalAnswers.push({ confirm: true });
-  await basketE.onCancelOrder();
+  await coE2.onCancelOrder();
   await flush();
   ordersP.onShow();
   await flush();
@@ -3037,9 +3078,12 @@ async function smoke() {
   assert.deepStrictEqual(classOf("pages/today/index", "empty-desc", {}), ["empty-desc"]);
   const todayWxml = fs.readFileSync(path.join(root, "pages/today/index.wxml"), "utf8");
   assert.ok(!/两个人|对方/.test(todayWxml), "菜篮页上的说法跟着本本变");
+  const myMenu = newPage("pages/menu/index");
+  await myMenu.onLoad();
+  await flush();
   modalAnswers.push({ confirm: false });
-  await myBasket.onClear();
-  assert.deepStrictEqual(lastCall("modal").slice(1), ["清空菜篮？", "点的菜、点菜单和买菜清单都会清空。库存不受影响。"]);
+  await myMenu.onClearCart();
+  assert.deepStrictEqual(lastCall("modal").slice(1), ["清空菜篮？", "点的菜都拿掉，买菜清单的勾选也清掉。库存不受影响。"]);
   const myEdit = newPage("pages/dish-edit/index");
   await myEdit.onLoad({ id: copiedLettuce._id });
   modalAnswers.push({ confirm: false });

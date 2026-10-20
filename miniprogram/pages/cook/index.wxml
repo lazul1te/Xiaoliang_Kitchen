@@ -2,7 +2,7 @@
   <view class="empty-emoji">🍽️</view>
   <view class="empty-title">{{emptyText}}</view>
   <view class="empty-desc">{{emptyDesc}}</view>
-  <view class="btn-primary" bindtap="onGoBasket">去菜篮</view>
+  <view class="btn-primary" bindtap="onGoCheckout">去下单</view>
 </view>
 
 <view wx:elif="{{tab}}" class="cook">

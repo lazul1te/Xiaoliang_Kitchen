@@ -40,33 +40,8 @@
   color: var(--wood);
 }
 
-/* 改一改的时候，最下面的「撤掉这张点菜单」 */
-.cancel-row {
-  padding: 12rpx 0 24rpx;
-  text-align: center;
-}
 
-.cancel-order {
-  font-size: var(--fs-sub);
-  color: var(--danger);
-}
-
-.clear-row {
-  padding: 8rpx 0 12rpx;
-  text-align: center;
-}
-
-.clear {
-  font-size: var(--fs-small);
-  color: var(--text-3);
-}
-
-/* ---------- 确认点菜单 ---------- */
-
-.o-label {
-  font-size: var(--fs-sub);
-  font-weight: 600;
-}
+/* ---------- 点了菜、还没下单：菜篮里的菜（只能看） ---------- */
 
 .o-head {
   display: flex;
@@ -133,21 +108,17 @@
   color: var(--text-3);
 }
 
-.o-input {
-  height: 72rpx;
-  margin-top: 12rpx;
-  padding: 0 20rpx;
-  border-radius: 14rpx;
-  background: var(--cream);
-  font-size: var(--fs-sub);
+.o-qty {
+  flex-shrink: 0;
+  font-family: Menlo, Consolas, monospace;
+  font-size: var(--fs-body);
+  color: var(--text-2);
 }
 
-.o-placeholder {
+.o-tip {
+  padding-top: 16rpx;
+  font-size: var(--fs-small);
   color: var(--text-3);
-}
-
-.o-person + .o-person {
-  margin-top: 12rpx;
 }
 
 .o-nodish {

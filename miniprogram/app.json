@@ -9,6 +9,7 @@
     "pages/categories/index",
     "pages/cook/index",
     "pages/log-edit/index",
+    "pages/checkout/index",
     "pages/meal/index",
     "pages/orders/index",
     "pages/export/index",
@@ -42,7 +43,7 @@
       },
       {
         "pagePath": "pages/today/index",
-        "text": "菜篮",
+        "text": "点菜单",
         "iconPath": "images/tabbar/today.png",
         "selectedIconPath": "images/tabbar/today-active.png"
       },

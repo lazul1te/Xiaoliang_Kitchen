@@ -1,26 +1,20 @@
-// 菜篮：这本小本本里大家一起点的菜、点菜单，和自动合并出来的买菜清单。
-// 下单前是「确认点菜单」（哪一顿、口味、谁点的、谁掌勺），下单以后最上面是点菜单，可以发给家人、存成图片、改一改（撤单也在那里）。
-// 先下单再开始做：下了单才有「开始做菜」「开饭」。从菜谱详情点「开始做」过来的，下好单直接开始做。
-// 买菜清单会对比家里的库存：家里有的不提醒；买到一样勾一样，大家都能看到
+// 点菜单（第二个 Tab，页面路径还是 pages/today）：下单以后，最上面是这顿的点菜单（发给 TA、存成图片、加菜、改一改），
+// 下面是自动合并出来的买菜清单，底部「开始做菜」「做好了，开饭」。
+// 点菜、改菜在菜单页（底部的菜篮能看已点的、加减）；下单前要填的在「确认点菜单」页（pages/checkout）。
+// 还没下单时这里只提示去下单。买菜清单会对比家里的库存：家里有的不提醒；买到一样勾一样，大家都能看到
 const dishService = require("../../services/dish");
 const bookService = require("../../services/book");
 const planService = require("../../services/plan");
 const pantryService = require("../../services/pantry");
-const logService = require("../../services/log");
 const cookSession = require("../../services/cook-session");
-const storage = require("../../utils/storage");
 const ui = require("../../utils/ui");
 const fileUtil = require("../../utils/file");
 const ticketUtil = require("../../utils/ticket");
 const { buildShoppingList } = require("../../utils/shopping");
-const { dateValue, timeOf } = require("../../utils/log");
-const { MEALS, FLAVORS, mealByTime, dateText, slowestText, ticketOf, shareTitle, recentNames } = require("../../utils/order");
+const { dateValue } = require("../../utils/log");
+const { slowestText, ticketOf, shareTitle } = require("../../utils/order");
 
-const ORDER_NAME_KEY = "order_name"; // 这台手机上次写的点菜人
-const COOK_NAME_KEY = "cook_name"; // 这台手机上次写的掌勺（打卡页也用）
-const FLAVOR_KEY = "custom_flavors"; // 自己加过的口味，下次直接点
-
-// 菜篮里的一道菜（小行）：缩略图、名字、用时
+// 菜篮里的一道菜（小行，只能看）：缩略图、名字、用时、份数
 function rowOf({ dish, qty }) {
   return {
     _id: dish._id,
@@ -39,33 +33,21 @@ function ticketItems(ticket) {
 
 Page({
   data: {
-    stage: "empty", // empty 菜篮是空的 / picking 还没下单 / ordered 已下单
+    stage: "empty", // empty 还没点菜 / picking 点了菜还没下单 / ordered 已下单
     items: [], // 菜篮里的菜 [{ _id, name, cover, initial, meta, qty }]
-    basket: {},
     count: 0, // 总份数
     slowText: "", // 最慢的一道要多久
-    form: null, // 确认点菜单 { date, meal, flavors, note, orderedBy, cook }
-    today: "",
-    tomorrow: "",
-    dateLabel: "", // 选了别的日子时显示「10月25日 周日」
-    meals: MEALS,
-    flavorChips: [], // [{ name, on }]
-    names: [], // 以前写过的名字，点一下就行
     ticket: null, // 已下单：点菜单（utils/order.js 的 ticketOf）
     overdue: "", // 点菜单上的日子已经过了：「10月19日的晚饭做了吗？」
     cooking: null, // 一起做到一半：{ done, total }
     shopping: null, // 买菜清单 { buy, unknown, stocked, extras, total, done }
-    hasPlan: false,
     shared: false, // 正在用的是家庭本本（说法用「家人」，个人本本里不说）
     showShopping: false, // 下单前买菜清单先收起来
     showStocked: false, // 「家里有的」展开没有
     broken: {}, // 加载失败的照片 { 照片地址: true }，显示占位图
-    editing: false, // 正在改点菜单（改一改）
-    startAfter: "", // 从菜谱详情点「开始做」过来的：下好单就开始做这道菜（菜品 id）
   },
 
   onLoad(options) {
-    this.initForm();
     // 点家人发来的点菜单卡片打开：切到发卡片的那本（你也在那本里的话）
     if (options && options.book) bookService.openShared(options.book).then(() => this.refresh());
   },
@@ -73,21 +55,11 @@ Page({
   onShow() {
     planService.updateBadge();
     bookService.updateDot();
-    const startAfter = planService.takeStartAfterOrder();
-    if (startAfter) {
-      this.setData({ startAfter });
-      ui.toast("先下单，下好单就开始做");
-    }
     this.refresh();
     // 家人可能刚点了菜、下了单、勾了清单、改了库存，隔一会儿回来就去云上看看
     dishService.refreshIfStale().then((changed) => {
       if (changed) this.refresh();
     });
-  },
-
-  // 离开菜篮就不算「下好单就开始做」了
-  onHide() {
-    if (this.data.startAfter) this.setData({ startAfter: "" });
   },
 
   async onPullDownRefresh() {
@@ -101,37 +73,10 @@ Page({
     wx.stopPullDownRefresh();
   },
 
-  // 确认点菜单的默认值：今天、按时间猜哪一顿、这台手机上次写的名字
-  initForm() {
-    if (this.data.form) return;
-    const now = Date.now();
-    this.setData({
-      today: dateValue(now),
-      tomorrow: dateValue(timeOf(dateValue(now)) + 36 * 3600 * 1000),
-      form: {
-        date: dateValue(now),
-        meal: mealByTime(now),
-        flavors: [],
-        note: "",
-        orderedBy: storage.get(ORDER_NAME_KEY) || "",
-        cook: storage.get(COOK_NAME_KEY) || "",
-      },
-    });
-  },
-
   async refresh() {
-    this.initForm();
-    // 页面一直开着过了零点：今天、明天往后挪，已经过去的日子换成今天
-    const today = dateValue(Date.now());
-    if (today !== this.data.today) {
-      this.setData({ today, tomorrow: dateValue(timeOf(today) + 36 * 3600 * 1000) });
-      if (this.data.form.date < today) this.setData({ "form.date": today });
-    }
     let dishes = [];
-    let logs = [];
     try {
       dishes = await dishService.listDishes();
-      logs = await logService.listLogs();
     } catch (err) {
       ui.toast(ui.errorText(err));
     }
@@ -140,198 +85,42 @@ Page({
     const planned = dishes.filter((d) => plan.items[d._id]).map((dish) => ({ dish, qty: plan.items[dish._id] }));
     const shopping = buildShoppingList(planned, plan.checked, plan.extras, pantryService.getItems());
     const stage = plan.order && planned.length ? "ordered" : planned.length || shopping.extras.length ? "picking" : "empty";
-    // 点菜单没了（撤单了、开饭了、家人在别的手机上撤了）：不在改了，一起做的进度也用不上了
-    if (stage !== "ordered") {
-      if (this.data.editing) this.leaveEditing();
-      if (cookSession.load()) cookSession.clear();
-    }
+    // 点菜单没了（撤单了、开饭了、家人在别的手机上撤了）：一起做的进度也用不上了
+    if (stage !== "ordered" && cookSession.load()) cookSession.clear();
     const ticket = stage === "ordered" ? ticketOf(plan.order, planned) : null;
-    const overdue = ticket && ticket.date < this.data.today ? `${ticket.dateText.split(" ")[0]}的${ticket.meal}做了吗？` : "";
-    const form = this.data.form;
+    const overdue = ticket && ticket.date < dateValue(Date.now()) ? `${ticket.dateText.split(" ")[0]}的${ticket.meal}做了吗？` : "";
     this.setData({
       stage,
       items: planned.map(rowOf),
-      basket: plan.items,
       count: planned.reduce((sum, p) => sum + p.qty, 0),
       slowText: slowestText(planned),
       ticket,
       overdue,
       cooking: stage === "ordered" ? cookSession.progress(plan.items) : null,
       shopping,
-      hasPlan: stage !== "empty",
       shared: bookService.isShared(),
-      flavorChips: this.flavorChips(form.flavors),
-      names: recentNames(
-        [form.orderedBy, form.cook, storage.get(ORDER_NAME_KEY), storage.get(COOK_NAME_KEY)].concat(bookService.memberNames(), logs.map((l) => l.cook))
-      ),
-      dateLabel: dateText(form.date),
     });
     if (ticket) this.prepareCard();
   },
 
-  flavorChips(selected) {
-    const custom = storage.get(FLAVOR_KEY) || [];
-    return recentNames(FLAVORS.concat(custom, selected), 20).map((name) => ({ name, on: selected.indexOf(name) >= 0 }));
-  },
-
-  onPlus(e) {
-    planService.add(e.currentTarget.dataset.id);
-    return this.refresh();
-  },
-
-  onMinus(e) {
-    planService.remove(e.currentTarget.dataset.id);
-    return this.refresh();
-  },
-
-  async onClear() {
-    const ok = await ui.confirm({
-      title: "清空菜篮？",
-      content: bookService.isShared() ? "点的菜、点菜单和买菜清单都会清空，这本里大家的都会清空。库存不受影响。" : "点的菜、点菜单和买菜清单都会清空。库存不受影响。",
-      confirmText: "清空",
-    });
-    if (!ok) return;
-    planService.clear();
-    return this.refresh();
-  },
-
-  // ---------- 确认点菜单 ----------
-
-  onPickDate(e) {
-    const date = e.currentTarget.dataset.date;
-    this.setData({ "form.date": date, dateLabel: dateText(date) });
-  },
-
-  onDateChange(e) {
-    this.setData({ "form.date": e.detail.value, dateLabel: dateText(e.detail.value) });
-  },
-
-  onPickMeal(e) {
-    this.setData({ "form.meal": e.currentTarget.dataset.meal });
-  },
-
-  onToggleFlavor(e) {
-    const name = e.currentTarget.dataset.name;
-    const flavors = this.data.form.flavors.slice();
-    const i = flavors.indexOf(name);
-    if (i >= 0) flavors.splice(i, 1);
-    else flavors.push(name);
-    this.setData({ "form.flavors": flavors, flavorChips: this.flavorChips(flavors) });
-  },
-
-  // 自己加一个口味：选上，下次也会出现在常用里
-  async onAddFlavor() {
-    const name = await ui.prompt({ title: "加个口味", placeholder: "比如：多放醋、不要葱" });
-    if (!name) return;
-    if (name.length > 10) {
-      ui.toast("最多 10 个字");
-      return;
-    }
-    const custom = recentNames([name].concat(storage.get(FLAVOR_KEY) || []), 6).filter((n) => FLAVORS.indexOf(n) < 0);
-    try {
-      storage.set(FLAVOR_KEY, custom);
-    } catch (err) {}
-    const flavors = this.data.form.flavors.indexOf(name) >= 0 ? this.data.form.flavors : this.data.form.flavors.concat(name);
-    this.setData({ "form.flavors": flavors, flavorChips: this.flavorChips(flavors) });
-  },
-
-  onNoteInput(e) {
-    this.setData({ "form.note": e.detail.value });
-  },
-
-  // 谁点的 / 谁掌勺：data-field 是 orderedBy 或 cook；再点一下同一个名字就是不填
-  onPickName(e) {
-    const { field, name } = e.currentTarget.dataset;
-    this.setData({ [`form.${field}`]: this.data.form[field] === name ? "" : name });
-  },
-
-  async onAddName(e) {
-    const field = e.currentTarget.dataset.field;
-    const name = await ui.prompt({ title: field === "cook" ? "谁掌勺" : "谁点的", placeholder: "写个名字" });
-    if (!name) return;
-    if (name.length > 10) {
-      ui.toast("最多 10 个字");
-      return;
-    }
-    this.setData({ [`form.${field}`]: name, names: recentNames([name].concat(this.data.names)) });
-  },
-
-  async onPlaceOrder() {
-    if (this.ordering) return;
-    const startAfter = this.data.startAfter;
-    if (!this.data.items.length) {
-      ui.toast("先去菜单点几道菜");
-      return;
-    }
-    const form = this.data.form;
-    this.ordering = true;
-    try {
-      if (form.orderedBy) storage.set(ORDER_NAME_KEY, form.orderedBy);
-      if (form.cook) storage.set(COOK_NAME_KEY, form.cook);
-    } catch (err) {} // 记不住名字不影响下单
-    try {
-      await planService.placeOrder(form);
-    } catch (err) {
-      this.ordering = false;
-      ui.alert("没下成", ui.errorText(err));
-      return;
-    }
-    this.ordering = false;
-    // 下一单重新填口味和备注
-    this.setData({ "form.flavors": [], "form.note": "", startAfter: "" });
-    await this.refresh();
-    if (startAfter && planService.getBasket()[startAfter]) {
-      // 从菜谱详情点「开始做」过来的：下好单直接开始做那道菜
-      wx.navigateTo({ url: `/pages/cook/index?from=basket&dish=${startAfter}` });
-      return;
-    }
-    wx.pageScrollTo({ scrollTop: 0, duration: 200 });
-    ui.toast("下单啦");
+  // 去下单：确认点菜单（哪天、哪一顿、口味……）
+  onGoCheckout() {
+    wx.navigateTo({ url: "/pages/checkout/index" });
   },
 
   // ---------- 已下单 ----------
 
+  // 加菜：回菜单点，点菜单上标「加」
   onAddMore() {
     wx.switchTab({ url: "/pages/menu/index" });
   },
 
-  // 改一改：打开跟下单时一样的确认页，原来填的都在；改好了编号不变
+  // 改一改：在确认点菜单页改哪天、哪一顿、口味、谁点的谁掌勺；撤单也在那里
   onEditOrder() {
-    const order = planService.getOrder();
-    if (!order) return;
-    this.formBeforeEdit = this.data.form;
-    this.setData({
-      editing: true,
-      form: { date: order.date, meal: order.meal, flavors: order.flavors, note: order.note, orderedBy: order.orderedBy, cook: order.cook },
-      flavorChips: this.flavorChips(order.flavors),
-      dateLabel: dateText(order.date),
-    });
-    wx.pageScrollTo({ scrollTop: 0, duration: 200 });
+    wx.navigateTo({ url: "/pages/checkout/index?edit=1" });
   },
 
-  // 不在改了：确认页换回下一单用的默认内容
-  leaveEditing() {
-    const form = this.formBeforeEdit || this.data.form;
-    this.formBeforeEdit = null;
-    this.setData({ editing: false, form, flavorChips: this.flavorChips(form.flavors), dateLabel: dateText(form.date) });
-  },
-
-  onCancelEdit() {
-    this.leaveEditing();
-  },
-
-  async onSaveOrder() {
-    try {
-      planService.updateOrder(this.data.form);
-    } catch (err) {
-      ui.alert("没改成", ui.errorText(err));
-    }
-    this.leaveEditing();
-    await this.refresh();
-    ui.toast("改好了");
-  },
-
-  // 撤单：点的菜还在菜篮里；编号不占，再下单还是这个号。一起做的进度清掉
+  // 点菜单上的日子过了，没做：撤单。点的菜还在菜篮里，编号不占
   async onCancelOrder() {
     const ok = await ui.confirm({
       title: "撤掉这张点菜单？",
@@ -342,7 +131,6 @@ Page({
     if (!ok) return;
     planService.cancelOrder();
     cookSession.clear();
-    if (this.data.editing) this.leaveEditing();
     return this.refresh();
   },
 

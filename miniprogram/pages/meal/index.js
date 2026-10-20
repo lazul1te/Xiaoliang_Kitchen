@@ -55,7 +55,7 @@ Page({
     const order = plan.order;
     if (!order) {
       // 点菜单撤掉了（可能是家人在别的手机上撤的）
-      await ui.alert("还没下单", "先在菜篮里下单，做好了再来开饭");
+      await ui.alert("还没下单", "先下单，做好了再来开饭");
       wx.navigateBack();
       return;
     }

@@ -1,0 +1,79 @@
+<view wx:if="{{ready && !items.length}}" class="empty">
+  <view class="empty-emoji">🧺</view>
+  <view class="empty-title">还没点菜</view>
+  <view class="empty-desc">先去菜单挑几道想做的菜</view>
+  <view class="btn-primary" bindtap="onBackToMenu">去点菜</view>
+</view>
+
+<view wx:elif="{{ready}}" class="checkout">
+  <view wx:if="{{editing}}" class="edit-tip">改一改 {{orderNo}}：改哪天、哪一顿、口味、谁点的谁掌勺，编号不变</view>
+
+  <view class="card">
+    <view class="c-label">这顿是</view>
+    <view class="chips">
+      <view class="chip {{form.date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onPickDate">今天</view>
+      <view class="chip {{form.date === tomorrow ? 'on' : ''}}" data-date="{{tomorrow}}" bindtap="onPickDate">明天</view>
+      <picker mode="date" value="{{form.date}}" start="{{today}}" bindchange="onDateChange">
+        <view class="chip {{form.date !== today && form.date !== tomorrow ? 'on' : ''}}">{{form.date !== today && form.date !== tomorrow ? dateLabel : '其他日子'}}</view>
+      </picker>
+    </view>
+    <view class="chips">
+      <view wx:for="{{meals}}" wx:key="*this" class="chip {{form.meal === item ? 'on' : ''}}" data-meal="{{item}}" bindtap="onPickMeal">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 点的菜：这里只能看，要加减回菜单 -->
+  <view class="card">
+    <view class="c-head">
+      <text class="c-title">点的菜 · {{items.length}} 道 {{count}} 份</text>
+      <text class="c-link hit" bindtap="onBackToMenu">回菜单改 ›</text>
+    </view>
+    <view wx:for="{{items}}" wx:key="_id" class="c-row" data-id="{{item._id}}" bindtap="onOpenDish">
+      <cloud-image wx:if="{{item.cover && !broken[item.cover]}}" class="c-thumb" src="{{item.cover}}" mode="aspectFill"
+                   data-src="{{item.cover}}" binderror="onCoverError" />
+      <view wx:else class="c-thumb c-thumb-empty">{{item.initial}}</view>
+      <view class="c-info">
+        <view class="c-name">{{item.name}}</view>
+        <view wx:if="{{item.meta}}" class="c-meta">{{item.meta}}</view>
+      </view>
+      <text class="c-qty">×{{item.qty}}</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="c-label">口味备注</view>
+    <view class="chips">
+      <view wx:for="{{flavorChips}}" wx:key="name" class="chip {{item.on ? 'on' : ''}}" data-name="{{item.name}}" bindtap="onToggleFlavor">{{item.name}}</view>
+      <view class="chip add" bindtap="onAddFlavor">＋</view>
+    </view>
+    <input class="c-input" value="{{form.note}}" placeholder="还想说点什么…" placeholder-class="c-placeholder"
+           maxlength="40" bindinput="onNoteInput" />
+  </view>
+
+  <view class="card">
+    <view class="c-person">
+      <view class="c-label">谁点的</view>
+      <view class="chips">
+        <view wx:for="{{names}}" wx:key="*this" class="chip {{form.orderedBy === item ? 'on' : ''}}"
+              data-field="orderedBy" data-name="{{item}}" bindtap="onPickName">{{item}}</view>
+        <view class="chip add" data-field="orderedBy" bindtap="onAddName">{{names.length ? '＋' : '＋ 写名字'}}</view>
+      </view>
+    </view>
+    <view class="c-person">
+      <view class="c-label">谁掌勺</view>
+      <view class="chips">
+        <view wx:for="{{names}}" wx:key="*this" class="chip {{form.cook === item ? 'on' : ''}}"
+              data-field="cook" data-name="{{item}}" bindtap="onPickName">{{item}}</view>
+        <view class="chip add" data-field="cook" bindtap="onAddName">{{names.length ? '＋' : '＋ 写名字'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 改一改：撤单放在最下面，不容易点错 -->
+  <view wx:if="{{editing}}" class="cancel-row"><text class="cancel-order hit" bindtap="onCancelOrder">撤掉这张点菜单</text></view>
+</view>
+
+<view wx:if="{{ready && items.length}}" class="c-bar">
+  <text class="c-bar-text">{{slowText || '共 ' + count + ' 份'}}</text>
+  <view class="btn-primary c-btn" bindtap="onSubmit">{{editing ? '改好了' : (starting ? '确认下单，开始做' : '确认下单')}}</view>
+</view>

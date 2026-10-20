@@ -76,7 +76,7 @@ Page({
       return;
     }
     if (!planService.getOrder()) {
-      this.setData({ notFound: true, emptyText: "还没下单", emptyDesc: "先在菜篮里下单，再开始做" });
+      this.setData({ notFound: true, emptyText: "还没下单", emptyDesc: "先下单，再开始做" });
       return;
     }
     const basket = planService.getBasket();
@@ -452,8 +452,8 @@ Page({
     wx.navigateTo({ url: "/pages/meal/index?from=cook" });
   },
 
-  // 还没下单：回菜篮
-  onGoBasket() {
-    wx.switchTab({ url: "/pages/today/index" });
+  // 还没下单：去确认点菜单（菜篮是空的话那里会说先去点菜）
+  onGoCheckout() {
+    wx.redirectTo({ url: "/pages/checkout/index" });
   },
 });

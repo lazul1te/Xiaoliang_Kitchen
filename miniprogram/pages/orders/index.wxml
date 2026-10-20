@@ -11,14 +11,14 @@
     <view class="current-dishes">{{current.dishesText}}</view>
     <view class="current-foot">
       <text class="current-people">{{current.peopleText}}</text>
-      <text class="current-go">回菜篮 ›</text>
+      <text class="current-go">看点菜单 ›</text>
     </view>
   </view>
 
   <view wx:if="{{!count && !current}}" class="empty">
     <view class="empty-emoji">🧾</view>
     <view class="empty-title">还没有点菜单</view>
-    <view class="empty-desc">在菜篮里下单，开饭以后就记在这里</view>
+    <view class="empty-desc">点好菜去下单，开饭以后就记在这里</view>
     <view class="btn-primary" bindtap="onGoMenu">去点菜</view>
   </view>
 
