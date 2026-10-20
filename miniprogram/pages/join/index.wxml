@@ -1,7 +1,8 @@
 <view class="join">
   <view class="join-title">输入家庭码</view>
   <view class="join-sub">问一下本里的人，6 位字母和数字</view>
-  <input class="code-input" value="{{code}}" maxlength="6" placeholder="K7Q3XM" placeholder-class="code-ph"
+  <!-- 粘贴来的家庭码可能带空格：多留几个字，onCodeInput 会去掉空格、换成大写 -->
+  <input class="code-input" value="{{code}}" maxlength="12" placeholder="K7Q3XM" placeholder-class="code-ph"
          confirm-type="done" bindinput="onCodeInput" />
   <view wx:if="{{checking}}" class="hint join-msg">正在找…</view>
   <view wx:elif="{{error}}" class="join-msg error">{{error}}</view>
