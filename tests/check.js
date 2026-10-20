@@ -633,6 +633,20 @@ function newPage(pagePath) {
 const lastCall = (type) => calls.filter((c) => c[0] === type).pop();
 const countCalls = (type) => calls.filter((c) => c[0] === type).length;
 const ev = (dataset, detail) => ({ currentTarget: { dataset }, detail: detail || {} });
+// 计时器的读数（"番茄炒蛋 · 第 1 步 00:20"）。Date.now 是真实时间加上拨过的时间，电脑忙的时候测试会慢一两秒，
+// 剩余时间就比算好的少一秒，所以秒数允许少 3 秒以内，前面的字要完全一样
+const secondsOf = (text) => {
+  const m = /(\d+):(\d\d)$/.exec(text);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+};
+function assertTimers(actual, expected, message) {
+  const head = (text) => text.replace(/\d+:\d\d$/, "");
+  assert.deepStrictEqual(actual.map(head), expected.map(head), message);
+  actual.forEach((text, i) => {
+    const late = secondsOf(expected[i]) - secondsOf(text);
+    assert.ok(late >= 0 && late <= 3, `${message || "计时"}：是 ${text}，应该是 ${expected[i]}`);
+  });
+}
 // 按 WXML 里写的 class 表达式，算出某个元素实际有哪些 class（{{ }} 里是普通的 JS 表达式）
 function classOf(pagePath, marker, scope) {
   const wxml = fs.readFileSync(path.join(root, pagePath + ".wxml"), "utf8");
@@ -1358,9 +1372,11 @@ async function smoke() {
   cook.stopTicking();
   timeOffset += 10 * 1000;
   cook.tick();
-  assert.deepStrictEqual(cook.data.running.map((r) => r.label), ["番茄炒蛋 · 第 1 步 00:20", "番茄炒蛋 · 第 4 步 01:50"]);
+  assertTimers(cook.data.running.map((r) => r.label), ["番茄炒蛋 · 第 1 步 00:20", "番茄炒蛋 · 第 4 步 01:50"]);
   cook.onTimerMain(ev({ i: 3 })); // 暂停第 4 步
   cook.stopTicking();
+  const pausedText = cook.data.steps[3].timerText;
+  assertTimers([pausedText], ["01:50"], "暂停时的读数");
   assert.deepStrictEqual([cook.data.steps[3].timerState, cook.data.steps[3].timerAction], ["paused", "继续"]);
   modalAnswers.push({ confirm: false }); // 时间到了：「知道了」
   timeOffset += 25 * 1000;
@@ -1370,7 +1386,7 @@ async function smoke() {
   assert.ok(lastCall("vibrate") && lastCall("sound"), "时间到了要震动、响铃");
   assert.strictEqual(lastCall("sound")[1], "http://usr/ding.wav");
   assert.deepStrictEqual(lastCall("modal").slice(1), ["⏰ 时间到了", `番茄炒蛋 · 第 1 步：${rowOf("番茄炒蛋").steps[0].text.slice(0, 40)}`]);
-  assert.strictEqual(cook.data.steps[3].timerText, "01:50", "暂停的计时不再走");
+  assert.strictEqual(cook.data.steps[3].timerText, pausedText, "暂停的计时不再走");
   cook.onTimerReset(ev({ i: 3 }));
   assert.deepStrictEqual([cook.data.steps[3].timerState, cook.data.steps[3].timerText], ["idle", "02:00"]);
   assert.strictEqual(lastCall("alertOff")[0], "alertOff");
@@ -2856,7 +2872,7 @@ async function smoke() {
   together.onTimerMain(ev({ i: 0 }));
   together.stopTicking();
   together.onNext();
-  assert.deepStrictEqual(together.data.running.map((r) => r.label), ["奥尔良鸡翅 · 第 2 步 30:00", "台式卤肉饭 · 第 1 步 08:00"], "计时写着是哪道菜");
+  assertTimers(together.data.running.map((r) => r.label), ["奥尔良鸡翅 · 第 2 步 30:00", "台式卤肉饭 · 第 1 步 08:00"], "计时写着是哪道菜");
   // 切到别的菜，计时不停；卤肉饭到点了，弹窗写明是哪道菜，点「去看看」跳过去
   together.onTab(ev({ key: LETTUCE }));
   assert.deepStrictEqual([together.data.tab, together.data.current], [LETTUCE, 0]);
@@ -2866,7 +2882,7 @@ async function smoke() {
   await flush();
   assert.deepStrictEqual(lastCall("modal").slice(1), ["⏰ 时间到了", "台式卤肉饭 · 第 1 步：鸡蛋冷水下锅，水开后再煮 8 分钟，捞出泡凉水，剥壳备用。"]);
   assert.deepStrictEqual([together.data.tab, together.data.current], [LUROU, 0], "点「去看看」切到卤肉饭那一步");
-  assert.deepStrictEqual(together.data.running.map((r) => r.label), ["奥尔良鸡翅 · 第 2 步 21:59"], "鸡翅的计时一直在走");
+  assertTimers(together.data.running.map((r) => r.label), ["奥尔良鸡翅 · 第 2 步 21:59"], "鸡翅的计时一直在走");
   // 微信被关掉了：菜篮页显示「继续做菜」；回来接着做，离开时到点的马上提醒
   together.onHide();
   together.onUnload();
