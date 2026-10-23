@@ -117,6 +117,11 @@ Page({
 
   // ---------- 一顿饭的卡片（templates/meal-card.wxml） ----------
 
+  // 改一改这一顿：整桌照片、哪天、哪一顿、掌勺、心得、每道菜的分数
+  onEditMeal(e) {
+    wx.navigateTo({ url: `/pages/meal/index?id=${e.currentTarget.dataset.id}` });
+  },
+
   onOpenLog(e) {
     wx.navigateTo({ url: `/pages/log-edit/index?id=${e.currentTarget.dataset.id}` });
   },

@@ -81,6 +81,7 @@
   - 「存成图片」「发给 TA」的卡片封面用 `utils/ticket.js` 画在页面里看不见的 `<canvas type="2d" id="ticket-canvas">` 上；存成图片、分享这顿饭都用 `ticket.shareTicket`（`wx.showShareImageMenu`），这顿饭的小票内容是 `utils/meal.js` 的 `mealTicket`；卡片封面在 `onShareAppMessage` 前先画好（5:4）。
 - 开饭（`pages/meal`、`services/meal.js`，要先下单）：一顿饭一条 `meals` 记录（格式见 `utils/meal.js`，`no` 是点菜单编号，以前没下单就开饭的是 0），每道做了的菜在 `cook_logs` 里各记一条，带 `mealId`；整桌照片只存在 `meals` 上（放在云存储 `logs/`），记录自己没照片时显示整桌照片。
   - 先存记录、最后存这一顿，`_id` 都是开饭页打开时定好的（`meal…`、`meal…-1`），重试时已经存上的跳过，不会多记。
+  - 记好的一顿能「改一改」（卡片上的按钮，`meal?id=`，`meal.update`）：整桌照片、哪天、哪一顿、掌勺、心得、每道菜的分数，这顿的做菜记录跟着改日子、分数、掌勺；做了哪些菜不能改。点卡片上的某道菜打开它自己的记录（`log-edit`），日子跟着这一顿不让改，记录自己的心得显示在卡片那道菜下面。
   - 做了的菜从菜篮拿掉、点菜单收起来（`plan.finishMeal`）；菜篮空了，勾选清空，自己加的只留没买的。
   - 记录页同一顿的合成一张卡片（`entriesOf`），能「再来一单」（`meal.reorder`）、「分享这顿饭」（小票盖「已开饭」）。一顿的记录删光了，这一顿和照片也删掉（`meal.removeIfEmpty`）。
   - 点菜单上的日子过了还没开饭，「点菜单」页会问「做了吗」，按那天记（`/pages/meal/index?date=`）。

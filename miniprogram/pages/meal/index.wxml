@@ -1,7 +1,7 @@
 <view wx:if="{{ready}}" class="meal">
   <!-- 整桌照片：点一下拍照或从相册选 -->
   <view class="photo-box" bindtap="onChoosePhoto" hover-class="tap-card" hover-stay-time="100">
-    <image wx:if="{{photo}}" class="photo" src="{{photo}}" mode="aspectFill" />
+    <cloud-image wx:if="{{photo}}" class="photo" src="{{photo}}" mode="aspectFill" />
     <view wx:else class="photo-empty">
       <image class="ic xl" src="/images/icons/camera-wood.png" />
       <text>拍一张整桌的照片</text>
@@ -15,10 +15,11 @@
   <!-- 做了哪些：勾上的各记一条做菜记录，可以顺手打个分 -->
   <view class="card">
     <view class="card-title">这顿做了哪些</view>
-    <view class="hint">没做的取消勾选，会留在菜篮里下次做</view>
+    <view wx:if="{{isEdit}}" class="hint">要删掉哪道菜，在记录页点开那道菜删</view>
+    <view wx:else class="hint">没做的取消勾选，会留在菜篮里下次做</view>
     <view wx:for="{{dishes}}" wx:key="dishId" class="m-dish {{item.checked ? '' : 'off'}}">
-      <view class="m-pick" data-i="{{index}}" bindtap="onToggleDish" hover-class="tap-row" hover-stay-time="100">
-        <view class="checkbox {{item.checked ? 'on' : ''}}">{{item.checked ? '✓' : ''}}</view>
+      <view class="m-pick" data-i="{{index}}" bindtap="onToggleDish" hover-class="{{isEdit ? 'none' : 'tap-row'}}" hover-stay-time="100">
+        <view wx:if="{{!isEdit}}" class="checkbox {{item.checked ? 'on' : ''}}">{{item.checked ? '✓' : ''}}</view>
         <text class="m-name">{{item.name}}</text>
         <text wx:if="{{item.qty > 1}}" class="m-qty">×{{item.qty}}</text>
       </view>
@@ -68,5 +69,5 @@
 
 <!-- 底部：记下来 -->
 <view wx:if="{{ready}}" class="save-bar">
-  <view class="btn-primary save-btn {{madeCount ? '' : 'disabled'}}" bindtap="onSave" hover-class="tap" hover-stay-time="100">记下来（{{madeCount}} 道菜）</view>
+  <view class="btn-primary save-btn {{madeCount ? '' : 'disabled'}}" bindtap="onSave" hover-class="tap" hover-stay-time="100">{{isEdit ? '保存' : '记下来（' + madeCount + ' 道菜）'}}</view>
 </view>

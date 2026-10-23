@@ -1,6 +1,7 @@
 // 开饭啦：这顿做了哪些菜（没做的取消勾选，留在菜篮下次做）、整桌照片、每道菜打个分、掌勺、心得，一次记下来。
 // 先下单再开饭：从菜篮「做好了，开饭」、一起做（?from=cook，点过「做好了」的默认勾上）、忘了开饭的提醒（?date=那天）进来。
-// 每道做了的菜各记一条做菜记录，日期默认是点菜单上那天；记好以后点菜单的编号就用掉了，一起做的进度清掉
+// 每道做了的菜各记一条做菜记录，日期默认是点菜单上那天；记好以后点菜单的编号就用掉了，一起做的进度清掉。
+// ?id=这一顿：改一改记好的一顿（整桌照片、哪天、哪一顿、掌勺、心得、每道菜的分数），做了哪些菜不能改
 const dishService = require("../../services/dish");
 const bookService = require("../../services/book");
 const planService = require("../../services/plan");
@@ -31,10 +32,15 @@ Page({
     names: [], // 以前写过的名字，点一下就行
     note: "",
     orderText: "", // 「点菜单 No.012」
+    isEdit: false, // 改一改记好的一顿
     stars: [1, 2, 3, 4, 5],
   },
 
   async onLoad(options) {
+    if (options.id) {
+      await this.loadMeal(options.id);
+      return;
+    }
     let dishes;
     let logs = [];
     try {
@@ -86,6 +92,57 @@ Page({
     this.countMade();
   },
 
+  // 改一改：读出记好的这一顿和它的做菜记录
+  async loadMeal(id) {
+    let meal;
+    let logs = [];
+    let dishes = [];
+    try {
+      meal = (await mealService.listMeals()).find((m) => m._id === id);
+      logs = await logService.listLogs();
+      dishes = await dishService.listDishes();
+    } catch (err) {
+      await ui.alert("没读到数据", ui.errorText(err));
+      wx.navigateBack();
+      return;
+    }
+    const mine = meal ? logs.filter((l) => l.mealId === id) : [];
+    if (!mine.length) {
+      await ui.alert("这一顿找不到了", "可能已经被删掉了");
+      wx.navigateBack();
+      return;
+    }
+    const qty = {};
+    const rank = {};
+    meal.items.forEach((item, index) => {
+      qty[item.dishId] = item.qty;
+      rank[item.dishId] = index;
+    });
+    const at = (l) => (l.dishId in rank ? rank[l.dishId] : 999);
+    const nameOf = (l) => (dishes.find((d) => d._id === l.dishId) || {}).name || l.dishName;
+    const now = Date.now();
+    wx.setNavigationBarTitle({ title: "改一改这一顿" });
+    this.mealId = id;
+    this.setData({
+      ready: true,
+      isEdit: true,
+      dishes: mine
+        .slice()
+        .sort((a, b) => at(a) - at(b))
+        .map((l) => ({ logId: l._id, dishId: l.dishId, name: nameOf(l), qty: qty[l.dishId] || 1, checked: true, rating: l.rating })),
+      photo: meal.photo,
+      date: meal.date,
+      today: dateValue(now),
+      yesterday: dateValue(now - 24 * 3600 * 1000),
+      dateLabel: dateText(meal.date),
+      meal: meal.meal,
+      cook: meal.cook,
+      note: meal.note,
+      names: recentNames([meal.cook, storage.get(COOK_NAME_KEY), meal.orderedBy].concat(bookService.memberNames(), logs.map((l) => l.cook))),
+    });
+    this.countMade();
+  },
+
   countMade() {
     this.setData({ madeCount: this.data.dishes.filter((d) => d.checked).length });
   },
@@ -102,6 +159,7 @@ Page({
   },
 
   onToggleDish(e) {
+    if (this.data.isEdit) return; // 记好的一顿不改做了哪些菜，要删某道菜去它自己的记录里删
     const i = e.currentTarget.dataset.i;
     this.setData({ [`dishes[${i}].checked`]: !this.data.dishes[i].checked });
     this.countMade();
@@ -150,6 +208,10 @@ Page({
 
   async onSave() {
     if (this.saving) return;
+    if (this.data.isEdit) {
+      await this.saveEdit();
+      return;
+    }
     const made = this.data.dishes.filter((d) => d.checked);
     if (!made.length) {
       ui.toast("勾上这顿做了的菜");
@@ -184,5 +246,25 @@ Page({
     }
     // 去记录页看这一天，那边给这一顿盖个「已开饭」的章
     wx.switchTab({ url: "/pages/logs/index" });
+  },
+
+  async saveEdit() {
+    this.saving = true;
+    wx.showLoading({ title: "保存中", mask: true });
+    const { date, meal, cook, note, photo } = this.data;
+    const ratings = {};
+    this.data.dishes.forEach((d) => {
+      ratings[d.logId] = d.rating;
+    });
+    try {
+      await mealService.update(this.mealId, { date, meal, cook, note, photo, ratings });
+    } catch (err) {
+      wx.hideLoading();
+      this.saving = false;
+      ui.alert("保存失败", ui.errorText(err));
+      return;
+    }
+    wx.hideLoading();
+    wx.navigateBack({ success: () => ui.toast("已保存") });
   },
 });

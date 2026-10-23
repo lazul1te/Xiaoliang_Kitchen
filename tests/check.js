@@ -2773,7 +2773,60 @@ async function smoke() {
   await flush();
   assert.deepStrictEqual(planItems(), { [POTATO]: 1, [LUROU]: 1, [WINGS]: 2, [LETTUCE]: 1 });
   assert.deepStrictEqual([lastCall("navigateTo"), lastCall("toast")], [["navigateTo", "/pages/checkout/index"], ["toast", "放进菜篮了"]], "还没下单：放进菜篮，去确认点菜单");
-  ok("开饭啦：一次记下这顿的菜（打分、掌勺、整桌照片）、没做的留在菜篮、集合没建时重试不多记；记录页按顿显示、分享这顿饭、再来一单");
+  // 改一改这一顿：整桌照片、哪天、掌勺、心得、每道菜的分数都能改，这顿的做菜记录跟着变；做了哪些菜不能改
+  logsM.onEditMeal(ev({ id: meal1._id }));
+  assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", `/pages/meal/index?id=${meal1._id}`]);
+  const editMeal = newPage("pages/meal/index");
+  await editMeal.onLoad({ id: meal1._id });
+  assert.deepStrictEqual(
+    [editMeal.data.isEdit, editMeal.data.dishes.length, editMeal.data.note, editMeal.data.cook, editMeal.data.photo, editMeal.data.date],
+    [true, 3, "卤肉炖得很烂，下次少放点糖", "小亮", meal1.photo, meal1.date],
+    "打开时是记好的样子"
+  );
+  editMeal.onToggleDish(ev({ i: 0 }));
+  assert.strictEqual(editMeal.data.madeCount, 3, "做了哪些菜不能改");
+  const ei = (id) => editMeal.data.dishes.findIndex((d) => d.dishId === id);
+  editMeal.onStar(ev({ i: ei(LETTUCE), value: 5 }));
+  editMeal.onNoteInput({ detail: { value: "卤肉下次少放糖" } });
+  editMeal.onPickCook(ev({ name: "小鱼" }));
+  editMeal.onQuickDate(ev({ date: dateValue(Date.now() - 24 * 3600 * 1000) }));
+  const oldMealPhotos = [meal1.photo, meal1.photoThumb];
+  await editMeal.onChoosePhoto();
+  await editMeal.onSave();
+  await flush();
+  const meal1e = cloudDB.meals.find((m) => m._id === meal1._id);
+  assert.deepStrictEqual(
+    [meal1e.note, meal1e.cook, meal1e.date, meal1e.no, meal1e.items.length],
+    ["卤肉下次少放糖", "小鱼", dateValue(Date.now() - 24 * 3600 * 1000), 1, 3],
+    "这一顿改上了，编号和菜不变"
+  );
+  assert.ok(meal1e.photo !== oldMealPhotos[0] && cloudFiles[meal1e.photo] && cloudFiles[meal1e.photoThumb], "换了整桌照片");
+  assert.ok(!cloudFiles[oldMealPhotos[0]] && !cloudFiles[oldMealPhotos[1]], "旧的整桌照片删掉了");
+  assert.deepStrictEqual(
+    cloudDB.cook_logs.filter((l) => l.mealId === meal1._id).map((l) => [l.dishId, l.rating, l.cook, dateValue(l.cookedAt)]).sort(),
+    [[LUROU, 5, "小鱼", meal1e.date], [WINGS, 4, "小鱼", meal1e.date], [LETTUCE, 5, "小鱼", meal1e.date]].sort(),
+    "做菜记录跟着这一顿改了分数、掌勺、日子"
+  );
+  assert.deepStrictEqual([lastCall("navigateBack")[0], lastCall("toast")], ["navigateBack", ["toast", "已保存"]]);
+  // 改回今天，后面的检查照旧
+  await svc("meal").update(meal1._id, { date: dateValue(Date.now()), meal: "晚饭", cook: "小亮", note: meal1e.note, photo: meal1e.photo });
+  // 开饭时记的那道菜自己的记录：哪天跟着这一顿（不显示日期），心得显示在这一顿的卡片上
+  const lettuceLog = cloudDB.cook_logs.find((l) => l.mealId === meal1._id && l.dishId === LETTUCE);
+  const mealLogEdit = newPage("pages/log-edit/index");
+  await mealLogEdit.onLoad({ id: lettuceLog._id });
+  assert.strictEqual(mealLogEdit.data.inMeal, true);
+  mealLogEdit.onInput(ev({ field: "note" }, { value: "莴笋切薄一点" }));
+  await mealLogEdit.onSave();
+  await flush();
+  logsM.onShow();
+  await flush();
+  const mealEntry2 = logsM.data.dayEntries.find((e) => e.type === "meal" && e.mealId === meal1._id);
+  assert.deepStrictEqual(
+    [mealEntry2.meal.note, mealEntry2.meal.dishes.find((d) => d.dishId === LETTUCE).note],
+    ["卤肉下次少放糖", "莴笋切薄一点"],
+    "卡片上看得到改过的心得"
+  );
+  ok("开饭啦：一次记下这顿的菜（打分、掌勺、整桌照片）、没做的留在菜篮、集合没建时重试不多记；记录页按顿显示、分享这顿饭、再来一单、改一改这一顿");
 
   // ======== 忘了开饭：第二天问一下；菜都做了，菜篮和买菜清单一起清掉；一顿的记录删光了，这一顿也删掉 ========
   const basketL = newPage("pages/today/index");

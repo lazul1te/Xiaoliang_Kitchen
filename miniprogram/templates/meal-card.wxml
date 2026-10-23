@@ -2,7 +2,7 @@
   一顿饭的卡片（开饭时一起记的）：整桌照片、哪一顿、点菜单编号、每道菜的分数、心得。记录页、点菜单记录页共用。用法：
     <import src="/templates/meal-card.wxml" />
     <template is="mealCard" data="{{...卡片}}" />     卡片是 utils/meal.js 的 mealCard()
-  用到它的页面要有 onOpenLog（点一道菜，看那条做菜记录）、onReorder（再来一单）、onShareMeal（分享这顿饭），
+  用到它的页面要有 onOpenLog（点一道菜，看那条做菜记录）、onReorder（再来一单）、onShareMeal（分享这顿饭）、onEditMeal（改一改），
   data-id 是这一顿（或者那条记录）的 _id。卡片带 fresh: true 时盖一个「已开饭」的章（刚开完饭）。样式在 app.wxss。
 -->
 <template name="mealCard">
@@ -16,13 +16,17 @@
         <text wx:if="{{peopleText}}" class="meal-people">{{peopleText}}</text>
       </view>
       <view wx:for="{{dishes}}" wx:key="_id" class="meal-dish" data-id="{{item._id}}" bindtap="onOpenLog" hover-class="tap-row" hover-stay-time="100">
-        <text class="meal-dish-name">{{item.dishName}}<text wx:if="{{item.qtyText}}" class="meal-qty"> {{item.qtyText}}</text></text>
+        <view class="meal-dish-main">
+          <text class="meal-dish-name">{{item.dishName}}<text wx:if="{{item.qtyText}}" class="meal-qty"> {{item.qtyText}}</text></text>
+          <text wx:if="{{item.note}}" class="meal-dish-note">{{item.note}}</text>
+        </view>
         <text wx:if="{{item.stars}}" class="meal-stars">{{item.stars}}</text>
       </view>
       <view wx:if="{{note}}" class="meal-note">{{note}}</view>
       <view class="meal-acts">
         <view class="pill pri meal-act" data-id="{{_id}}" bindtap="onReorder" hover-class="tap" hover-stay-time="100">再来一单</view>
         <view class="pill meal-act" data-id="{{_id}}" bindtap="onShareMeal" hover-class="tap" hover-stay-time="100">分享这顿饭</view>
+        <view class="pill meal-act" data-id="{{_id}}" bindtap="onEditMeal" hover-class="tap" hover-stay-time="100">改一改</view>
       </view>
     </view>
   </view>

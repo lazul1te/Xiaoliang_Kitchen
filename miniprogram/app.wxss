@@ -623,9 +623,23 @@ button::after {
   border-bottom: 2rpx solid var(--line);
 }
 
+.meal-dish-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .meal-dish-name {
   min-width: 0;
   font-size: var(--fs-body);
+}
+
+/* 这道菜自己的心得（在那道菜的记录里写的） */
+.meal-dish-note {
+  margin-top: 4rpx;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--text-3);
 }
 
 .meal-qty {

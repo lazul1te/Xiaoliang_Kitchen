@@ -2,6 +2,7 @@
 const dishService = require("../../services/dish");
 const logService = require("../../services/log");
 const planService = require("../../services/plan");
+const mealService = require("../../services/meal");
 const imageService = require("../../services/image");
 const ui = require("../../utils/ui");
 const { dateValue, dateToTime } = require("../../utils/log");
@@ -21,6 +22,7 @@ Page({
     form: null, // { _id, dishId, date, photo, rating, note, cook }
     isEdit: false,
     dishLocked: false, // 从某道菜进来的，不用再选菜
+    inMeal: false, // 开饭时一起记的：哪天跟着那一顿，整桌照片和这顿的心得在那一顿的「改一改」里改
     dishName: "",
     showDishPicker: false, // 选菜面板
     today: "",
@@ -37,10 +39,12 @@ Page({
   async onLoad(options) {
     let log = null;
     let logs = [];
+    let inMeal = false;
     try {
       this.dishes = await dishService.listDishes();
       if (options.id) log = await logService.getLog(options.id);
       logs = await logService.listLogs().catch(() => []);
+      if (log && log.mealId) inMeal = (await mealService.listMeals()).some((m) => m._id === log.mealId);
     } catch (err) {
       await ui.alert("没读到数据", ui.errorText(err));
       wx.navigateBack();
@@ -62,6 +66,7 @@ Page({
       form,
       isEdit: !!log,
       dishLocked: !log && !!options.dishId,
+      inMeal,
       today: dateValue(Date.now()),
       yesterday: dateValue(Date.now() - 24 * 3600 * 1000),
       cookNames: recentCooks(logs, logService.getCookName()),

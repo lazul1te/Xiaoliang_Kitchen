@@ -102,6 +102,70 @@ async function finish(input) {
   return { meal, logs };
 }
 
+async function updateOnce(name, id, data) {
+  const res = await db.collection(name).doc(id).update({ data });
+  if (res.stats && res.stats.updated === 0) throw cloud.notWritten();
+}
+
+// 改一改记好的一顿（记录页、点菜单记录页的「改一改」）。input：
+//   date、meal 哪一顿、cook 掌勺、note 心得、photo 整桌照片（没换是原来的云文件，换了是手机上的临时文件，删了是空的）、
+//   ratings { 记录_id: 分数 }
+// 这顿的每条做菜记录跟着改：日子换了记录也挪过去，掌勺换了原来写着旧掌勺的也换成新的。返回改好的这一顿
+async function update(mealId, input) {
+  await store.ensureLoaded();
+  const old = store.getMeal(mealId);
+  if (!old) throw new Error("这一顿找不到了，可能已经被删掉了");
+  const now = Date.now();
+  const meal = normalizeMeal(Object.assign({}, old, {
+    date: input.date,
+    meal: input.meal,
+    cook: input.cook,
+    note: input.note,
+    photo: input.photo,
+    photoThumb: input.photo === old.photo ? old.photoThumb : "",
+    updatedAt: now,
+  }));
+  const moved = meal.date !== old.date;
+  const cookedAt = meal.date === dateValue(now) ? now : dateToTime(meal.date);
+  const ratings = input.ratings || {};
+  const changed = [];
+  const logs = store.listLogs().filter((l) => l.mealId === mealId).map((l) => {
+    const log = normalizeLog(Object.assign({}, l, {
+      rating: l._id in ratings ? ratings[l._id] : l.rating,
+      cook: l.cook === old.cook ? meal.cook : l.cook,
+      cookedAt: moved ? cookedAt : l.cookedAt,
+    }));
+    if (log.rating !== l.rating || log.cook !== l.cook || log.cookedAt !== l.cookedAt) {
+      log.updatedAt = now;
+      changed.push(log);
+    }
+    return log;
+  });
+  const uploaded = [];
+  try {
+    if (meal.photo && !imageService.isCloudFile(meal.photo)) {
+      const files = await imageService.uploadCover(meal.photo, "logs");
+      uploaded.push(files.cover, files.thumb);
+      meal.photo = files.cover;
+      meal.photoThumb = files.thumb;
+    }
+    await Promise.all(changed.map((l) =>
+      updateOnce("cook_logs", l._id, { rating: l.rating, cook: l.cook, cookedAt: l.cookedAt, updatedAt: l.updatedAt })
+    ));
+    const { date, meal: which, cook, note, photo, photoThumb, updatedAt } = meal;
+    await updateOnce(COLLECTION, mealId, { date, meal: which, cook, note, photo, photoThumb, updatedAt });
+  } catch (err) {
+    imageService.remove(uploaded);
+    store.sync().catch(() => {}); // 可能改上了一部分，以云上的为准
+    throw cloud.explain(err);
+  }
+  const keep = [meal.photo, meal.photoThumb];
+  imageService.remove([old.photo, old.photoThumb].filter((f) => f && keep.indexOf(f) < 0));
+  store.putMeal(meal);
+  logs.forEach((l) => store.putLog(l));
+  return meal;
+}
+
 // 再来一单：这顿的菜按当时的份数放回菜篮（已经删掉的菜跳过）。返回放回了几道
 async function reorder(mealId) {
   await store.ensureLoaded();
@@ -149,4 +213,4 @@ function takeFreshMeal() {
   return id;
 }
 
-module.exports = { listMeals, newMealId, finish, reorder, removeIfEmpty, setFocusDate, takeFocusDate, takeFreshMeal };
+module.exports = { listMeals, newMealId, finish, update, reorder, removeIfEmpty, setFocusDate, takeFocusDate, takeFreshMeal };
