@@ -1,15 +1,14 @@
 <!--
-  一顿饭的卡片（开饭时一起记的）：整桌照片、哪一顿、点菜单编号、每道菜的分数、心得。记录页、点菜单记录页共用。用法：
+  一顿饭的卡片（开饭时一起记的）：整桌照片、哪一顿、点菜单编号、每道菜的分数、心得。点菜单记录页用（记录页还是一道菜一条）。用法：
     <import src="/templates/meal-card.wxml" />
     <template is="mealCard" data="{{...卡片}}" />     卡片是 utils/meal.js 的 mealCard()
   用到它的页面要有 onOpenLog（点一道菜，看那条做菜记录）、onReorder（再来一单）、onShareMeal（分享这顿饭）、onEditMeal（改一改），
-  data-id 是这一顿（或者那条记录）的 _id。卡片带 fresh: true 时盖一个「已开饭」的章（刚开完饭）。样式在 app.wxss。
+  data-id 是这一顿（或者那条记录）的 _id。样式在 app.wxss。
 -->
 <template name="mealCard">
   <view class="meal-card">
     <cloud-image wx:if="{{photo}}" class="meal-photo" src="{{photo}}" mode="aspectFill" />
     <view class="meal-body">
-      <view wx:if="{{fresh}}" class="meal-stamp">已开饭</view>
       <view class="meal-head">
         <text class="meal-title">{{title}}</text>
         <text wx:if="{{noText}}" class="meal-no">{{noText}}</text>

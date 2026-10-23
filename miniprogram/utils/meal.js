@@ -26,7 +26,7 @@ function normalizeMeal(m) {
   };
 }
 
-// 记录页上的一顿饭：logs 是这顿饭的做菜记录（卡片，utils/log.js 的 toLogCard），按点菜的顺序排
+// 点菜单记录页上的一顿饭：logs 是这顿饭的做菜记录（卡片，utils/log.js 的 toLogCard，不传 meals），按点菜的顺序排
 function mealCard(meal, logs) {
   const qty = {};
   const order = {};
@@ -49,30 +49,6 @@ function mealCard(meal, logs) {
   };
 }
 
-// 记录页的一天：同一顿饭的记录合成一张卡片，别的还是一条一条。
-// cards：这天的做菜记录（卡片，带 mealId）；meals：{ mealId: 一顿饭 }。
-// 返回 [{ key, type: "meal", meal: mealCard } 或 { key, type: "log", log: 卡片 }]
-function entriesOf(cards, meals) {
-  const entries = [];
-  const byMeal = {};
-  cards.forEach((c) => {
-    const meal = c.mealId && meals[c.mealId];
-    if (!meal) {
-      entries.push({ key: c._id, type: "log", log: c });
-      return;
-    }
-    if (!byMeal[c.mealId]) {
-      byMeal[c.mealId] = [];
-      entries.push({ key: `m-${c.mealId}`, type: "meal", mealId: c.mealId });
-    }
-    byMeal[c.mealId].push(c);
-  });
-  entries.forEach((e) => {
-    if (e.type === "meal") e.meal = mealCard(meals[e.mealId], byMeal[e.mealId]);
-  });
-  return entries;
-}
-
 // 「分享这顿饭」的小票（utils/ticket.js 画）：盖着「已开饭」，每道菜的分数、这顿的心得。
 // logs：这顿的做菜记录；names：{ 菜品id: 现在的菜名 }（菜改过名的话用新名字）
 function mealTicket(meal, logs, names) {
@@ -93,4 +69,4 @@ function mealTicket(meal, logs, names) {
   };
 }
 
-module.exports = { normalizeMeal, mealCard, entriesOf, mealTicket };
+module.exports = { normalizeMeal, mealCard, mealTicket };

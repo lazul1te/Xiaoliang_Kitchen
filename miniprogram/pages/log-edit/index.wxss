@@ -199,7 +199,3 @@
 .save-btn {
   flex: 1;
 }
-
-.meal-tip {
-  margin: 20rpx 32rpx 0;
-}

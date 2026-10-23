@@ -177,11 +177,30 @@
 }
 
 .log-card {
+  position: relative;
   display: flex;
   margin: 0 24rpx 16rpx;
   padding: 20rpx;
   border-radius: 20rpx;
   background: #fff;
+}
+
+/* 刚开完饭：照片上盖下来一个「已开饭」（stamp-in 在 app.wxss；落下那一刻是 index.js 的 STAMP_HIT_MS） */
+.log-stamp {
+  position: absolute;
+  top: 66rpx;
+  left: 34rpx;
+  padding: 2rpx 12rpx;
+  border: 4rpx solid var(--danger);
+  border-radius: 12rpx;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--danger);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  opacity: 0.85;
+  transform: rotate(-12deg);
+  animation: stamp-in 0.5s 0.3s both;
 }
 
 .log-photo {

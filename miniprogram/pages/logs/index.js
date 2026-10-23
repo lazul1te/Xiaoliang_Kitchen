@@ -1,20 +1,17 @@
 // 记录：上面是做饭日历（哪天做了几道菜一眼就能看到），下面是做菜记录。
 // 日历默认收起，只显示一周；点「展开整月」看整月，展开时左右滑换月。右上角「总结」进做饭总结（pages/stats）。
 // 点日历上的某一天，只看那天的记录；点没做饭的日子可以补记一条。
-// 开饭时一起记的菜合成一张「一顿饭」的卡片：整桌照片、每道菜的分数，可以再来一单、分享这顿饭
+// 开饭时记的菜跟别的记录一样一道菜一条（自己没照片、心得时用这顿的整桌照片和心得）；按顿看在「点菜单记录」里
 const dishService = require("../../services/dish");
 const bookService = require("../../services/book");
 const logService = require("../../services/log");
 const mealService = require("../../services/meal");
 const planService = require("../../services/plan");
-const photoService = require("../../services/photo");
 const ui = require("../../utils/ui");
-const ticketUtil = require("../../utils/ticket");
 const { groupByMonth, buildMonth, dateValue, dayText, toLogCard, timeOf } = require("../../utils/log");
-const { entriesOf, mealTicket } = require("../../utils/meal");
 
 const SWIPE_PX = 50; // 日历上横着滑这么远才算换月
-const STAMP_HIT_MS = 650; // 「已开饭」的章落下来的那一下（app.wxss 的 .meal-stamp：0.3 秒后开始、0.5 秒的 70%）
+const STAMP_HIT_MS = 650; // 「已开饭」的章落下来的那一下（app.wxss 的 .log-stamp：0.3 秒后开始、0.5 秒的 70%）
 
 Page({
   data: {
@@ -25,7 +22,6 @@ Page({
     selected: "", // 选中的日期 "2026-10-02"，空表示看全部
     dayTitle: "",
     dayLogs: [], // 选中那天的记录（卡片）
-    dayEntries: [], // 选中那天：同一顿饭的合成一张卡片（utils/meal.js 的 entriesOf）
     months: [], // 全部记录：[{ key, title, count, days: [{ key, title, logs }] }]
     loaded: false,
   },
@@ -39,7 +35,7 @@ Page({
   onShow() {
     planService.updateBadge();
     bookService.updateDot();
-    // 刚开完饭：直接看那一天，给这一顿盖个「已开饭」的章
+    // 刚开完饭：直接看那一天，这一顿的每道菜盖个「已开饭」的章
     const fresh = mealService.takeFreshMeal();
     if (fresh) {
       this.freshMeal = fresh;
@@ -93,11 +89,6 @@ Page({
     });
     this.logs = logs;
     const months = groupByMonth(logs, this.names, this.meals);
-    months.forEach((month) =>
-      month.days.forEach((day) => {
-        day.entries = entriesOf(day.logs, this.meals);
-      })
-    );
     this.setData({ months, loaded: true });
     this.renderCalendar();
   },
@@ -106,16 +97,11 @@ Page({
     const selected = this.data.selected;
     const dayLogs = selected ? this.logs.filter((l) => dateValue(l.cookedAt) === selected) : [];
     const cal = buildMonth(this.calYear, this.calMonth, this.logs);
-    const cards = dayLogs.map((l) => toLogCard(l, this.names, this.meals));
-    const dayEntries = entriesOf(cards, this.meals);
-    dayEntries.forEach((entry) => {
-      if (entry.type === "meal" && entry.meal._id === this.freshMeal) entry.meal.fresh = true;
-    });
+    const cards = dayLogs.map((l) => Object.assign(toLogCard(l, this.names, this.meals), { fresh: !!this.freshMeal && l.mealId === this.freshMeal }));
     this.setData({
       cal,
       weeks: this.data.calOpen ? cal.weeks : [cal.weeks[this.focusWeek(cal)]],
       dayLogs: cards,
-      dayEntries,
       dayTitle: selected ? `${dayText(timeOf(selected))} · 做了 ${dayLogs.length} 道菜` : "",
     });
   },
@@ -200,34 +186,7 @@ Page({
     this.renderCalendar();
   },
 
-  // ---------- 一顿饭 ----------
-
-  // 再来一单：这顿的菜按当时的份数放回菜篮（已经删掉的菜跳过）
-  async onReorder(e) {
-    if (!(await mealService.reorder(e.currentTarget.dataset.id))) {
-      ui.toast("这顿的菜都已经删掉了");
-      return;
-    }
-    // 已经下了单：就是给这单加菜；还没下单：去确认点菜单
-    if (planService.getOrder()) wx.switchTab({ url: "/pages/today/index", success: () => ui.toast("加进点菜单了") });
-    else wx.navigateTo({ url: "/pages/checkout/index", success: () => ui.toast("放进菜篮了") });
-  },
-
-  // 分享这顿饭：画一张盖着「已开饭」的小票，最上面是整桌照片，弹出微信的分享图片菜单
-  async onShareMeal(e) {
-    const meal = this.meals[e.currentTarget.dataset.id];
-    if (!meal) return;
-    const logs = this.logs.filter((l) => l.mealId === meal._id);
-    const photo = meal.photo ? await photoService.urlOf(meal.photo) : "";
-    await ticketUtil.shareTicket(this, mealTicket(meal, logs, this.names), photo);
-  },
-
   // ---------- 记录 ----------
-
-  // 改一改这一顿：整桌照片、哪天、哪一顿、掌勺、心得、每道菜的分数
-  onEditMeal(e) {
-    wx.navigateTo({ url: `/pages/meal/index?id=${e.currentTarget.dataset.id}` });
-  },
 
   onOpenLog(e) {
     wx.navigateTo({ url: `/pages/log-edit/index?id=${e.currentTarget.dataset.id}` });

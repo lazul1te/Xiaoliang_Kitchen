@@ -60,7 +60,8 @@ function dayText(ts) {
   return `${d.getMonth() + 1}月${d.getDate()}日 周${WEEKDAYS[d.getDay()]}`;
 }
 
-// 记录页、详情页里的一条记录。meals：{ mealId: 一顿饭 }，这条记录自己没有照片时用那顿饭的整桌照片
+// 记录页、详情页里的一条记录。meals：{ mealId: 一顿饭 }，开饭时记的这条自己没有照片、心得时，用那顿饭的整桌照片和心得
+// （不传 meals 就只用记录自己的，点菜单记录页的一顿饭卡片上这顿的心得另外显示）
 function toLogCard(log, dishNames, meals) {
   const name = (dishNames && dishNames[log.dishId]) || log.dishName || "这道菜已经删掉了";
   const meal = meals && log.mealId ? meals[log.mealId] : null;
@@ -72,7 +73,7 @@ function toLogCard(log, dishNames, meals) {
     initial: name.slice(0, 1), // 没有照片时，用菜名第一个字当占位图
     photo: log.photoThumb || log.photo || (meal ? meal.photoThumb || meal.photo : ""),
     stars: log.rating ? "★".repeat(log.rating) + "☆".repeat(5 - log.rating) : "",
-    note: log.note,
+    note: log.note || (meal ? meal.note : ""),
     cook: log.cook,
     dayText: dayText(log.cookedAt),
   };

@@ -1,10 +1,9 @@
-<import src="/templates/meal-card.wxml" />
-
-<!-- 一条做菜记录 -->
+<!-- 一条做菜记录（开饭时记的也一样）。fresh：刚开完饭，盖个「已开饭」的章 -->
 <template name="logCard">
   <view class="log-card" data-id="{{_id}}" bindtap="onOpenLog" hover-class="tap-card" hover-stay-time="100">
     <cloud-image wx:if="{{photo}}" class="log-photo" src="{{photo}}" mode="aspectFill" />
     <view wx:else class="log-photo log-photo-empty">{{initial}}</view>
+    <view wx:if="{{fresh}}" class="log-stamp">已开饭</view>
     <view class="log-info">
       <view class="log-head">
         <text class="log-dish">{{dishName}}</text>
@@ -51,9 +50,8 @@
       <text class="day-bar-all" bindtap="onShowAll">看全部</text>
     </view>
     <view class="add-log" data-date="{{selected}}" bindtap="onAddLog" hover-class="tap" hover-stay-time="100">＋ 这天再记一道</view>
-    <block wx:for="{{dayEntries}}" wx:key="key" wx:for-item="entry">
-      <template wx:if="{{entry.type === 'meal'}}" is="mealCard" data="{{...entry.meal}}" />
-      <template wx:else is="logCard" data="{{...entry.log}}" />
+    <block wx:for="{{dayLogs}}" wx:key="_id">
+      <template is="logCard" data="{{...item}}" />
     </block>
   </block>
 
@@ -69,9 +67,8 @@
       <view class="month-title">{{month.title}}<text class="month-count"> · 下厨 {{month.count}} 次</text></view>
       <view wx:for="{{month.days}}" wx:key="key" wx:for-item="day" class="day">
         <view class="day-title">{{day.title}}</view>
-        <block wx:for="{{day.entries}}" wx:key="key" wx:for-item="entry">
-          <template wx:if="{{entry.type === 'meal'}}" is="mealCard" data="{{...entry.meal}}" />
-          <template wx:else is="logCard" data="{{...entry.log}}" />
+        <block wx:for="{{day.logs}}" wx:key="_id">
+          <template is="logCard" data="{{...item}}" />
         </block>
       </view>
     </view>
@@ -91,6 +88,3 @@
     <view class="sk sk-bar"></view>
   </view>
 </view>
-
-<!-- 画「分享这顿饭」图片用的画布，不显示出来 -->
-<canvas type="2d" id="ticket-canvas" class="ticket-canvas"></canvas>

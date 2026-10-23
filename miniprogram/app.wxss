@@ -573,23 +573,6 @@ button::after {
   padding: 20rpx 24rpx 24rpx;
 }
 
-/* 刚开完饭：右上角盖下来一个「已开饭」 */
-.meal-stamp {
-  position: absolute;
-  top: 18rpx;
-  right: 24rpx;
-  padding: 2rpx 14rpx;
-  border: 4rpx solid var(--danger);
-  border-radius: 12rpx;
-  color: var(--danger);
-  font-size: var(--fs-small);
-  font-weight: 700;
-  letter-spacing: 4rpx;
-  opacity: 0.85;
-  transform: rotate(-12deg);
-  animation: stamp-in 0.5s 0.3s both;
-}
-
 .meal-head {
   display: flex;
   flex-wrap: wrap;

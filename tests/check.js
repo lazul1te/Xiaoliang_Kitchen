@@ -2738,15 +2738,16 @@ async function smoke() {
   assert.deepStrictEqual(Object.values(planDoc().extras).map((x) => x.name), ["牛奶"], "还剩菜，买菜清单先不动");
   assert.deepStrictEqual(lastCall("switchTab"), ["switchTab", "/pages/logs/index"]);
   assert.strictEqual(dev().dev_cook_name, "小亮");
-  // 记录页：直接选中那天，同一顿的菜合成一张卡片
+  // 记录页：直接选中那天，开饭记的菜跟别的记录一样一道菜一条，自己没照片、心得的用这顿的
   const logsM = newPage("pages/logs/index");
   logsM.onLoad();
   logsM.onShow();
   await flush();
   assert.strictEqual(logsM.data.selected, dateValue(Date.now()), "开完饭直接看那天");
-  const mealEntry = logsM.data.dayEntries.find((e) => e.type === "meal");
-  assert.ok(mealEntry, "那天有一张「一顿饭」的卡片");
-  assert.strictEqual(mealEntry.meal.fresh, true, "刚记好的这一顿盖个「已开饭」的章");
+  const mealCards = logsM.data.dayLogs.filter((c) => c.mealId === meal1._id);
+  assert.strictEqual(mealCards.length, 3, "一道菜一条");
+  assert.ok(mealCards.every((c) => c.fresh), "刚记好的这一顿每道菜盖个「已开饭」的章");
+  assert.ok(logsM.data.dayLogs.filter((c) => c.mealId !== meal1._id).every((c) => !c.fresh), "别的记录不盖章");
   assert.strictEqual(logsM.data.calOpen, false, "日历默认收起");
   assert.deepStrictEqual(
     logsM.data.weeks.map((w) => w.days.some((d) => d.date === dateValue(Date.now()))),
@@ -2754,27 +2755,35 @@ async function smoke() {
     "收起时只显示选中的那天那一周"
   );
   assert.deepStrictEqual(
-    [mealEntry.meal.title, mealEntry.meal.noText, mealEntry.meal.photo, mealEntry.meal.peopleText, mealEntry.meal.note],
-    ["晚饭", "No.001", meal1.photoThumb, "点菜 小鱼 · 掌勺 小亮", "卤肉炖得很烂，下次少放点糖"]
+    mealCards.map((c) => `${c.dishName}|${c.stars}|${c.photo === meal1.photoThumb}|${c.note}|${c.cook}`).sort(),
+    ["台式卤肉饭|★★★★★|true|卤肉炖得很烂，下次少放点糖|小亮", "奥尔良鸡翅（空气炸锅版）|★★★★☆|true|卤肉炖得很烂，下次少放点糖|小亮", "莴笋炒肉|★★★☆☆|true|卤肉炖得很烂，下次少放点糖|小亮"].sort()
   );
-  assert.deepStrictEqual(mealEntry.meal.dishes.map((d) => `${d.dishName}${d.qtyText}|${d.stars}`).sort(), ["台式卤肉饭|★★★★★", "奥尔良鸡翅（空气炸锅版）×2|★★★★☆", "莴笋炒肉|★★★☆☆"].sort());
-  assert.ok(logsM.data.months[0].days[0].entries.some((e) => e.type === "meal" && e.mealId === meal1._id), "全部记录里也按顿合在一起");
+  assert.strictEqual(logsM.data.months[0].days[0].logs.filter((c) => c.mealId === meal1._id).length, 3, "全部记录里也是一道菜一条");
   // 详情页：开饭记的那条没自己的照片，用整桌照片
   const detM = newPage("pages/dish-detail/index");
   detM.onLoad({ id: LUROU });
   await flush();
   assert.strictEqual(detM.data.logs[0].photo, meal1.photoThumb);
-  // 分享这顿饭：小票盖「已开饭」，有分数和心得，最上面是整桌照片
-  await logsM.onShareMeal(ev({ id: meal1._id }));
+  // 点菜单记录页按顿显示：分享这顿饭，小票盖「已开饭」，有分数和心得，最上面是整桌照片
+  const ordersM = newPage("pages/orders/index");
+  ordersM.onShow();
+  await flush();
+  const mealCardM = [].concat(...ordersM.data.months.map((m) => m.cards)).find((c) => c._id === meal1._id);
+  assert.deepStrictEqual(
+    [mealCardM.noText, mealCardM.photo, mealCardM.peopleText, mealCardM.note, mealCardM.dishes.map((d) => d.note).join("")],
+    ["No.001", meal1.photoThumb, "点菜 小鱼 · 掌勺 小亮", "卤肉炖得很烂，下次少放点糖", ""],
+    "这顿的心得只在卡片下面写一次"
+  );
+  await ordersM.onShareMeal(ev({ id: meal1._id }));
   const mealImg = files[lastCall("shareImage")[1]];
   ["已开饭", "No.001", "★★★★★", "奥尔良鸡翅（空气炸锅版） ×2", "卤肉炖得很烂，下次少放点糖"].forEach((t) => assert.ok(mealImg.includes(t), `图片上没有「${t}」：${mealImg}`));
   // 再来一单：按当时的份数放回菜篮
-  logsM.onReorder(ev({ id: meal1._id }));
+  await ordersM.onReorder(ev({ id: meal1._id }));
   await flush();
   assert.deepStrictEqual(planItems(), { [POTATO]: 1, [LUROU]: 1, [WINGS]: 2, [LETTUCE]: 1 });
   assert.deepStrictEqual([lastCall("navigateTo"), lastCall("toast")], [["navigateTo", "/pages/checkout/index"], ["toast", "放进菜篮了"]], "还没下单：放进菜篮，去确认点菜单");
   // 改一改这一顿：整桌照片、哪天、掌勺、心得、每道菜的分数都能改，这顿的做菜记录跟着变；做了哪些菜不能改
-  logsM.onEditMeal(ev({ id: meal1._id }));
+  ordersM.onEditMeal(ev({ id: meal1._id }));
   assert.deepStrictEqual(lastCall("navigateTo"), ["navigateTo", `/pages/meal/index?id=${meal1._id}`]);
   const editMeal = newPage("pages/meal/index");
   await editMeal.onLoad({ id: meal1._id });
@@ -2810,23 +2819,37 @@ async function smoke() {
   assert.deepStrictEqual([lastCall("navigateBack")[0], lastCall("toast")], ["navigateBack", ["toast", "已保存"]]);
   // 改回今天，后面的检查照旧
   await svc("meal").update(meal1._id, { date: dateValue(Date.now()), meal: "晚饭", cook: "小亮", note: meal1e.note, photo: meal1e.photo });
-  // 开饭时记的那道菜自己的记录：哪天跟着这一顿（不显示日期），心得显示在这一顿的卡片上
+  // 点开开饭记的一道菜：跟别的记录一样改；没改的照片、心得还跟着这一顿，整桌照片不会被当成这条的删掉
   const lettuceLog = cloudDB.cook_logs.find((l) => l.mealId === meal1._id && l.dishId === LETTUCE);
   const mealLogEdit = newPage("pages/log-edit/index");
   await mealLogEdit.onLoad({ id: lettuceLog._id });
-  assert.strictEqual(mealLogEdit.data.inMeal, true);
+  assert.deepStrictEqual(
+    [mealLogEdit.data.form.photo, mealLogEdit.data.mealPhoto, mealLogEdit.data.form.note],
+    [meal1e.photo, meal1e.photo, "卤肉下次少放糖"],
+    "打开时是卡片上的样子"
+  );
   mealLogEdit.onInput(ev({ field: "note" }, { value: "莴笋切薄一点" }));
   await mealLogEdit.onSave();
   await flush();
+  const lettuceSaved = cloudDB.cook_logs.find((l) => l._id === lettuceLog._id);
+  assert.deepStrictEqual([lettuceSaved.note, lettuceSaved.photo], ["莴笋切薄一点", ""], "心得存在这条上，照片还用整桌的");
+  const wingsLog = cloudDB.cook_logs.find((l) => l.mealId === meal1._id && l.dishId === WINGS);
+  const wingsEdit = newPage("pages/log-edit/index");
+  await wingsEdit.onLoad({ id: wingsLog._id });
+  await wingsEdit.onSave();
+  await flush();
+  const wingsSaved = cloudDB.cook_logs.find((l) => l._id === wingsLog._id);
+  assert.deepStrictEqual([wingsSaved.note, wingsSaved.photo], ["", ""], "照片、心得没动就还跟着这一顿");
+  assert.ok(cloudFiles[meal1e.photo], "整桌照片还在");
+  logsM.onHide();
   logsM.onShow();
   await flush();
-  const mealEntry2 = logsM.data.dayEntries.find((e) => e.type === "meal" && e.mealId === meal1._id);
   assert.deepStrictEqual(
-    [mealEntry2.meal.note, mealEntry2.meal.dishes.find((d) => d.dishId === LETTUCE).note],
-    ["卤肉下次少放糖", "莴笋切薄一点"],
-    "卡片上看得到改过的心得"
+    logsM.data.dayLogs.filter((c) => c.mealId === meal1._id).map((c) => `${c.dishName}|${c.note}|${c.photo === meal1e.photoThumb}|${!!c.fresh}`).sort(),
+    ["台式卤肉饭|卤肉下次少放糖|true|false", "奥尔良鸡翅（空气炸锅版）|卤肉下次少放糖|true|false", "莴笋炒肉|莴笋切薄一点|true|false"].sort(),
+    "记录页的卡片看得到改过的心得，章只盖一回"
   );
-  ok("开饭啦：一次记下这顿的菜（打分、掌勺、整桌照片）、没做的留在菜篮、集合没建时重试不多记；记录页按顿显示、分享这顿饭、再来一单、改一改这一顿");
+  ok("开饭啦：一次记下这顿的菜（打分、掌勺、整桌照片）、没做的留在菜篮、集合没建时重试不多记；记录页一道菜一条、点菜单记录按顿显示、分享这顿饭、再来一单、改一改这一顿、开饭记的菜跟别的记录一样改");
 
   // ======== 忘了开饭：第二天问一下；菜都做了，菜篮和买菜清单一起清掉；一顿的记录删光了，这一顿也删掉 ========
   const basketL = newPage("pages/today/index");

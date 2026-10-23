@@ -22,7 +22,7 @@ Page({
     form: null, // { _id, dishId, date, photo, rating, note, cook }
     isEdit: false,
     dishLocked: false, // 从某道菜进来的，不用再选菜
-    inMeal: false, // 开饭时一起记的：哪天跟着那一顿，整桌照片和这顿的心得在那一顿的「改一改」里改
+    mealPhoto: "", // 开饭时记的、自己没照片：显示这顿的整桌照片（只能换，不能删）
     dishName: "",
     showDishPicker: false, // 选菜面板
     today: "",
@@ -39,12 +39,12 @@ Page({
   async onLoad(options) {
     let log = null;
     let logs = [];
-    let inMeal = false;
+    let meal = null;
     try {
       this.dishes = await dishService.listDishes();
       if (options.id) log = await logService.getLog(options.id);
       logs = await logService.listLogs().catch(() => []);
-      if (log && log.mealId) inMeal = (await mealService.listMeals()).some((m) => m._id === log.mealId);
+      if (log && log.mealId) meal = (await mealService.listMeals()).find((m) => m._id === log.mealId) || null;
     } catch (err) {
       await ui.alert("没读到数据", ui.errorText(err));
       wx.navigateBack();
@@ -55,8 +55,11 @@ Page({
       wx.navigateBack();
       return;
     }
+    // 开饭时记的：自己没照片、心得的，跟记录页的卡片一样显示这顿的整桌照片和心得
+    const mealPhoto = log && !log.photo && meal ? meal.photo : "";
+    this.mealNote = log && !log.note && meal ? meal.note : "";
     const form = log
-      ? { _id: log._id, dishId: log.dishId, date: dateValue(log.cookedAt), photo: log.photo, rating: log.rating, note: log.note, cook: log.cook }
+      ? { _id: log._id, dishId: log.dishId, date: dateValue(log.cookedAt), photo: log.photo || mealPhoto, rating: log.rating, note: log.note || this.mealNote, cook: log.cook }
       : { _id: "", dishId: options.dishId || "", date: this.startDate(options.date), photo: "", rating: 0, note: "", cook: logService.getCookName() };
     // 修改记录时日期没动，就保留原来的时间
     this.originalDate = form.date;
@@ -66,7 +69,7 @@ Page({
       form,
       isEdit: !!log,
       dishLocked: !log && !!options.dishId,
-      inMeal,
+      mealPhoto,
       today: dateValue(Date.now()),
       yesterday: dateValue(Date.now() - 24 * 3600 * 1000),
       cookNames: recentCooks(logs, logService.getCookName()),
@@ -198,8 +201,11 @@ Page({
     let count = 0;
     try {
       const cookedAt = this.data.isEdit && f.date === this.originalDate ? this.originalCookedAt : dateToTime(f.date);
+      // 整桌照片、这顿的心得没动，记录自己还是空的（照片是这一顿的，删记录时不能删掉它）
+      const photo = f.photo === this.data.mealPhoto ? "" : f.photo;
+      const note = this.mealNote && f.note === this.mealNote ? "" : f.note;
       const log = await logService.saveLog(
-        { _id: f._id, dishId: f.dishId, cookedAt, photo: f.photo, rating: f.rating, note: f.note, cook: f.cook },
+        { _id: f._id, dishId: f.dishId, cookedAt, photo, rating: f.rating, note, cook: f.cook },
         {
           useAsCover: this.data.showCoverOption && this.data.useAsCover,
           removeFromPlan: this.data.showPlanOption && this.data.removeFromPlan,

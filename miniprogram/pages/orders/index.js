@@ -66,7 +66,7 @@ Page({
     const byMeal = {};
     logs.forEach((l) => {
       if (!l.mealId || !this.meals[l.mealId]) return;
-      (byMeal[l.mealId] = byMeal[l.mealId] || []).push(toLogCard(l, this.names, this.meals));
+      (byMeal[l.mealId] = byMeal[l.mealId] || []).push(toLogCard(l, this.names));
     });
     const months = [];
     meals

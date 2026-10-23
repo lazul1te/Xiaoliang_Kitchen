@@ -1,5 +1,4 @@
 <view wx:if="{{form}}" class="log-edit">
-  <view wx:if="{{inMeal}}" class="hint meal-tip">开饭时一起记的。这里改这道菜自己的照片、分数和心得，哪天吃的、整桌照片和这顿的心得在记录页那一顿的「改一改」里改</view>
   <!-- 成品照：点一下拍照或从相册选 -->
   <view class="photo-box" bindtap="onChoosePhoto" hover-class="tap-card" hover-stay-time="100">
     <cloud-image wx:if="{{form.photo}}" class="photo" src="{{form.photo}}" mode="aspectFill" />
@@ -9,7 +8,7 @@
     </view>
     <view wx:if="{{form.photo}}" class="photo-actions">
       <view class="photo-btn">换一张</view>
-      <view class="photo-btn" catchtap="onRemovePhoto" hover-class="tap" hover-stay-time="100" hover-stop-propagation>删除</view>
+      <view wx:if="{{form.photo !== mealPhoto}}" class="photo-btn" catchtap="onRemovePhoto" hover-class="tap" hover-stay-time="100" hover-stop-propagation>删除</view>
     </view>
   </view>
 
@@ -24,8 +23,8 @@
       <text class="label">做的菜</text>
       <text class="value">{{dishName}}</text>
     </view>
-    <!-- 日期：多数是今天、昨天，点一下就行；别的日子再打开日期选择。开饭时一起记的跟着那一顿 -->
-    <view wx:if="{{!inMeal}}" class="field field-wrap">
+    <!-- 日期：多数是今天、昨天，点一下就行；别的日子再打开日期选择 -->
+    <view class="field field-wrap">
       <text class="label">哪天做的</text>
       <view class="chips">
         <view class="chip {{form.date === today ? 'on' : ''}}" data-date="{{today}}" bindtap="onQuickDate" hover-class="tap" hover-stay-time="100">今天</view>

@@ -77,13 +77,14 @@
   - 点菜单存在 `current` 的 `order` 里（格式见 `utils/order.js` 的 `normalizeOrder`），`items` 是下单时点的菜，之后再点的显示「加」；菜篮空了点菜单也一起去掉。
   - 编号按开过饭的数：下一单 = 这本里 `meals` 的最大 `no` + 1（`plan.placeOrder` 先同步一下）。撤单不占号、不留记录，开饭了这个号才算用掉。菜单页不显示编号。
   - 「改一改」（`checkout?edit=1`，`plan.updateOrder`）用同一个确认页改哪天、哪一顿、口味、备注、名字，编号和下单时点的菜不变；撤单放在改一改页最下面（点菜单过期了的提醒里也能撤）。
-  - 「点菜单记录」`pages/orders`（「点菜单」页最上面、「我的」页进）：进行中的那单在最上面，下面是开过饭的（`no > 0` 的 `meals`，按吃的日子新的在前、按月分组），卡片跟记录页一样用 `templates/meal-card.wxml`（样式在 `app.wxss`），能再来一单（`meal.reorder`）、分享这顿饭、在记录里看（`meal.setFocusDate`）。
+  - 「点菜单记录」`pages/orders`（「点菜单」页最上面、「我的」页进）：进行中的那单在最上面，下面是开过饭的（`no > 0` 的 `meals`，按吃的日子新的在前、按月分组），一顿一张卡片 `templates/meal-card.wxml`（样式在 `app.wxss`），能再来一单（`meal.reorder`）、分享这顿饭、在记录里看（`meal.setFocusDate`）。
   - 「存成图片」「发给 TA」的卡片封面用 `utils/ticket.js` 画在页面里看不见的 `<canvas type="2d" id="ticket-canvas">` 上；存成图片、分享这顿饭都用 `ticket.shareTicket`（`wx.showShareImageMenu`），这顿饭的小票内容是 `utils/meal.js` 的 `mealTicket`；卡片封面在 `onShareAppMessage` 前先画好（5:4）。
 - 开饭（`pages/meal`、`services/meal.js`，要先下单）：一顿饭一条 `meals` 记录（格式见 `utils/meal.js`，`no` 是点菜单编号，以前没下单就开饭的是 0），每道做了的菜在 `cook_logs` 里各记一条，带 `mealId`；整桌照片只存在 `meals` 上（放在云存储 `logs/`），记录自己没照片时显示整桌照片。
   - 先存记录、最后存这一顿，`_id` 都是开饭页打开时定好的（`meal…`、`meal…-1`），重试时已经存上的跳过，不会多记。
-  - 记好的一顿能「改一改」（卡片上的按钮，`meal?id=`，`meal.update`）：整桌照片、哪天、哪一顿、掌勺、心得、每道菜的分数，这顿的做菜记录跟着改日子、分数、掌勺；做了哪些菜不能改。点卡片上的某道菜打开它自己的记录（`log-edit`），日子跟着这一顿不让改，记录自己的心得显示在卡片那道菜下面。
+  - 记录页上开饭记的菜跟别的记录一样一道菜一条（`toLogCard`：自己没照片、心得的，显示这顿的整桌照片和心得），点开就是 `log-edit`，改法也一样；没动的照片、心得存成空的，还跟着这一顿（整桌照片不会被当成这条记录的删掉）。刚开完饭，这顿的每条记录盖个「已开饭」的章。
+  - 点菜单记录页按顿显示（`templates/meal-card.wxml`），能「改一改」这一顿（`meal?id=`，`meal.update`）：整桌照片、哪天、哪一顿、掌勺、心得、每道菜的分数，这顿的做菜记录跟着改日子、分数、掌勺；做了哪些菜不能改。
   - 做了的菜从菜篮拿掉、点菜单收起来（`plan.finishMeal`）；菜篮空了，勾选清空，自己加的只留没买的。
-  - 记录页同一顿的合成一张卡片（`entriesOf`），能「再来一单」（`meal.reorder`）、「分享这顿饭」（小票盖「已开饭」）。一顿的记录删光了，这一顿和照片也删掉（`meal.removeIfEmpty`）。
+  - 一顿的记录删光了，这一顿和照片也删掉（`meal.removeIfEmpty`）。
   - 点菜单上的日子过了还没开饭，「点菜单」页会问「做了吗」，按那天记（`/pages/meal/index?date=`）。
   - 导出带上 `meals`，导入时按 `createdAt` 去重，记录的 `mealId` 换成新的那一顿。
 - 买菜清单的合并规则在 `utils/shopping.js`：同名原料合在一起，数字用量 × 份数相加，单位不同或「适量」原样列出；再对比库存（名字去掉括号说明后对）：库存里有的放「家里有」，用完了的放「要买的」，库存里没记录的调料单独一组。
